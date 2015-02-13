@@ -1,0 +1,13 @@
+<resources>
+
+    <style name="Theme.MyTheme" parent="Theme.AppCompat.NoActionBar">
+    	
+    	<!-- Set AppCompat’s color theming attrs -->
+    	<item name="colorPrimary">@color/custom_blue</item>
+    	<item name="colorPrimaryDark">@color/custom_gray</item>
+    	<item name="colorAccent">@color/custom_green</item>
+    
+    	<!-- The rest of your attributes -->
+	</style>
+
+</resources>

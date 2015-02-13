@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:orientation="vertical"
+    android:padding="5dp">
+    
+<TextView
+	    android:id="@+id/txtFileName"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:textSize="18sp"
+	    android:text="Download this File?"/>
+		    
+	<TextView
+	    android:id="@+id/txtFilePath"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:textSize="12sp"
+	    android:text="File Path Goes Here"/>
+	
+	<TextView
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="10dp"
+	    android:textSize="12sp"
+	    android:textStyle="italic"
+	    android:text="IMPORTANT! Make sure you trust the source of this file before downloading!"/>
+    
+	<LinearLayout 
+    	android:layout_width="match_parent"
+    	android:layout_height="wrap_content" 
+    	android:orientation="vertical"
+    	android:layout_marginTop="10dp"
+    	android:padding="5dp">
+    	
+	    <!-- Button for Running the Application -->
+	    <LinearLayout
+	        android:id="@+id/btnDownload"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:background="#11AE09"
+	    	android:minWidth="100dp"
+	    	android:padding="10dp"
+	        android:layout_gravity="right"
+	        android:orientation="vertical">
+	        <TextView
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:gravity="center"
+	            android:text="DOWNLOAD"
+	            android:textColor="#FFFFFF"
+	            android:textSize="12sp" />
+	    </LinearLayout>
+	</LinearLayout>
+	
+</LinearLayout>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    
+	<!-- Custom App Colors -->
+    <color name="custom_blue">#0186D5</color>
+    <color name="custom_green">#11AE09</color>
+    <color name="custom_gray">#333333</color>
+    <color name="custom_light_blue">#0B9EFF</color>
+     
+</resources>

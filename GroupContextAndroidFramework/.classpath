@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/GroupContextFramework"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/activation.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/additionnal.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/dropbox-core-sdk-1.7.5.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/jackson-core-2.2.3.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/jsch-0.1.51.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/mail.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/mqtt-client-0.4.0.jar"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>

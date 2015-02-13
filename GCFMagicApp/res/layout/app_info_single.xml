@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="#EEEEEE"
+    android:paddingBottom="4dp"
+    android:orientation="vertical">
+    
+    <LinearLayout
+        android:background="@drawable/corner_shadow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:paddingBottom="3dp"
+        android:orientation="vertical">
+    
+            <LinearLayout
+		        android:background="@drawable/corner"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:orientation="vertical">
+		                
+		        <LinearLayout
+			        android:layout_width="match_parent"
+			        android:layout_height="wrap_content"
+			        android:orientation="vertical">
+		        
+		            <TextView
+						android:id="@+id/txtTitle"
+						android:text="App Title Goes Here"
+						android:textSize="18sp"
+						android:textColor="@color/custom_blue"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content" />
+		        
+		            <TextView
+						android:id="@+id/txtDescription"
+						android:text="Application Description Goes Here"
+						android:textSize="12sp"
+						android:textColor="#666666"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content" />
+		        </LinearLayout>
+		        
+		        <ImageView
+		            android:id="@+id/imgBanner"
+					android:layout_width="fill_parent"
+			        android:layout_height="50dp"
+			        android:scaleType="fitXY"
+			        android:layout_marginTop="5dp"
+			        />
+		        
+				<View 
+				    android:layout_width="fill_parent" 
+				    android:layout_height="1dp" 
+				    android:background="#CCCCCC"
+				    android:layout_marginTop="5dp"
+				    android:layout_marginBottom="5dp" />
+				
+				<LinearLayout
+			        android:layout_width="match_parent"
+			        android:layout_height="wrap_content"
+			        android:layout_marginBottom="5dp"
+			        android:orientation="horizontal">
+				    
+				    <ImageView
+				    	android:layout_width="25dp"
+			        	android:layout_height="25dp"
+			        	android:src="@drawable/play"/>
+				    
+				    <TextView
+						android:text="Run Application"
+						android:textSize="14sp"
+						android:layout_marginLeft="5dp"
+						android:textColor="@color/custom_green"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center" />
+		    
+		</LinearLayout>
+        
+    </LinearLayout>
+        
+    </LinearLayout>
+        
+</LinearLayout>

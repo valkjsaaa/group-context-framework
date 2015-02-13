@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/GroupContextFramework"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/bluecove-2.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/dropbox-core-sdk-1.7.5.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/jackson-core-2.2.3.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/jsch-0.1.51.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/mqtt-client-0.4.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

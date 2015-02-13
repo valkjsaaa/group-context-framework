@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    
+        <PreferenceCategory 
+        android:title="Application Details"
+        android:key="category_app_details">
+        
+        <EditTextPreference 
+            android:key="app_version"
+            android:title="Application Version" 
+            android:enabled="false"
+            android:selectable="false"
+            android:persistent="false"
+            android:shouldDisableView="false"/>
+        
+        <EditTextPreference 
+            android:key="gcf_version"
+            android:title="GCF Version" 
+            android:enabled="false"
+            android:selectable="false"
+            android:persistent="false"
+            android:shouldDisableView="false"/>
+        
+        <EditTextPreference 
+            android:key="gcf_comm"
+            android:title="Comm Channel" 
+            android:enabled="false"
+            android:selectable="false"
+            android:persistent="false"
+            android:shouldDisableView="false"/>
+        
+        <EditTextPreference 
+            android:key="device_name"
+            android:title="GCF Name"
+            android:summary="Set Blank to Use Programmatic Name" />
+        
+    </PreferenceCategory>
+<!--     
+   <PreferenceCategory 
+        android:title="Toggle Context Sharing"
+        android:summary="Specify which providers you would like to share context"
+        android:key="category_gcf_providers">
+       
+		<CheckBoxPreference 
+            android:key="gcf_provider_loc"
+            android:title="Location Provider" 
+            android:summary="Uses GPS/Network Triangulation to Determine Your Location"/>
+		
+		<CheckBoxPreference 
+            android:key="gcf_provider_bt"
+            android:title="Bluetooth Provider" 
+            android:summary="Determines Which Devices are Nearby"/>
+		
+		<CheckBoxPreference 
+		    android:key="gcf_provider_cal"
+		    android:title="Calendar Provider"
+		    android:summary="Tracks Your Next Calendar Appointment"/>
+       
+   </PreferenceCategory>  -->
+    
+</PreferenceScreen>

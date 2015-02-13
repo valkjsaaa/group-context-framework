@@ -1,0 +1,57 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    android:background="#FFFFFF">
+ 
+    <TextView
+        	android:id="@+id/txtDevice"
+	        android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            android:padding="2dp"
+            android:background="#339966"
+            android:textColor="#FFFFFF"
+            android:textSize="10pt"
+            android:text="DEVICE ID"/>
+    
+	<TextView
+        	android:id="@+id/txtProviders"
+	        android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            android:paddingLeft="3dp"
+            android:background="#333333"
+            android:textColor="#FFFFFF"
+            android:textSize="6pt"
+            android:text="Providers Go Here"/>
+    
+ 	<ScrollView
+    	android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1">
+            
+ 	    <LinearLayout
+ 	        android:layout_width="fill_parent"
+        	android:layout_height="wrap_content"
+        	android:orientation="vertical">
+ 	        
+ 	    
+	    	<TextView
+	        	android:id="@+id/txtConsole"
+		        android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:scrollbars="vertical"
+	            android:padding="3dp"
+	            android:background="#FFFFFF"
+	            android:textSize="6pt"
+	            android:textColor="#000000"/>
+ 	        
+ 	    </LinearLayout>
+    	
+	</ScrollView>
+	    
+</LinearLayout>

@@ -1,0 +1,43 @@
+<RelativeLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#EEEEEE"
+    android:keepScreenOn="true"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+            
+        <android.support.v7.widget.Toolbar
+		    xmlns:app="http://schemas.android.com/apk/res-auto"
+		    android:id="@+id/toolbar"
+		    android:layout_height="wrap_content"
+		    android:layout_width="match_parent"
+		    app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+		    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+		    android:background="@color/custom_blue" />
+        
+        <ListView
+			android:id="@+id/lstApps"
+			android:layout_marginTop="2dp"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"/>
+    </LinearLayout>
+            
+    <ImageView
+        android:id="@+id/imgCamera"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="15dp"
+        android:padding="8dp"
+        android:elevation="5dp"
+        android:background="@drawable/camera_focused"
+        android:src="@drawable/ic_camera"/>
+
+</RelativeLayout>
