@@ -1,7 +1,6 @@
 package com.adefreitas.magicappserver;
 
 import java.util.Calendar;
-import java.util.Date;
 
 import android.widget.Toast;
 

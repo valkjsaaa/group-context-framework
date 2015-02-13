@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.util.Date;
 
 import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.messages.CommMessage;
 import com.google.gson.Gson;

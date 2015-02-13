@@ -3,12 +3,8 @@ package com.adefreitas.androidbluewave;
 import java.util.Date;
 
 import android.app.Application;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.adefreitas.androidframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.GroupContextManager;

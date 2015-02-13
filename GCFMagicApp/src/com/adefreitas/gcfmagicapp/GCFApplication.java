@@ -583,12 +583,7 @@ public class GCFApplication extends Application
 											
 					// Adds the App
 					AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);
-					
-					if (app == null)
-					{
-						System.out.println("NULL APP?!?");
-					}
-					
+										
 					GCFApplication.this.addApplicationToCatalog(app);
 					
 					// Notifies the Application that the App List has Changed

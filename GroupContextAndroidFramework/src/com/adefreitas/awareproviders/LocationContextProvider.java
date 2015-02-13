@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.ContextReportingThread;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;

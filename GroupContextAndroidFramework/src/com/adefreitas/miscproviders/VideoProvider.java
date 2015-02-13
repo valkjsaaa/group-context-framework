@@ -13,15 +13,11 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
 
 /**
  * This is a template for a context provider.

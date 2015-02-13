@@ -1,11 +1,7 @@
 package snap_to_it;
 
-import java.awt.Robot;
-import java.awt.event.KeyEvent;
-
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextRequest;
 

@@ -3,21 +3,13 @@ package liveos_apps;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Date;
-
-import bluetoothcontext.toolkit.JSONContextParser;
 
 import com.adefreitas.desktoptoolkits.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 

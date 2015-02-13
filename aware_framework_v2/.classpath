@@ -5,7 +5,7 @@
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/android-support-v4.jar"/>
-	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/lib/mqtt-client-0.4.0.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/android-support-v4.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/mqtt-client-0.4.0.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

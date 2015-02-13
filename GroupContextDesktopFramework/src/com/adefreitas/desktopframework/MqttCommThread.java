@@ -11,7 +11,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.messages.CommMessage;
 import com.google.gson.Gson;
 

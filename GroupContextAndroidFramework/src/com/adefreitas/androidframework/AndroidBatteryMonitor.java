@@ -2,7 +2,6 @@ package com.adefreitas.androidframework;
 
 import java.util.Date;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContextWrapper;

@@ -5,14 +5,13 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 
-
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import com.adefreitas.groupcontextframework.*;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.messages.*;
+import com.adefreitas.groupcontextframework.CommManager;
+import com.adefreitas.groupcontextframework.CommThread;
+import com.adefreitas.messages.CommMessage;
 import com.google.gson.Gson;
 
 public class MulticastCommThread extends CommThread
@@ -93,10 +92,6 @@ public class MulticastCommThread extends CommThread
 				{
 					m.obj     	   = cm;
 					commHandler.sendMessage(m);
-				}
-				else
-				{
-					Log.e("Multicast", "JSON PARSE ERROR:  " + json);
 				}
 			}
 			catch (SocketTimeoutException ste)

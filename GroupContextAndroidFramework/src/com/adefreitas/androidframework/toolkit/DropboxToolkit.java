@@ -3,18 +3,13 @@ package com.adefreitas.androidframework.toolkit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 
-import android.app.Activity;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.util.Log;
 
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;

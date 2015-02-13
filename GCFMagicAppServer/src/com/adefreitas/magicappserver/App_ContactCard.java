@@ -3,17 +3,13 @@ package com.adefreitas.magicappserver;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.List;
 
 import org.json.JSONObject;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Intent;
-import android.database.Cursor;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.widget.Toast;
 

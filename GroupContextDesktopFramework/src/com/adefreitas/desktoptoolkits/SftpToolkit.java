@@ -1,21 +1,11 @@
 package com.adefreitas.desktoptoolkits;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Vector;
 
 import com.adefreitas.groupcontextframework.Settings;
-import com.dropbox.core.DbxAppInfo;
-import com.dropbox.core.DbxAuthFinish;
-import com.dropbox.core.DbxClient;
-import com.dropbox.core.DbxEntry;
-import com.dropbox.core.DbxRequestConfig;
-import com.dropbox.core.DbxWebAuthNoRedirect;
-import com.dropbox.core.DbxWriteMode;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;

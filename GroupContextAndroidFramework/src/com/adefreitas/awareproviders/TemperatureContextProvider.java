@@ -11,15 +11,9 @@ import android.util.Log;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextReportingThread;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.aware.Accelerometer;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
-import com.aware.Barometer;
-import com.aware.LinearAccelerometer;
 import com.aware.Temperature;
-import com.aware.providers.Accelerometer_Provider.Accelerometer_Data;
-import com.aware.providers.Barometer_Provider.Barometer_Data;
-import com.aware.providers.Linear_Accelerometer_Provider.Linear_Accelerometer_Data;
 import com.aware.providers.Temperature_Provider.Temperature_Data;
 
 /**

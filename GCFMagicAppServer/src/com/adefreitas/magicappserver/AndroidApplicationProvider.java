@@ -1,12 +1,9 @@
 package com.adefreitas.magicappserver;
 
-import android.widget.Toast;
-
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.liveos.ApplicationProvider;
-import com.adefreitas.messages.CommMessage;
 
 public abstract class AndroidApplicationProvider extends ApplicationProvider
 {

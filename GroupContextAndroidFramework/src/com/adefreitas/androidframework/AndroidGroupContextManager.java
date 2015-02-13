@@ -14,7 +14,6 @@ import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextCapability;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;

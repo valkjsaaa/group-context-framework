@@ -1,9 +1,9 @@
 package com.adefreitas.androidframework.toolkit;
 
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
+
 import javax.activation.CommandMap;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -19,24 +19,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-
-import android.content.Context;
-import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.http.AndroidHttpClient;
-import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 public class Mail extends javax.mail.Authenticator
 {

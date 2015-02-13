@@ -25,7 +25,7 @@ hs_err_pid*
 Miscellaneous/
 GCFUniversalRemote/
 GCFBluetoothDemo/
-lib/
+libraries/
 appData/
 
 # Generated files

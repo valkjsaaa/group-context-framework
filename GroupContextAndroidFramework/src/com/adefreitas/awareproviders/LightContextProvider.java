@@ -1,14 +1,5 @@
 package com.adefreitas.awareproviders;
 
-import com.adefreitas.groupcontextframework.*;
-import com.adefreitas.messages.CommMessage;
-import com.aware.Aware;
-import com.aware.Aware_Preferences;
-import com.aware.Barometer;
-import com.aware.Light;
-import com.aware.providers.Barometer_Provider.Barometer_Data;
-import com.aware.providers.Light_Provider.Light_Data;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +7,13 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
+
+import com.adefreitas.groupcontextframework.ContextProvider;
+import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.aware.Aware;
+import com.aware.Aware_Preferences;
+import com.aware.Light;
+import com.aware.providers.Light_Provider.Light_Data;
 
 /**
  * AWARE Light Provider.

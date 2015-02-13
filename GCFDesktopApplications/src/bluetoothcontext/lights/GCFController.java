@@ -2,22 +2,12 @@ package bluetoothcontext.lights;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 
 import bluetoothcontext.toolkit.GCFDesktopApplication;
 import bluetoothcontext.toolkit.JSONContextParser;
 
-import com.adefreitas.desktopframework.DesktopBatteryMonitor;
-import com.adefreitas.desktopframework.DesktopGroupContextManager;
-import com.adefreitas.desktopframework.MessageProcessor;
-import com.adefreitas.desktopframework.RequestProcessor;
 import com.adefreitas.desktopproviders.PhillipsHueProvider;
-import com.adefreitas.desktoptoolkits.DropboxToolkit;
-import com.adefreitas.desktoptoolkits.HttpToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
 import com.google.gson.JsonObject;

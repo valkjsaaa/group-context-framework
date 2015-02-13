@@ -31,7 +31,6 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	private int     port;
     private Gson    gson;
     private Handler commHandler;
-    private int bob;
     
     private MqttClient     	  client;
     private ArrayList<String> channels;
@@ -195,17 +194,16 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		{
 			if (channelARP.containsKey(deviceID) && !channelsToSend.contains(channelARP.get(deviceID)))
 			{
-				//Log.d(LOG_NAME, "FOUND CHANNEL: " + channelARP.get(deviceID));
 				channelsToSend.add(channelARP.get(deviceID));
 			}
 			else
 			{
-				//Log.d(LOG_NAME, "BROADCASTING");
 				broadcast = true;
 				break;
 			}
 		}
 
+		// Determines Whether to Broadcast the Message or to Only Send it to Select Channels
 		if (broadcast)
 		{
 			for (String channel : channels)
@@ -306,7 +304,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		}
 	}
 	
-	// Overridding Methods
+	// Channel Methods
 	public boolean supportsChannels()
 	{
 		return true;

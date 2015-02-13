@@ -1,5 +1,11 @@
 package com.adefreitas.groupcontextframework;
 
+/**
+ * This is intended to be used as a debug class.  The IP Addresses and ports here 
+ * are used so that you don't nave to manually hard code them in every project.
+ * @author adefreit
+ *
+ */
 public class Settings 
 {
 	// The Multicast Channel Hosting GCF
@@ -14,7 +20,11 @@ public class Settings
 	public static final int	   DEV_MQTT_PORT      = 1883;
 	public static final int	   DEV_SFTP_PORT      = 22;
 	
-	// TODO:  This is a hardcoded way of assigning friendly names.
+	/**
+	 * This method allows you to replace a device ID with a more human friendly name
+	 * @param name
+	 * @return
+	 */
 	public static String getDeviceName(String name)
 	{
 		String result = name;

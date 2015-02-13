@@ -1,20 +1,14 @@
 package com.adefreitas.androidbluewave;
 
-import java.util.Date;
 import java.util.HashMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.CalendarContract;
 import android.util.Log;
 import android.widget.Toast;
 

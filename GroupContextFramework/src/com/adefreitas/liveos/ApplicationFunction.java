@@ -2,9 +2,6 @@ package com.adefreitas.liveos;
 
 import java.util.ArrayList;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.google.gson.Gson;
-
 public class ApplicationFunction extends ApplicationElement
 {
 	private String 						 functionDescription;

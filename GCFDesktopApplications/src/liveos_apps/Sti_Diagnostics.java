@@ -3,17 +3,12 @@ package liveos_apps;
 import java.util.ArrayList;
 import java.util.Date;
 
-import bluetoothcontext.toolkit.JSONContextParser;
-
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.liveos.ApplicationElement;
 import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 
 public class Sti_Diagnostics extends SnapToItApplicationProvider
 {

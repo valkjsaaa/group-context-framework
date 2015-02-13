@@ -1,18 +1,13 @@
 package liveos_apps;
 
-import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.Date;
 import java.util.HashMap;
-
-import liveos_dns.GeoMath;
 
 import bluetoothcontext.toolkit.JSONContextParser;
 
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 
