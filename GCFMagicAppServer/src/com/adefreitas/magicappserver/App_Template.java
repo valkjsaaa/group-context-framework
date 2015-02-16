@@ -1,7 +1,5 @@
 package com.adefreitas.magicappserver;
 
-import java.util.Date;
-
 import android.widget.Toast;
 
 import com.adefreitas.groupcontextframework.CommManager.CommMode;

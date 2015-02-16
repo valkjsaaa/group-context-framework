@@ -8,7 +8,6 @@ import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.view.Menu;
-import android.widget.Toast;
 
 import com.adefreitas.androidbluewave.JSONContextParser;
 import com.adefreitas.groupcontextframework.GroupContextManager;

@@ -4,22 +4,20 @@
     android:layout_height="wrap_content"
     android:background="#EEEEEE"
     android:paddingBottom="4dp"
+    android:elevation="5dp"
     android:orientation="vertical">
     
     <LinearLayout
-        android:background="@drawable/corner_shadow"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:paddingBottom="3dp"
+        android:layout_margin="5dp"
         android:orientation="vertical">
     
             <LinearLayout
 		        android:background="@drawable/corner"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
+		        android:padding="5dp"
 		        android:orientation="vertical">
 		                
 		        <LinearLayout
@@ -30,7 +28,7 @@
 		            <TextView
 						android:id="@+id/txtTitle"
 						android:text="App Title Goes Here"
-						android:textSize="18sp"
+						android:textSize="20sp"
 						android:textColor="@color/custom_blue"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content" />
@@ -43,15 +41,7 @@
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content" />
 		        </LinearLayout>
-		        
-		        <ImageView
-		            android:id="@+id/imgBanner"
-					android:layout_width="fill_parent"
-			        android:layout_height="50dp"
-			        android:scaleType="fitXY"
-			        android:layout_marginTop="5dp"
-			        />
-		        
+		        		        
 				<View 
 				    android:layout_width="fill_parent" 
 				    android:layout_height="1dp" 
@@ -59,6 +49,20 @@
 				    android:layout_marginTop="5dp"
 				    android:layout_marginBottom="5dp" />
 				
+				        		        <ImageView
+		            android:id="@+id/imgBanner"
+					android:layout_width="fill_parent"
+			        android:layout_height="150dp"
+			        android:scaleType="fitXY"
+			        android:layout_marginTop="5dp"/>
+				
+				<View 
+				    android:layout_width="fill_parent" 
+				    android:layout_height="1dp" 
+				    android:background="#CCCCCC"
+				    android:layout_marginTop="5dp"
+				    android:layout_marginBottom="5dp" />
+				        		        
 				<LinearLayout
 			        android:layout_width="match_parent"
 			        android:layout_height="wrap_content"
@@ -71,7 +75,7 @@
 			        	android:src="@drawable/play"/>
 				    
 				    <TextView
-						android:text="Run Application"
+						android:text="Connect"
 						android:textSize="14sp"
 						android:layout_marginLeft="5dp"
 						android:textColor="@color/custom_green"

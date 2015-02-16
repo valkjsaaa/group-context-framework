@@ -1,7 +1,6 @@
 package com.adefreitas.androidframework.toolkit;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

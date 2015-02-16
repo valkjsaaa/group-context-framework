@@ -33,11 +33,12 @@ import android.widget.Toast;
 public class CameraActivity extends Activity 
 {		
 	// Constants
-	public  static final int    IMAGE_HEIGHT 		 = 480;
-	public  static final int    IMAGE_WIDTH  		 = 640;
-	public  static final String CLOUD_FOLDER 		 = "/var/www/html/gcf/universalremote/";
-	private static final String IMAGE_DIRECTORY_NAME = "SnapToIt";
-	private static final String LOG_NAME 			 = "SnapToIt";
+	public  static final int    IMAGE_HEIGHT 		  = 480;
+	public  static final int    IMAGE_WIDTH  		  = 640;
+	public  static final String CLOUD_FOLDER 		  = "/var/www/html/gcf/universalremote/";
+	private static final String IMAGE_DIRECTORY_NAME  = "SnapToIt";
+	private static final String LOG_NAME 			  = "SnapToIt";
+
 	
 	// Activity request codes
     private static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
@@ -202,20 +203,17 @@ public class CameraActivity extends Activity
 				    FileOutputStream fos  = new FileOutputStream(file);
 				    fos.write(stream.toByteArray());
 				    fos.close();
-					
+									    
 				    // Uploads or Saves the File, Depending on the Mode
 				    if (!captureMode)
 				    {
 				    	application.setPhotoTaken();
-				    	application.getCloudToolkit().uploadFile(CLOUD_FOLDER, file);
+				    	application.getCloudToolkit().uploadFile(CLOUD_FOLDER, file, GCFApplication.ACTION_IMAGE_UPLOADED);
 				    }
 				    else
 				    {
 				    	Toast.makeText(this, "Created : " + filename, Toast.LENGTH_LONG).show();
 				    }
-				    
-				    // Makes the File Visible!
-				    MediaScannerConnection.scanFile(this, new String[] { file.getAbsolutePath() }, null, null);
 			    }
 			    catch (Exception e)
 			    {

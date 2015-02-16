@@ -1,13 +1,5 @@
 package com.adefreitas.awareproviders;
 
-import com.adefreitas.groupcontextframework.*;
-import com.aware.Applications;
-import com.aware.Aware;
-import com.aware.Aware_Preferences;
-import com.aware.Light;
-import com.aware.providers.Applications_Provider.Applications_Foreground;
-import com.aware.providers.Light_Provider.Light_Data;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +7,14 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
+
+import com.adefreitas.groupcontextframework.ContextProvider;
+import com.adefreitas.groupcontextframework.ContextReportingThread;
+import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.aware.Applications;
+import com.aware.Aware;
+import com.aware.Aware_Preferences;
+import com.aware.providers.Applications_Provider.Applications_Foreground;
 
 public class ApplicationContextProvider extends ContextProvider
 {

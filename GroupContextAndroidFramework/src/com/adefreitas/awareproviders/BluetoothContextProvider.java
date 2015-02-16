@@ -18,7 +18,6 @@ import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.Bluetooth;
 import com.aware.providers.Bluetooth_Provider.Bluetooth_Data;
-import com.aware.providers.Bluetooth_Provider.Bluetooth_Sensor;
 
 /**
  * AWARE Bluetooth Provider.

@@ -25,7 +25,6 @@ import com.adefreitas.androidframework.AndroidBatteryMonitor;
 import com.adefreitas.androidframework.AndroidGroupContextManager;
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextType;

@@ -31,7 +31,7 @@ public class UploadFileDialog
 	private String[] 		 filetypes;   
 	private static final int DIALOG_LOAD_FILE = 1000;
 
-	public UploadFileDialog(Context context, String dialogMessage, String startingFolder, String[] filetypes, CloudStorageToolkit cloudToolkit, String cloudDestinationFolder)
+	public UploadFileDialog(Context context, String dialogMessage, String startingFolder, String[] filetypes, CloudStorageToolkit cloudToolkit, String cloudDestinationFolder, String callbackCommand)
 	{
 		this.context       		  	= context;
 		this.dialogMessage			= dialogMessage;

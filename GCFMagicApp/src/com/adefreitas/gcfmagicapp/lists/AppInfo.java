@@ -22,6 +22,7 @@ public class AppInfo
 	
 	// Snap To It Values
 	private double photoMatches;
+	private boolean favorite;
 	
 	// Communications Settings
 	private CommMode commMode;
@@ -64,8 +65,10 @@ public class AppInfo
 		this.dateExpires 	= new Date(dateCreated.getTime() + lifetime * 1000);
 		this.photoMatches   = photoMatches;
 		
+		// These are values that the app decides
 		this.connections = new ArrayList<String>();
 		this.ui			 = null;
+		this.favorite    = false;
 	}
 
 	/**
@@ -191,6 +194,16 @@ public class AppInfo
 	public double getPhotoMatches()
 	{
 		return photoMatches;
+	}
+	
+	public boolean isFavorite()
+	{
+		return favorite;
+	}
+	
+	public void setFavorite(boolean value)
+	{
+		favorite = value;
 	}
 	
 	/**

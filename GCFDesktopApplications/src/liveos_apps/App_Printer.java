@@ -3,9 +3,6 @@ package liveos_apps;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Date;
-
-import bluetoothcontext.toolkit.JSONContextParser;
 
 import com.adefreitas.desktoptoolkits.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;

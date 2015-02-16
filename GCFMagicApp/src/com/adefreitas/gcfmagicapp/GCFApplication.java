@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.MediaScannerConnection;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -56,6 +57,7 @@ public class GCFApplication extends Application
 	public static final String ROOT_FOLDER       = "/Download/Impromptu/";							 			   // Path on the Phone
 	public static final int    UPDATE_SECONDS    = 15;
 	public static final String ACTION_APP_UPDATE = "APP_UPDATE";
+	public static final String ACTION_IMAGE_UPLOADED = "STI_IMAGE_UPLOADED";
 	
 	// GCF Communication Settings (BROADCAST_MODE Assumes a Functional TCP Relay Running)
 	public static final CommMode COMM_MODE  = CommMode.MQTT;
@@ -97,7 +99,6 @@ public class GCFApplication extends Application
 	private Date    lastSnapToItUpdate;
 	private Date    lastPhotoTaken;
 	private Date    lastAutoLaunch;
-	private String  uploadPath = "";
 	
 	// Experimental Webview
 	public WebView webview;
@@ -132,7 +133,7 @@ public class GCFApplication extends Application
 		
 		// EXPERIMENTAL:  Initializes Bluewave
 		bluewaveManager = new BluewaveManager(this, groupContextManager, "http://gcf.cmu-tbank.com/" + groupContextManager.getDeviceID() + ".txt");
-		bluewaveManager.startScan();
+		//bluewaveManager.startScan();
 		
 		// Creates the Cloud Toolkit Helper
 		//dropboxToolkit = new DropboxToolkit(this, APP_KEY, APP_SECRET, AUTH_TOKEN);
@@ -152,14 +153,14 @@ public class GCFApplication extends Application
 		this.filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 		this.filter.addAction(BluewaveManager.ACTION_COMPUTE_INSTRUCTION_RECEIVED);
 		this.filter.addAction(AndroidCommManager.ACTION_CHANNEL_SUBSCRIBED);
-		this.filter.addAction(CloudStorageToolkit.CLOUD_UPLOAD_COMPLETE);
+		this.filter.addAction(ACTION_IMAGE_UPLOADED);
 		this.registerReceiver(intentReceiver, filter);
 		
 		// Creates the Scheduled Event Timer	
 		timerHandler = new TimerHandler(this, groupContextManager, bluewaveManager);
 				
 		// Performs an Initial Context Update
-		setPersonalContext();
+		setPersonalContext(null);
 	}
 	
 	/**
@@ -226,7 +227,7 @@ public class GCFApplication extends Application
 	}
 	
 	// Application Specific Methods -------------------------------------------------------------
-	private void setPersonalContext()
+	private void setPersonalContext(String photoFilePath)
 	{
 		try
 		{
@@ -260,9 +261,9 @@ public class GCFApplication extends Application
 	        }
 	        
 	        // Sets Snap To It Value
-	        if (uploadPath.length() > 0)
+	        if (photoFilePath != null)
 	        {
-	        	snapToIt.put("PHOTO", uploadPath);
+	        	snapToIt.put("PHOTO", photoFilePath);
 	        	this.setPersonalContext(SNAP_TO_IT_TAG, snapToIt);
 	        }
 	        else
@@ -273,6 +274,9 @@ public class GCFApplication extends Application
 			// Updates Via Bluewave
 			this.setPersonalContext(APP_CONTEXT_TAG, context);
 			this.setPersonalContext(LOCATION_TAG, location);
+			
+			// PUBLISHES THE CHANGES AT ONCE
+			bluewaveManager.getPersonalContextProvider().publish();
 		}
 		catch (Exception ex)
 		{
@@ -333,7 +337,7 @@ public class GCFApplication extends Application
 			
 			if (contextReceiver == null)
 			{
-				createNotification("Impromptu Update", "Received New Impromptu App");
+				createNotification("Impromptu Update", "Received New App: " + newApp.getAppName());
 			}
 		}
 	}
@@ -356,6 +360,15 @@ public class GCFApplication extends Application
 		return appCatalog;
 	}
 	
+	public void clearApplicationCatalog()
+	{
+		appCatalog.clear();
+		
+		// Notifies the Application that the App List has Changed (or been erased)
+		Intent i = new Intent(ACTION_APP_UPDATE);
+		GCFApplication.this.sendBroadcast(i);
+	}
+	
 	private void updateCatalog()
 	{
 		boolean changed = false;
@@ -364,7 +377,7 @@ public class GCFApplication extends Application
 		// Looking for Canceled Application
 		for (AppInfo app : new ArrayList<AppInfo>(appCatalog))
 		{
-			if (new Date().getTime() > app.getDateExpires().getTime() && !activeApps.contains(app))
+			if (new Date().getTime() > app.getDateExpires().getTime() && !activeApps.contains(app) && !app.isFavorite())
 			{
 				getApplicationCatalog().remove(app);
 				changed = true;
@@ -388,8 +401,7 @@ public class GCFApplication extends Application
 	
 	public void clearSnapToItHistory()
 	{
-		uploadPath = "";
-		setPersonalContext();
+		setPersonalContext(null);
 	}
 		
 	public void setPhotoTaken()
@@ -454,9 +466,9 @@ public class GCFApplication extends Application
 			{
 				onChannelSubscribed(context, intent);
 			}
-			else if (intent.getAction().equals(CloudStorageToolkit.CLOUD_UPLOAD_COMPLETE))
+			else if (intent.getAction().equals(ACTION_IMAGE_UPLOADED))
 			{
-				onCloudUploadComplete(context, intent);
+				onSnapToItUploadComplete(context, intent);
 			}
 			else
 			{
@@ -493,7 +505,7 @@ public class GCFApplication extends Application
 	
 		private void onUserContextUpdated(Context context, Intent intent)
 		{
-			sendQuery(groupContextManager, bluewaveManager);
+			//sendQuery(groupContextManager, bluewaveManager);
 		}
 	
 		private void onOtherUserContextReceived(Context context, Intent intent)
@@ -611,13 +623,18 @@ public class GCFApplication extends Application
 			}
 		}
 	
-		private void onCloudUploadComplete(Context context, Intent intent)
+		private void onSnapToItUploadComplete(Context context, Intent intent)
 		{
-			uploadPath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
-			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+			String uploadPath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
+			//Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+			
+		    // Makes the File Visible!
+		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
+			
+			clearApplicationCatalog();
 			
 			// Updates Context with the New Upload Path
-			setPersonalContext();
+			setPersonalContext(uploadPath);
 			
 			// Sends a New Query!
 			sendQuery(groupContextManager, bluewaveManager);
@@ -627,6 +644,7 @@ public class GCFApplication extends Application
 	private static void sendQuery(GroupContextManager gcm, BluewaveManager bluewaveManager)
 	{
 		JSONContextParser context = bluewaveManager.getPersonalContextProvider().getContext(); 
+		
 		if (context != null)
 		{
 			gcm.sendComputeInstruction("LOS_DNS", new String[] { "LOS_DNS" }, "QUERY", new String[] { "CONTEXT=" + context.toString() });	
@@ -659,13 +677,13 @@ public class GCFApplication extends Application
 					application.updateCatalog();
 					
 					// Updates the Device's Personal Context
-					application.setPersonalContext();
+					application.setPersonalContext(null);
 					
 					//Toast.makeText(application, "Running Scheduled Task", Toast.LENGTH_SHORT).show();
 					sendQuery(groupContextManager, bluewaveManager);
 					
-					bluewaveManager.getPersonalContextProvider().publish();
 					bluewaveManager.updateBluetoothName();
+					//bluewaveManager.getPersonalContextProvider().publish();
 					
 					// This Runs Once Every X Seconds
 					postDelayed(this, delayTime);

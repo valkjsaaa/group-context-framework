@@ -184,7 +184,7 @@ public class PersonalContextProvider extends ContextProvider
 			else
 			{
 				parser.setJSONObject(name, obj);
-				publish();
+				//publish();
 			}
 		}
 		catch (Exception ex)
@@ -216,7 +216,7 @@ public class PersonalContextProvider extends ContextProvider
 				
 				context.put(name, value);
 
-				publish();	
+				//publish();	
 			}
 		}
 		catch (Exception ex)
@@ -230,7 +230,7 @@ public class PersonalContextProvider extends ContextProvider
 		if (parser != null)
 		{
 			parser.removeJSONObject(name);
-			publish();	
+			//publish();	
 		}
 	}
 	

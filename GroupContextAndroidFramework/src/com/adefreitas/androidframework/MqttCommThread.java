@@ -5,10 +5,13 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import android.content.ContextWrapper;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -16,7 +19,6 @@ import android.widget.Toast;
 
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.messages.CommMessage;
 import com.google.gson.Gson;
 

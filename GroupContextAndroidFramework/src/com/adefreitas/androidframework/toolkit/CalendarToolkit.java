@@ -1,6 +1,5 @@
 package com.adefreitas.androidframework.toolkit;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 

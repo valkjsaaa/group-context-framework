@@ -1,7 +1,6 @@
 package com.adefreitas.desktopframework;
 
 import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.messages.CommMessage;
 
 public class DesktopCommManager extends CommManager implements MessageProcessor

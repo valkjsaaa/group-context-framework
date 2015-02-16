@@ -28,6 +28,9 @@ public class Sti_Diagnostics extends SnapToItApplicationProvider
 				ipAddress,
 				port);
 		
+		// Tells STI 
+		this.storeUserPhotos = false;
+		
 		// Loads Photos
 		this.addPhoto("appData/liveOS/STI_PRINTER/Pewter1.jpeg");
 		this.addPhoto("appData/liveOS/STI_PRINTER/Pewter2.jpeg");
@@ -108,21 +111,15 @@ public class Sti_Diagnostics extends SnapToItApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		String ui  = "<html><title>Diagnostic App :)</title>";
-		ui 		  += "<h4>Updated: " + new Date() + ".</h4></html>";
-		ui 		  += "<h4>Download Test.</h4></html>";
-		ui	      += "<div><input value=\"Download Test.docx\" type=\"button\" height=\"100\" onclick=\"device.downloadFile('http://gcf.cmu-tbank.com/test.docx');\"/></div>";
-		
-		// Creates an Object for this Application
-		ApplicationObject obj = new ApplicationObject("FILE_DOCX", "Download Test.docx");
-		
-		// Converts Objects into a JSON String
-		String objects = ApplicationElement.toJSONArray(new ApplicationElement[] { obj }) ;
+		String ui  = "<html><title>Snap-To-It Diagnostics</title>";
+		ui 	       += "<div>";
+		ui		   += this.getDebugDescription().replace("\n", "<br />");
+		ui 	       += "</div>";
 				
 		// Delivers the UI Code, as Well as the Objects
 		//System.out.println("OBJECTS = " + objects);
-		//return new String[] { "UI=" + ui, "OBJECTS=" + objects};
-		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/diagnostics/index.html", "OBJECTS=" + objects};
+		return new String[] { "UI=" + ui};
+		//return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/diagnostics/index.html", "OBJECTS=" + objects};
 	}
 
 	@Override

@@ -1,13 +1,8 @@
 package liveos_apps;
 
-import java.util.Date;
-
-import bluetoothcontext.toolkit.JSONContextParser;
-
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.ComputeInstruction;
 
 public class App_Game_PiratePig extends DesktopApplicationProvider

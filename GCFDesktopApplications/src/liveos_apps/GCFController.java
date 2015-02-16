@@ -73,9 +73,9 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		// Creates the App Provider
 		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));

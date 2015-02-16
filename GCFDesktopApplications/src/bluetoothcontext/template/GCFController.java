@@ -5,10 +5,7 @@ import java.util.Date;
 import bluetoothcontext.toolkit.GCFDesktopApplication;
 import bluetoothcontext.toolkit.JSONContextParser;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.messages.ContextData;
-import com.adefreitas.messages.ContextRequest;
 import com.google.gson.JsonObject;
 
 public class GCFController extends GCFDesktopApplication

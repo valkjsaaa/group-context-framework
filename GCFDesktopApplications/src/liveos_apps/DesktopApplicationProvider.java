@@ -1,15 +1,12 @@
 package liveos_apps;
 
+import java.awt.Graphics2D;
 import java.awt.Robot;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 
-import openimaj.OpenimajToolkit;
-
-import snap_to_it.RemoteControlProvider.CompareInfo;
-import toolkits.ScreenshotToolkit;
+import javax.imageio.ImageIO;
 
 import liveos_dns.GeoMath;
 import bluetoothcontext.toolkit.JSONContextParser;
@@ -161,6 +158,40 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		}
 		
 		return APP_DATA_FOLDER + this.getContextType() + "/"; 
+	}
+	
+	/**
+	 * Creates a Resized Image
+	 * @param originalImage
+	 * @param type
+	 * @param Width
+	 * @param Height
+	 * @return
+	 */
+	public static File resizeImage(String picturePath, String outputName, int Width,int Height)
+	{
+		File outputFile = null;
+		
+		try
+		{
+			BufferedImage originalImage = ImageIO.read(new File(picturePath));
+			int 		  type 		    = BufferedImage.TYPE_INT_RGB;
+			
+			BufferedImage resizedImage = new BufferedImage(Width, Height, type);
+		    Graphics2D g = resizedImage.createGraphics();
+		    g.drawImage(originalImage, 0, 0, Width, Height, null);
+		    g.dispose();
+
+		    outputName = (outputName.endsWith(".jpeg")) ? outputName : outputName + ".jpeg";
+			outputFile = new File(outputName);
+			ImageIO.write(resizedImage, "jpeg", outputFile);
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	    
+	    return outputFile;
 	}
 	
 	// JSON CONTEXT HELPER METHODS --------------------------------------------------------------------

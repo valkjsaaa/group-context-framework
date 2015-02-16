@@ -53,9 +53,9 @@ public class AppInfoListAdapter extends ArrayAdapter<AppInfo>
 			}
 			else
 			{
-				imgBanner.setVisibility(View.GONE);
+				imgBanner.setVisibility(View.VISIBLE);
 				// "http://74.111.161.33/gcf/universalremote/magic/dots.png"
-				//bitmapManager.loadBitmap(app.getLogo(), imgBanner, imgBanner.getWidth(), imgBanner.getHeight());
+				bitmapManager.loadBitmap(app.getLogo(), imgBanner, imgBanner.getWidth(), imgBanner.getHeight());
 			}
 		}
 		

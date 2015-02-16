@@ -2,17 +2,12 @@ package com.adefreitas.desktopframework;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import com.adefreitas.groupcontextframework.BatteryMonitor;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.ContextType;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextCapability;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;

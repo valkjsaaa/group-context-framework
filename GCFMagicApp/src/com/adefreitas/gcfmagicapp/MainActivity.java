@@ -13,16 +13,13 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.FrameLayout;
@@ -52,9 +49,13 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	private GCFApplication application;
 	
 	// Android Controls
-	private Toolbar	  toolbar;
-	private ListView  lstApps;
-	private ImageView imgCamera;
+	private Toolbar	     toolbar;
+	private ListView     lstApps;
+	private LinearLayout layoutInstructions;
+	private ImageView    imgCameraSmall;
+	private ImageView    imgCameraBig;
+	private TextView	 txtInstructionTitle;
+	private TextView	 txtInstructionDescription;
 	
 	// List Adapters
 	private AppInfoListAdapter adapter; 
@@ -80,9 +81,13 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.application = (GCFApplication)this.getApplication();
 	
 		// Saves Controls
-		this.toolbar   = (Toolbar)this.findViewById(R.id.toolbar);
-		this.lstApps   = (ListView)this.findViewById(R.id.lstApps);
-		this.imgCamera = (ImageView)this.findViewById(R.id.imgCamera);
+		this.toolbar   	   			   = (Toolbar)this.findViewById(R.id.toolbar);
+		this.lstApps  	    		   = (ListView)this.findViewById(R.id.lstApps);
+		this.layoutInstructions 	   = (LinearLayout)this.findViewById(R.id.layoutInstructions);
+		this.imgCameraSmall 		   = (ImageView)this.findViewById(R.id.imgCameraSmall);
+		this.imgCameraBig   		   = (ImageView)this.findViewById(R.id.imgCameraBig);
+		this.txtInstructionTitle 	   = (TextView)this.findViewById(R.id.txtInstructionTitle);
+		this.txtInstructionDescription = (TextView)this.findViewById(R.id.txtInstructionDescription);
 				
 		// Sets Up Adapter
 		adapter = new AppInfoListAdapter(this, R.layout.app_info_single, application.getApplicationCatalog(), BitmapManager.INSTANCE);
@@ -98,7 +103,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.filter.addAction(AndroidCommManager.ACTION_CHANNEL_SUBSCRIBED);
 		
 		// Creates Event Handlers
-		this.imgCamera.setOnClickListener(onCameraClickListener);
+		this.imgCameraSmall.setOnClickListener(onCameraClickListener);
+		this.imgCameraBig.setOnClickListener(onCameraClickListener);
 		
 		// Generates the Execution Alert for an App
 		if (savedInstanceState != null && savedInstanceState.containsKey(APP_ID))
@@ -115,6 +121,9 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		{
 			toolbar.setTitle(savedInstanceState.getString(TITLEBAR_CONTENTS));
 		}
+		
+		// Updates the Application List
+		updateViewContents();
 	}
 
 	/**
@@ -335,20 +344,47 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	 * Updates the Visual Look of the Entire Activity
 	 */
 	public void updateViewContents()
-	{
-		adapter.notifyDataSetChanged();
-					
-		// Runs a Process to Auto Launch
-		runAutoLaunch();
+	{									
+		if (application.getApplicationCatalog().size() == 0)
+		{
+			imgCameraSmall.setVisibility(View.GONE);
+			lstApps.setVisibility(View.GONE);
+			layoutInstructions.setVisibility(View.VISIBLE);
+		}
+		else
+		{
+			adapter.notifyDataSetChanged();
+			
+			// Runs a Process to Auto Launch
+			runAutoLaunch();
+			
+			imgCameraSmall.setVisibility(View.VISIBLE);
+			lstApps.setVisibility(View.VISIBLE);
+			layoutInstructions.setVisibility(View.GONE);
+		}
+		
+		if (application.getBluewaveManager().getPersonalContextProvider().getContext() != null && 
+				application.getBluewaveManager().getPersonalContextProvider().getContext().getJSONObject("snap-to-it") != null)
+		{
+			txtInstructionTitle.setText("Searching For Your Device");
+			txtInstructionDescription.setText("Snap-To-It is looking for your device.  This may take a few seconds.");
+			imgCameraBig.setBackground(this.getResources().getDrawable(R.drawable.camera_searching));
+		}
+		else
+		{
+			txtInstructionTitle.setText("Take A Picture!");
+			txtInstructionDescription.setText("Welcome to Snap-To-It!  To get started, press the above button and take a photograph of the appliance you want to control!");
+			imgCameraBig.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
+		}
 		
 		// Determines if the Snap To It Button is Visible
 		if (new Date().getTime() - application.getLastSnapToItUpdate().getTime() > 120000)
 		{
-			imgCamera.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
+			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
 		}
 		else
 		{
-			imgCamera.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
+			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
 		}
 	}
 	

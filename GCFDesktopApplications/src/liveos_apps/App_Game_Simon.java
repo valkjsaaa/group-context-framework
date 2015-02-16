@@ -1,7 +1,5 @@
 package liveos_apps;
 
-import bluetoothcontext.toolkit.JSONContextParser;
-
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;

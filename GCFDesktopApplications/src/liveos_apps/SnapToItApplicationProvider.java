@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import openimaj.OpenimajToolkit;
+
 import org.codehaus.plexus.util.FileUtils;
 
-import openimaj.OpenimajToolkit;
-import snap_to_it.RemoteControlProvider.CompareInfo;
 import toolkits.ScreenshotToolkit;
-
 import bluetoothcontext.toolkit.JSONContextParser;
 
 import com.adefreitas.desktoptoolkits.CloudStorageToolkit;
@@ -18,6 +17,7 @@ import com.adefreitas.desktoptoolkits.SftpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.messages.CommMessage;
 import com.google.gson.JsonObject;
 
@@ -32,8 +32,8 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	private CloudStorageToolkit          cloudToolkit;
 	
 	// Behavior Flags
-	private boolean storeUserPhotos;
-	private int		maxPhotos = 5;
+	protected boolean storeUserPhotos;
+	protected int	  maxPhotos = 5;
 	
 	/**
 	 * Constructor
@@ -235,6 +235,18 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			photos.add(photoPath);
 			openimaj.computeFeatures(photoPath);
 			System.out.println("SUCCESS");
+			
+			if (photos.size() == 1)
+			{
+				System.out.println("GENERATING ICON");
+		    	
+				File logo = DesktopApplicationProvider.resizeImage(photoPath, this.getAppID() + "_logo.jpeg", 320, 240);
+				cloudToolkit.uploadFile("/var/www/html/gcf/universalremote/magic/", logo);
+				logo.delete();
+				
+				this.logoPath = "http://" + Settings.DEV_WEB_IP + "/gcf/universalremote/magic/" + logo.getName();
+				System.out.println("  ICON: " + logoPath);
+			}
 		}
 		else
 		{
@@ -356,7 +368,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		
 		for (String deviceID : comparisonHistory.keySet())
 		{
-			result += comparisonHistory.get(deviceID).getBestMatchFilename() + " [" + comparisonHistory.get(deviceID).getBestMatch() + "]\n"; 
+			result += comparisonHistory.get(deviceID).getTopMatches(5);
 		}
 		
 		return result;
@@ -475,6 +487,35 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			}
 			
 			return bestFilename;
+		}
+	
+		public String getTopMatches(int numMatches)
+		{
+			ArrayList<String> matches = new ArrayList<String>();
+			String 			  result  = "";
+			
+			for (int i=0; i<Math.min(numMatches, results.size()); i++)
+			{
+				String bestFilename = "";
+				double bestMatch    = 0.0;
+				
+				for (String filename : results.keySet())
+				{
+					if (results.get(filename) > bestMatch && !matches.contains(filename))
+					{
+						bestFilename = filename;
+						bestMatch    = results.get(filename);
+					}
+				}
+				
+				if (bestFilename.length() > 0)
+				{
+					result += bestFilename + ": " + bestMatch + "\n";	
+					matches.add(bestFilename);
+				}
+			}
+			
+			return result;
 		}
 	}
 }
