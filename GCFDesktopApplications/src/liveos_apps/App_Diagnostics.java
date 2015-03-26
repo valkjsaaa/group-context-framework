@@ -21,7 +21,7 @@ public class App_Diagnostics extends DesktopApplicationProvider
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://74.111.161.33/gcf/universalremote/magic/gears.png",				   // LOGO
+				"http://icons.iconarchive.com/icons/rafiqul-hassan/blogger/96/Settings-icon.png",				   // LOGO
 				30,
 				commMode,
 				ipAddress,
@@ -44,8 +44,9 @@ public class App_Diagnostics extends DesktopApplicationProvider
 				
 		// Delivers the UI Code, as Well as the Objects
 		//System.out.println("OBJECTS = " + objects);
-		//return new String[] { "UI=" + ui, "OBJECTS=" + objects};
-		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/diagnostics/index.html", "OBJECTS=" + objects};
+		return new String[] { "UI=" + ui, "OBJECTS=" + objects};
+		//return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/diagnostics/index.html", "OBJECTS=" + objects};
+		//return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/diagnostics/index.html"};
 	}
 
 	@Override

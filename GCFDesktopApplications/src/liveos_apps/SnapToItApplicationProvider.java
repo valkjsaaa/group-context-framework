@@ -29,11 +29,13 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	private HashMap<String, CompareInfo> comparisonHistory;
 	
 	// File Downloading
-	private CloudStorageToolkit          cloudToolkit;
+	private CloudStorageToolkit cloudToolkit;
 	
 	// Behavior Flags
-	protected boolean storeUserPhotos;
-	protected int	  maxPhotos = 5;
+	protected boolean debugMode       = false;
+	protected boolean storeUserPhotos = false;
+	protected int	  maxUserPhotos   = 5;
+	protected double  minMatches      = 10.0;
 	
 	/**
 	 * Constructor
@@ -60,8 +62,13 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		comparisonHistory = new HashMap<String, CompareInfo>();
 		cloudToolkit      = new SftpToolkit();
 		
-		// Store User Photos
-		this.storeUserPhotos = true;
+		// Generates the Local Storage Folder on Initialization
+		this.getLocalStorageFolder();
+		
+		if (debugMode)
+		{
+			System.out.println("*** WARNING:  DEBUG MODE ENABLED ***");
+		}
 	}
 	
 	@Override
@@ -103,10 +110,11 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	public double getFitness(String[] parameters) 
 	{
 		// Extracts the Parameters from the Request Message
-		String deviceID       = CommMessage.getValue(parameters, "deviceID"); // The Device Sending this Request
-		String cloudPhotoPath = CommMessage.getValue(parameters, "photo");	  // Cloud Location
+		String deviceID       = CommMessage.getValue(parameters, "deviceID"); 					  // The Device Sending this Request
+		String cloudPhotoPath = CommMessage.getValue(parameters, "photo");	  					  // Cloud Location
+		//Long   timestamp      = Long.parseLong(CommMessage.getValue(parameters, "timestamp"));	  // Timestamp when photo was taken
 		
-		return processPhoto(deviceID, cloudPhotoPath);
+		return processPhoto(deviceID, cloudPhotoPath, 0);
 	}
 	
 	public double getFitness(String json)
@@ -119,7 +127,8 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		if (snapToItObject != null)
 		{
 			String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
-			return processPhoto(deviceID, cloudPhotoPath);
+			long   timestamp      = snapToItObject.get("TIMESTAMP").getAsLong();
+			return processPhoto(deviceID, cloudPhotoPath, timestamp);
 		}
 		else
 		{
@@ -130,26 +139,45 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	@Override
 	public boolean sendAppData(String json)
 	{
-		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-		
-		String deviceID		  = this.getDeviceName(parser);
-		
-		JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
-		
-		if (snapToItObject != null)
+		if (debugMode)
 		{
-			String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
-			double matches = processPhoto(deviceID, cloudPhotoPath);
-			System.out.println("Matches = " + matches);
-			
-			return matches > 10.0;
+			return true;
 		}
-		
-		return false;		
+		else
+		{
+			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
+			
+			String deviceID		  = this.getDeviceName(parser);
+			
+			JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
+			
+			if (snapToItObject != null)
+			{
+				String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
+				long   timestamp      = snapToItObject.get("TIMESTAMP").getAsLong();
+				double matches = processPhoto(deviceID, cloudPhotoPath, timestamp);
+				System.out.println("Matches = " + matches);
+				
+				return matches >= minMatches;
+			}
+			
+			return false;		
+		}	
 	}
 	
-	private double processPhoto(String deviceID, String cloudPhotoPath)
+	/**
+	 * This performs the SIFT comparison
+	 * @param deviceID
+	 * @param cloudPhotoPath
+	 * @return
+	 */
+	private double processPhoto(String deviceID, String cloudPhotoPath, long timestamp)
 	{
+		Date startTime 		    = new Date();
+		long featureComputeTime = 0;
+		long totalCompareTime   = 0;
+		long totalDownloadTime  = 0;
+		
 		if (cloudPhotoPath != null)
 		{
 			String filename    	  = cloudPhotoPath.substring(cloudPhotoPath.lastIndexOf("/") + 1); 	// Just the Filename
@@ -159,21 +187,22 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					
 			// Performs Comparisons (as needed)
 			if (deviceID != null && cloudPhotoPath != null && (cloudPhotoPath.endsWith("jpeg") || cloudPhotoPath.endsWith("jpg")))
-			{
-				// Looks at the File and Determines when this File was Last Modified
-				Date lastModified = cloudToolkit.getLastModified(cloudPhotoPath);
-				
+			{				
 				// Determines if the Device's Photograph Needs to be Downloaded Again
-				if (!comparisonHistory.containsKey(deviceID) || (lastModified != null && lastModified.getTime() > comparisonHistory.get(deviceID).getLastModifiedTime()))
-				{									
+				if (!comparisonHistory.containsKey(deviceID) || (timestamp > comparisonHistory.get(deviceID).getLastModifiedTime()))
+				{								
+					Date startDownload = new Date();
 					cloudToolkit.downloadFile(cloudPhotoPath, localPhotoPath);
+					totalDownloadTime = new Date().getTime() - startDownload.getTime();
 					
 					// Recomputes the Features for this Photo from Scratch
 					openimaj.forgetFeatures(localPhotoPath);
+					Date startFeatureCompute = new Date();					
 					openimaj.computeFeatures(localPhotoPath);
-				
+					featureComputeTime = new Date().getTime() - startFeatureCompute.getTime();
+					
 					// Erases Existing Photo Path
-					comparisonHistory.put(deviceID, new CompareInfo(deviceID, lastModified.getTime()));
+					comparisonHistory.put(deviceID, new CompareInfo(deviceID, timestamp));
 				}
 				else
 				{
@@ -193,7 +222,9 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					for (String refPhoto : new ArrayList<String>(photos))
 					{
 						// Performs the Actual Comparison
+						Date startCompare = new Date();
 						int matches = openimaj.compareImages(refPhoto, localPhotoPath);
+						totalCompareTime += new Date().getTime() - startCompare.getTime();
 						
 						// Stores the Results
 						comparisonHistory.get(deviceID).addComparisonResult(refPhoto, matches);
@@ -203,6 +234,14 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					}
 				}
 			}
+			
+			// DEBUG:  Reports Timing Data
+			System.out.println("----- ANALYSIS COMPLETE -----");
+			System.out.println("Total Time Elapsed:   " + (new Date().getTime() - startTime.getTime()) + "ms");
+			System.out.println("Image Download Time:  " + (totalDownloadTime) + "ms");
+			System.out.println("Feature Compute Time: " + (featureComputeTime) + "ms");
+			System.out.println("Avg Comparison Time:  " + ((double)totalCompareTime / (double)photos.size()) + "ms");
+			System.out.println("-----------------------------");
 			
 			// Makes Sure that there
 			if (comparisonHistory.containsKey(deviceID))
@@ -236,7 +275,8 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			openimaj.computeFeatures(photoPath);
 			System.out.println("SUCCESS");
 			
-			if (photos.size() == 1)
+			// Generates an Automatic Icon
+			if (photos.size() == 1 && (this.logoPath == null || this.logoPath.length() == 0))
 			{
 				System.out.println("GENERATING ICON");
 		    	
@@ -343,7 +383,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			{
 				filenames.add(this.getLocalStorageFolder() + filename);
 				
-				if (filenames.size() > maxPhotos)
+				if (filenames.size() > maxUserPhotos)
 				{
 					// Grab the File
 					File file = new File(filenames.get(0));
@@ -360,8 +400,8 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			}
 		}
 	}
-	
-	// DEBUG METHODS -----------------------------------------------------------------------------------
+		
+	// RESEARCH METHODS -----------------------------------------------------------------------------------
 	public String getDebugDescription()
 	{
 		String result = "";
@@ -374,11 +414,22 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		return result;
 	}
 	
-	public void test(String filename)
+	public String test(String filename)
 	{
+		String result = "";
+		
 		System.out.println("\n\n*** Analyzing " + filename + " ***");
 		
-		HashMap<String, Integer> history = new HashMap<String, Integer>();
+		HashMap<Integer, Integer> history = new HashMap<Integer, Integer>();
+		
+		// Results
+		boolean top1 = false;
+		boolean top3 = false;
+		boolean top5 = false;
+		boolean top7 = false;
+		boolean top9 = false;
+		
+		int correctAutoLaunch = 0;
 		
 		// Compares Device Photo to Pictures on Record
 		for (String refPhoto : new ArrayList<String>(photos))
@@ -387,29 +438,133 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			int matches = openimaj.compareImages(refPhoto, filename);
 			
 			// Stores the Results
-			history.put(refPhoto, matches);
+			if (!history.containsKey(getPrinter(refPhoto)))
+			{
+				history.put(getPrinter(refPhoto), matches);
+			}
+			else if (history.get(getPrinter(refPhoto)) < matches)
+			{
+				history.put(getPrinter(refPhoto), matches);
+			}
 		}
 		
-		while (history.size() > 0)
+		ArrayList<Double> values = new ArrayList<Double>();
+		
+		for (int i=0; i<9; i++)
 		{
 			int    maxMatches = -10000;
-			String maxFile    = "";
+			int maxDevice    = -1;
 			
-			for (String photo : history.keySet())
+			for (Integer photo : history.keySet())
 			{
 				if (maxMatches < history.get(photo))
 				{
 					maxMatches = history.get(photo);
-					maxFile    = photo;
+					maxDevice    = photo;
 				}
 			}
 			
-			System.out.println(maxFile + ": " + maxMatches);			
-			history.remove(maxFile);
+			values.add((double)maxMatches);
+			
+			System.out.println(maxDevice + ": " + maxMatches);			
+			history.remove(maxDevice);
+			
+			if (getPrinter(filename) == maxDevice)
+			{
+				if (i<=8)
+				{
+					top9 = true;
+				}
+				if (i<=6)
+				{
+					top7 = true;
+				}
+				if (i<=4)
+				{
+					top5 = true;
+				}
+				if (i<=2)
+				{
+					top3 = true;
+				}
+				if (i==0)
+				{
+					top1 = true;
+				}
+			}
 		}
 		
-		System.out.println("*** Analysis Complete ***\n\n");
+		result += (top1) ? "Y" : "N";
+		result += (top3) ? "Y" : "N";
+		result += (top5) ? "Y" : "N";
+		result += (top7) ? "Y" : "N";
+		result += (top9) ? "Y" : "N";
+		
+		double  sd    = standardDeviation(values.toArray(new Double[0]));
+		double  mean  = mean(values.toArray(new Double[0]));
+		boolean skew1 = values.get(0) > (mean + 1*sd);
+		boolean skew2 = values.get(0) > (mean + 2*sd);
+		boolean skew3 = values.get(0) > (mean + 3*sd);
+		correctAutoLaunch += (skew1 && skew2 && values.get(0) > 20 && top1) ? 1 : 0; 
+		
+		System.out.println("*** Analysis Complete [" + result + "] *** sd:" + sd + " mean:" + mean + "; " + skew1 + "; " + skew2 + "; " + skew3 + "; " + correctAutoLaunch + "\n");
+		
+		return result;
 	}
+	
+	public void viewComparison(String file1, String file2)
+	{	
+		File f1 = new File(file1);
+		File f2 = new File(file2);
+		
+		if (f1.exists() && f2.exists())
+		{	
+			int matches = openimaj.compareImages(file1, file2);
+			System.out.println("Comparing Results: " + file1 + " vs. " + file2 + ": " + matches);
+			openimaj.showResults(file1, file2);
+		}
+		else
+		{
+			System.out.println("Invalid Files: " + file1 + " vs. " + file2);
+		}
+	}
+	
+	private int getPrinter(String filename)
+	{
+		String[] temp = filename.split("/");
+		
+		String printer = temp[temp.length-1].split("-")[0];
+		
+		return Integer.parseInt(printer);
+	}
+	
+    public static double standardDeviation(Double[] values) {
+        double mean = mean(values);
+        double n = values.length;
+        double dv = 0;
+        for (double d : values) {
+            double dm = d - mean;
+            dv += dm * dm;
+        }
+        return Math.sqrt(dv / n);
+    }
+    
+    public static strictfp double mean(Double[] values) {
+        return sum(values) / values.length;
+    }
+
+    public static strictfp double sum(Double[] values) {
+        if (values == null || values.length == 0) {
+            throw new IllegalArgumentException("The data array either is null or does not contain any data.");
+        }
+        else {
+            double sum = 0;
+            for (int i = 0; i < values.length; i++) {
+                sum += values[i];
+            }
+            return sum;
+        }
+    }
 	
 	// HELPER CLASSES ----------------------------------------------------------------------------------
 	public class CompareInfo

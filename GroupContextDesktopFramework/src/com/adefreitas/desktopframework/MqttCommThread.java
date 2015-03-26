@@ -2,6 +2,7 @@ package com.adefreitas.desktopframework;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -12,12 +13,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.messages.CommMessage;
+import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.Gson;
 
 public class MqttCommThread extends CommThread implements MqttCallback
 {
-	private boolean DEBUG = false;
-	private int 	QOS	  = 0;
+	private static final boolean DEBUG = false;
+	private static final int 	 QOS	  = 0;
 	
 	private String 			 serverIP;
 	private int 			 port;
@@ -28,6 +30,9 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	private ArrayList<String> channels;
 	private String 	   		  deviceID;
     
+	// Keeps Track of what Channel
+    private HashMap<String, String> channelARP;
+	
     private boolean run;
 	
     /**
@@ -40,11 +45,12 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		super(commManager);
 		
-		this.deviceID  = deviceID;
-	    gson 	   	   = new Gson();
-	    this.processor = processor;
-	    this.channels  = new ArrayList<String>();
-	    this.run	   = false;
+		this.deviceID   = deviceID;
+	    this.gson  	    = new Gson();
+	    this.processor  = processor;
+	    this.channels   = new ArrayList<String>();
+	    this.run	    = false;
+	    this.channelARP = new HashMap<String, String>();
 	    
 	    // Repeatedly Tries to Connect
 		connect(serverIP, port);
@@ -69,7 +75,11 @@ public class MqttCommThread extends CommThread implements MqttCallback
     			else
     			{
     				sleep(30000);
-    				System.out.println("MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])));
+    				
+    				if (DEBUG)
+    				{
+        				System.out.println("MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])));
+    				}
     			}
     		}
     	}
@@ -146,11 +156,35 @@ public class MqttCommThread extends CommThread implements MqttCallback
      */
 	public void send(CommMessage message)
     {
-		if (message != null)
+		ArrayList<String> channelsToSend = new ArrayList<String>();
+		boolean 		  broadcast      = message.getDestination().length == 0;
+		
+		for (String deviceID : message.getDestination())
+		{
+			if (channelARP.containsKey(deviceID) && !channelsToSend.contains(channelARP.get(deviceID)))
+			{
+				channelsToSend.add(channelARP.get(deviceID));
+			}
+			else
+			{
+				broadcast = true;
+				break;
+			}
+		}
+
+		// Determines Whether to Broadcast the Message or to Only Send it to Select Channels
+		if (broadcast)
 		{
 			for (String channel : channels)
 			{
-			    send(channel, gson.toJson(message));		
+				send(channel, gson.toJson(message));	
+			}
+		}
+		else
+		{
+			for (String channel : channelsToSend)
+			{
+				send(channel, gson.toJson(message));
 			}
 		}
 	}
@@ -204,8 +238,14 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		
 		if (processor != null && msg != null)
 		{
-			// Allows this Thread to Track WHO it has Seen Messages From
-			this.addToArp(msg.getDeviceID());
+			if (!(msg instanceof ComputeInstruction))
+			{
+				// Allows this Thread to Track WHO it has Seen Messages From
+				this.addToArp(msg.getDeviceID());	
+				
+				// Allows this Thread to Track WHICH CHANNEL a Device is On
+				channelARP.put(msg.getDeviceID(), topic);	
+			}
 			
 			processor.onMessage(msg);
 		}	

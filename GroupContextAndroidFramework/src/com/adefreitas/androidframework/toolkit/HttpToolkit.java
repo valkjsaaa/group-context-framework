@@ -37,12 +37,13 @@ import android.util.Log;
 public class HttpToolkit
 {
 	// Constants
-	private static final String LOG_NAME     	  = "HTTP_TOOLKIT";
-	private static final String GET_COMMAND  	  = "GET";
-	private static final String GET_BYTES_COMMAND = "GET_BYTES";
-	private static final String POST_COMMAND 	  = "POST";
-	private static final String PUT_COMMAND		  = "PUT";
-	private static final String DOWNLOAD_COMMAND  = "DOWNLOAD";
+	private static final boolean DEBUG			   = false;
+	private static final String  LOG_NAME     	   = "HTTP_TOOLKIT";
+	private static final String  GET_COMMAND  	   = "GET";
+	private static final String  GET_BYTES_COMMAND = "GET_BYTES";
+	private static final String  POST_COMMAND 	   = "POST";
+	private static final String  PUT_COMMAND	   = "PUT";
+	private static final String  DOWNLOAD_COMMAND  = "DOWNLOAD";
 	
 	// Intent Extra Values
 	public static final String HTTP_REQUEST_COMPLETE = "HTTP_REQUEST_COMPLETE";
@@ -63,7 +64,7 @@ public class HttpToolkit
 	
 	public void get(final String url, final String callbackIntent)
 	{		
-		System.out.println("Getting: " + url);
+		Log.d(LOG_NAME, "Getting: " + url);
 		HttpJob job = new HttpJob(GET_COMMAND, url, null, callbackIntent);
 		
 		Thread httpThread = new HttpRequestThread(job, httpHandler);
@@ -72,7 +73,7 @@ public class HttpToolkit
 	
 	public void getBytes(final String url, final String callbackIntent)
 	{
-		System.out.println("Getting Bytes: " + url);
+		Log.d(LOG_NAME, "Getting Bytes: " + url);
 		HttpJob job = new HttpJob(GET_BYTES_COMMAND, url, null, callbackIntent);
 		
 		Thread httpThread = new HttpRequestThread(job, httpHandler);
@@ -81,7 +82,7 @@ public class HttpToolkit
 	
 	public void post(final String url, final String body, final String callbackIntent)
 	{
-		System.out.println("Posting " + url);
+		Log.d(LOG_NAME, "Posting " + url);
 		HttpJob job = new HttpJob(POST_COMMAND, url, body, callbackIntent);
 
 		Thread httpThread = new HttpRequestThread(job, httpHandler);
@@ -90,7 +91,7 @@ public class HttpToolkit
 	
 	public void put(final String url, final String body, final String callbackIntent)
 	{
-		System.out.println("Putting " + url);
+		Log.d(LOG_NAME, "Putting " + url);
 		HttpJob job = new HttpJob(PUT_COMMAND, url, body, callbackIntent);
 
 		Thread httpThread = new HttpRequestThread(job, httpHandler);
@@ -99,11 +100,19 @@ public class HttpToolkit
 	
 	public void download(final String url, final String destination, final String callbackIntent)
 	{
-		System.out.println("Posting " + url);
+		Log.d(LOG_NAME, "Downloading " + url);
 		HttpJob job = new HttpJob(DOWNLOAD_COMMAND, url, destination, callbackIntent);
 		
 		Thread httpThread = new HttpRequestThread(job, httpHandler);
 		httpThread.start();
+	}
+	
+	private static void log(String tag, String text)
+	{
+		if (DEBUG)
+		{
+			Log.d(tag, text);
+		}
 	}
 	
 	private static String convertInputStreamToString(InputStream inputStream) throws IOException
@@ -124,7 +133,8 @@ public class HttpToolkit
 	
 	private static Byte[] convertInputStreamToBytes(InputStream inputStream, long size) throws IOException
 	{        
-		 return new Byte[0];
+		// TODO
+		return new Byte[0];
     }
 	
 	private static class HttpHandler extends Handler
@@ -142,15 +152,15 @@ public class HttpToolkit
 			{
 				HttpJob job = (HttpJob)msg.obj;
 				
-				Log.d(LOG_NAME, "HTTP " + job.getCommand() + ":  " + job.getURL());
-		    	Log.d(LOG_NAME, "BODY: " + job.getArgument());
-		    	Log.d(LOG_NAME, "HTTP RESPONSE: " + job.getResponse());
+				log(LOG_NAME, "HTTP " + job.getCommand() + ":  " + job.getURL());
+			    log(LOG_NAME, "BODY: " + job.getArgument());
+			    log(LOG_NAME, "HTTP RESPONSE: " + job.getResponse());	
 		    	
 		    	if (job.getResponse() != null)
 		    	{
 	            	// Creates the Intent
 	        	 	Intent dataDeliveryIntent = new Intent(job.getCallback());
-	        	 	Log.d(LOG_NAME, "PREPARING CALLBACK: " + job.getCallback());
+	        	 	log(LOG_NAME, "PREPARING CALLBACK: " + job.getCallback());
 	        	 	
 	        	 	// Includes the HTTP Response
 	        	 	dataDeliveryIntent.putExtra(HTTP_RESPONSE, job.getResponse());
@@ -165,7 +175,7 @@ public class HttpToolkit
 	        	 	wrapper.get().sendBroadcast(dataDeliveryIntent);
 		    	}
 		    	
-		    	Log.d(LOG_NAME, "TIME ELAPSED: [" + (new Date().getTime() - job.getCreationDate().getTime()) + " ms]");	
+		    	log(LOG_NAME, "TIME ELAPSED: [" + (new Date().getTime() - job.getCreationDate().getTime()) + " ms]");	
 			}
 		}
 	}
@@ -562,7 +572,7 @@ public class HttpToolkit
 			    String 				filename = (job.getURL().substring(job.getURL().lastIndexOf("/")+1));
 			    File 				f    	 = new File(dir + "/" + filename);
 		
-			    System.out.println("Downloading . . .\nURL: " + job.getURL() + "\nDestination: " + f.getAbsolutePath());
+			    log(LOG_NAME, "Downloading . . .\nURL: " + job.getURL() + "\nDestination: " + f.getAbsolutePath());
 			    
 		    	try 
 			    {	
@@ -603,7 +613,6 @@ public class HttpToolkit
 		    catch (Exception ex)
 		    {
 		    	ex.printStackTrace();
-		    	//f.delete();
 		    }
 			
 			return "FAILURE";

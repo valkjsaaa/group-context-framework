@@ -306,18 +306,17 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		// Configures Web View Control
 		//if (application.webview == null)
 		{
-			application.webview = new WebView(this);
-			application.webview.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-			application.webview.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
-			application.webview.setScrollbarFadingEnabled(true);
-			application.webview.getSettings().setLoadsImagesAutomatically(true);
-			application.webview.getSettings().setJavaScriptEnabled(true);
-			application.webview.getSettings().setDomStorageEnabled(true);
-			application.webview.addJavascriptInterface(jsInterface, JSInterface.JAVASCRIPT_OBJECT_NAME);
-			application.webview.setWebViewClient(new CustomBrowser());	
+			webView = new WebView(this);
+			webView.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
+			webView.getSettings().setLoadsImagesAutomatically(true);
+			webView.getSettings().setJavaScriptEnabled(true);
+			webView.getSettings().setDomStorageEnabled(true);
+			webView.addJavascriptInterface(jsInterface, JSInterface.JAVASCRIPT_OBJECT_NAME);
+			webView.setWebViewClient(new CustomBrowser());	
 		}
 
-		webView = application.webview;
+		//webView = application.webview;
 		webViewPlaceholder.addView(webView);
 	}
 

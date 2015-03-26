@@ -29,6 +29,7 @@ import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextType;
 import com.adefreitas.groupcontextframework.Settings;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.providers.NullContextProvider;
 
@@ -72,7 +73,7 @@ public class GCFApplication extends Application
 		groupContextManager  = new AndroidGroupContextManager(this, DEV_NAME, batteryMonitor, false);
 			
 		// EXPERIMENTAL:  Initializes Bluewave
-		bluewaveManager = new BluewaveManager(this, groupContextManager, "http://gcf.cmu-tbank.com/" + groupContextManager.getDeviceID() + "_bw2.txt");
+		bluewaveManager = new BluewaveManager(this, groupContextManager, Settings.getBluewaveFilename(groupContextManager.getDeviceID()));
 		//bluewaveManager.startScan();
 		bluewaveManager.getPersonalContextProvider().setSharable(false);
 		
@@ -92,9 +93,6 @@ public class GCFApplication extends Application
 		this.filter.addAction(AndroidGroupContextManager.ACTION_GCF_OUTPUT);
 		this.filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 		this.registerReceiver(intentReceiver, filter);
-		
-		//UpdateThread t = new UpdateThread();
-		//t.start();
 	}
 	
 	/**
@@ -157,7 +155,7 @@ public class GCFApplication extends Application
 		String connectionKey = groupContextManager.connect(COMM_MODE, IP_ADDRESS, PORT);
 		
 		// Creates Applications for Specific Devices
-		if (groupContextManager.getDeviceID().equals("ZTE-Office"))
+		if (groupContextManager.getDeviceID().equals("Device 4"))
 		{
 			// Creates the Contact Card App
 			AndroidApplicationProvider contactCardProvider = new App_ContactCard(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT);
@@ -173,7 +171,7 @@ public class GCFApplication extends Application
 		}
 		
 		// Creates the Snap To It Decoy
-		groupContextManager.registerContextProvider(new NullContextProvider("SNAP_TO_IT", groupContextManager));
+		//groupContextManager.registerContextProvider(new NullContextProvider("SNAP_TO_IT", groupContextManager));
 		
 		// Creates the Instant Task App
 //		AndroidApplicationProvider taskProvider = new App_QuickTask(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT);
@@ -181,19 +179,19 @@ public class GCFApplication extends Application
 //		groupContextManager.subscribe(connectionKey, taskProvider.getContextType());
 		
 		// Creates a Game!
-		//AndroidApplicationProvider gameProvider = new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT);
-		//groupContextManager.registerContextProvider(gameProvider);
-		//groupContextManager.subscribe(connectionKey, gameProvider.getContextType());
+//		AndroidApplicationProvider gameProvider = new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT);
+//		groupContextManager.registerContextProvider(gameProvider);
+//		groupContextManager.subscribe(connectionKey, gameProvider.getContextType());
 		
 		// TODO:  Remove This Someday when Communications are More Reliable!
-		groupContextManager.subscribe(connectionKey, "cmu/gcf_dns");
+		//groupContextManager.subscribe(connectionKey, "cmu/gcf_dns");
 	}
 	
 	// Group Context Framework Methods ----------------------------------------------------------	
 	public void onBluewaveContext(JSONContextParser parser)
 	{
 		// Attempts to Extract Connection Information
-		JSONObject context   = parser.getJSONObject("magic");
+		JSONObject context = parser.getJSONObject("identity");
 		
 		if (context != null)
 		{
@@ -203,7 +201,7 @@ public class GCFApplication extends Application
 				CommMode commMode  		 = CommMode.valueOf(context.getString("COMM_MODE")); 
 				String   ipAddress 		 = context.getString("IP_ADDRESS");
 				int      port            = context.getInt("PORT");
-				boolean  snapToItEnabled = context.has("SNAP_TO_IT") ? context.getBoolean("SNAP_TO_IT") : false;
+				boolean  snapToItEnabled = parser.getJSONRoot().has("snap-to-it");
 				
 				String result = "";
 				
@@ -215,30 +213,21 @@ public class GCFApplication extends Application
 						{
 							AndroidApplicationProvider appProvider = (AndroidApplicationProvider)p;
 							
+							// Determines whether the App Provider Wants this Context
 							if (appProvider.sendAppData(parser.toString()))
 							{
 								result += appProvider.getContextType() + " ";
 								
-								//boolean isConnected   = groupContextManager.isConnected(commMode, ipAddress, port);
-								//String  connectionKey = groupContextManager.connect(commMode, ipAddress, port);
+								boolean isConnected   = groupContextManager.isConnected(commMode, ipAddress, port);
+								String connectionKey = groupContextManager.connect(commMode, ipAddress, port);
 								
-								// TODO:  Remove THIS!
-								//String connectionKey = groupContextManager.connect(commMode, ipAddress, port);
-								//groupContextManager.subscribe(connectionKey, "cmu/gcf_dns");
-								
-								groupContextManager.sendComputeInstruction(ContextType.PERSONAL, new String[] { deviceID }, "APPLICATION", appProvider.getInformation().toArray(new String[0]));
-								//groupContextManager.disconnect(connectionKey);
-								
-//								if (isConnected)
-//								{
-//									groupContextManager.unsubscribe(connectionKey, "cmu/gcf_dns");
-//								}
-//								else
-//								{
-//									
-//								}
-//								
-//								groupContextManager.disconnect(connectionKey);
+								groupContextManager.sendComputeInstruction(
+										connectionKey, 
+										ApplicationSettings.DNS_CHANNEL, 
+										ContextType.PERSONAL, 
+										new String[] { deviceID }, 
+										"APPLICATION", 
+										appProvider.getInformation().toArray(new String[0]));
 							}
 						}
 					}
@@ -325,29 +314,6 @@ public class GCFApplication extends Application
 			else
 			{
 				Log.e("", "Unknown Action: " + intent.getAction());
-			}
-		}
-	}
-
-	private class UpdateThread extends Thread
-	{
-		public void run()
-		{
-			try
-			{
-				while (true)
-				{
-					bluewaveManager.updateBluetoothName();
-					
-					Intent i = new Intent(APP_TICK);
-					GCFApplication.this.sendBroadcast(i);
-					
-					sleep(30000);	
-				}
-			}
-			catch (Exception ex)
-			{
-				ex.printStackTrace();
 			}
 		}
 	}

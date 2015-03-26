@@ -3,6 +3,8 @@ package liveos_apps;
 import java.util.ArrayList;
 import java.util.Date;
 
+import cern.colt.Arrays;
+
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -30,59 +32,87 @@ public class Sti_Diagnostics extends SnapToItApplicationProvider
 		
 		// Tells STI 
 		this.storeUserPhotos = false;
+
+		// Runs an Experiment
+		//runExperiment(15, new int[] { 1 }, new int[] { 6, 7, 8, 9, 10, 11 });
+		//runExperiment(15, new int[] { 1, 2, 3 }, new int[] { 6, 7, 8, 9, 10, 11 });
+		//runExperiment(15, new int[] { 1, 2, 3, 4, 5 }, new int[] { 6, 7, 8, 9, 10, 11 });
+
+		String photo1 = "appData/liveOS/STI_DIAG/12-1.jpeg";
+		String photo2 = "appData/liveOS/STI_DIAG/12-12.jpeg";
 		
-		// Loads Photos
-		this.addPhoto("appData/liveOS/STI_PRINTER/Pewter1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Pewter2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Pewter3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Zircon1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Zircon2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Zircon3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Color1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Color2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Color3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Copy1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Copy2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/Copy3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/PewterCopy1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/PewterCopy2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/PewterCopy3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH411.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH412.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH413.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH4509BW1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH4509BW2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH4509BW3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSHRoboticsCopy1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSHRoboticsCopy2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSHRoboticsCopy3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/DevLab1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/DevLab2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/DevLab3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH111.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH112.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH113.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyGray1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyGray2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyGray3.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyBlue1.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyBlue2.jpeg");
-		this.addPhoto("appData/liveOS/STI_PRINTER/NSH1CopyBlue3.jpeg");
+		this.addPhoto(photo1);
+		this.addPhoto(photo2);
+		this.viewComparison(photo1, photo2);
+	}
+	
+	/**
+	 * Runs ONE Experiment
+	 * @param numDevices
+	 * @param picsToLoad
+	 * @param picsToTest
+	 */
+	private void runExperiment(int numDevices, int[] picsToLoad, int[] picsToTest)
+	{	
+		// Loads INITIAL Photos
+		for (int d=1; d<numDevices+1; d++)
+		{
+			for (int i : picsToLoad)
+			{
+				this.addPhoto("appData/liveOS/STI_DIAG/" + d + "-" + i + ".jpeg");	
+			}	
+		}
+				
+		// TRIAL 
+		double top1 = 0;
+		double top3 = 0;
+		double top5 = 0;
+		double top7 = 0;
+		double top9 = 0;
 		
-//		this.test("appData/liveOS/STI_PRINTER/test1.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test2.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test3.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test4.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test5.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test6.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test7.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test8.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test9.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test10.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test11.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test12.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test13.jpeg");
-//		this.test("appData/liveOS/STI_PRINTER/test14.jpeg");
+		for (int d=1; d<numDevices+1; d++)
+		{
+			for (int i : picsToTest)
+			{
+				String result = this.test("appData/liveOS/STI_DIAG/" + d + "-" + i + ".jpeg");	
+				
+				if (result.charAt(0) == 'Y')
+				{
+					top1++;
+				}
+				if (result.charAt(1) == 'Y')
+				{
+					top3++;
+				}
+				if (result.charAt(2) == 'Y')
+				{
+					top5++;
+				}	
+				if (result.charAt(3) == 'Y')
+				{
+					top7++;
+				}	
+				if (result.charAt(4) == 'Y')
+				{
+					top9++;
+				}		
+			}
+		}
+
+		double top1_avg = ((double)top1/(double)picsToTest.length)/(double)numDevices;
+		double top3_avg = ((double)top3/(double)picsToTest.length)/(double)numDevices;
+		double top5_avg = ((double)top5/(double)picsToTest.length)/(double)numDevices;
+		double top7_avg = ((double)top7/(double)picsToTest.length)/(double)numDevices;
+		double top9_avg = ((double)top9/(double)picsToTest.length)/(double)numDevices;
+		
+		System.out.println("TRIAL COMPLETE: ");// + top1 + "; " + top3 + "; " + top5 + "; " + top7 + "; " + top9);
+		System.out.println("PICS LOADED: " + Arrays.toString(picsToLoad));
+		System.out.println("PICS TESTED: " + Arrays.toString(picsToTest));
+		System.out.printf("TOP 1:" + top1 + " (%1.4f)\n", top1_avg);
+		System.out.printf("TOP 3:" + top3 + " (%1.4f)\n", top3_avg);
+		System.out.printf("TOP 5:" + top5 + " (%1.4f)\n", top5_avg);
+		System.out.printf("TOP 7:" + top7 + " (%1.4f)\n", top7_avg);
+		System.out.printf("TOP 9:" + top9 + " (%1.4f)\n", top9_avg);
 	}
 	
 	public ArrayList<String> getInformation()

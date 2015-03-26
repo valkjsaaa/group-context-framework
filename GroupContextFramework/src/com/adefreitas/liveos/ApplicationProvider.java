@@ -118,9 +118,6 @@ public abstract class ApplicationProvider extends ContextProvider
 			//System.out.println("Sending Interface to: " + info.getDeviceID());
 			this.getGroupContextManager().sendContext(CONTEXT_TYPE, "", new String[] { info.getDeviceID() }, getInterface(info));
 		}
-		
-		// Purely for Formatting
-		//System.out.println();
 	}
 	
 	@Override

@@ -39,7 +39,7 @@ public class UploadFileDialog
 		this.cloudToolkit 		  	= cloudToolkit;
 		this.cloudDestinationFolder = cloudDestinationFolder;
 		this.filetypes 		        = filetypes;
-		mPath 		        		= new File(Environment.getExternalStorageDirectory() + startingFolder);
+		mPath 		        		= new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + startingFolder);
 		
 		// Looks for All Files that Match the Specified Extensions
 		loadFileList();
@@ -90,7 +90,7 @@ public class UploadFileDialog
 	    }
 	    else 
 	    {
-	        mFileList= new String[0];
+	        mFileList= new String[] { };
 	    }
 	}
 	

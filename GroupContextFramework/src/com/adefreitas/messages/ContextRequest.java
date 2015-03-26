@@ -139,6 +139,6 @@ public class ContextRequest extends CommMessage
 		
 		parameterContents += "}";
 		
-		return String.format("REQUEST [%s] (Device=%s; RequestType=%s; Refresh=%d):  %s", contextType, deviceID, requestType, refreshRate, parameterContents);
+		return String.format("REQUEST [%s] (Device=%s; RequestType=%s; Refresh=%d):  %d bytes", contextType, deviceID, requestType, refreshRate, parameterContents.length());
 	}
 }

@@ -25,7 +25,7 @@ public class App_Bus extends DesktopApplicationProvider
 				"TRANSPORTATION",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://74.111.161.33/gcf/universalremote/magic/travel.png",				   // LOGO
+				"http://findthestop.co.uk/img/bus-stop.jpg",				   // LOGO
 				60,
 				commMode,
 				ipAddress,

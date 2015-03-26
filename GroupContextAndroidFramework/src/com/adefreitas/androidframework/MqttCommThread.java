@@ -20,11 +20,13 @@ import android.widget.Toast;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.messages.CommMessage;
+import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.Gson;
 
 public class MqttCommThread extends CommThread implements MqttCallback
 {
-	private static final String LOG_NAME = "MqttCommThread";
+	private static final String  LOG_NAME = "MqttCommThread";
+	private static final boolean DEBUG    = false; 
 	
 	// No MQTT Messages are Ever Expected to be Guaranteed to Arrive
 	private static final int QOS = 0;
@@ -43,7 +45,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
     HashMap<String, String> channelARP = new HashMap<String, String>();
     
     private boolean run;
-    private int disconnectCount = 0;
+    private int 	disconnectCount = 0;
     
     /**
      * Constructor
@@ -76,13 +78,17 @@ public class MqttCommThread extends CommThread implements MqttCallback
     		{
     			if (run && client != null && !client.isConnected())
     			{
-    				sleep(1000);
+    				sleep(2000);
     				connect(serverIP, port);
     			}
     			else
     			{
-    				sleep(10000);
-    				Log.d(LOG_NAME, "MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])) + " " + this.count + " attempt(s); " + this.disconnectCount + " disconnect(s).");
+    				sleep(30000);
+    				
+    				if (DEBUG)
+    				{
+        				Log.d(LOG_NAME, "MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])) + " " + this.count + " attempt(s); " + this.disconnectCount + " disconnect(s).");	
+    				}
     			}
     		}
     		
@@ -192,6 +198,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		ArrayList<String> channelsToSend = new ArrayList<String>();
 		boolean 		  broadcast      = message.getDestination().length == 0;
 		
+		// Looks for Channels for Specific Destinations
 		for (String deviceID : message.getDestination())
 		{
 			if (channelARP.containsKey(deviceID) && !channelsToSend.contains(channelARP.get(deviceID)))
@@ -205,6 +212,9 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			}
 		}
 
+		// TODO:  Evaluate whether or not this is actually needed
+		broadcast = broadcast || channelsToSend.size() == 0;
+		
 		// Determines Whether to Broadcast the Message or to Only Send it to Select Channels
 		if (broadcast)
 		{
@@ -215,9 +225,16 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		}
 		else
 		{
-			for (String channel : channelsToSend)
+			if (channelsToSend.size() == 0)
 			{
-				send(channel, gson.toJson(message));
+				Log.d(LOG_NAME,  "No channels found for " + message.toString());
+			}
+			else
+			{
+				for (String channel : channelsToSend)
+				{
+					send(channel, gson.toJson(message));
+				}	
 			}
 		}
 	}
@@ -287,18 +304,22 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	}
 
 	@Override
-	public void messageArrived(String topic, MqttMessage message) throws Exception
+	public void messageArrived(String channel, MqttMessage message) throws Exception
 	{
 		String 	    s   = new String(message.getPayload(), "UTF-8");
 		CommMessage msg = CommMessage.jsonToMessage(s);
 				
 		if (commHandler != null && msg != null)
 		{			
-			// Allows this Thread to Track WHO it has Seen Messages From
-			this.addToArp(msg.getDeviceID());
-			
-			// Allows this Thread to Track WHICH CHANNEL a Device is On
-			channelARP.put(msg.getDeviceID(), topic);
+			if (!(msg instanceof ComputeInstruction))
+			{
+				// Allows this Thread to Track WHO it has Seen Messages From
+				this.addToArp(msg.getDeviceID());
+				
+				// Allows this Thread to Track WHICH CHANNEL a Device is On
+				channelARP.put(msg.getDeviceID(), channel);
+				Log.d(LOG_NAME, "Associating " + msg.getDeviceID() + " with channel " + channel);
+			}
 			
 			Message m = commHandler.obtainMessage();
 			m.obj = msg;
@@ -379,10 +400,26 @@ public class MqttCommThread extends CommThread implements MqttCallback
 							// Makes Sure the Client it Good to Go Before Officially Subscribing
 							if (client != null && client.isConnected())
 							{
-								Log.d(LOG_NAME, "ATTEMPT " + count + ":  MQTT unsubscribing to: " + channel);
+								Log.d(LOG_NAME, "ATTEMPT " + count + ":  MQTT unsubscribing from channel: " + channel);
 								client.unsubscribe(channel);	
 								channels.remove(channel);
-								break;
+								
+								// Cleaning the channelARP
+								HashMap<String, String> newARP = new HashMap<String, String>(channelARP);
+								
+								for (String devID : channelARP.keySet())
+								{
+									if (newARP.get(devID).equals(channel))
+									{
+										newARP.remove(devID);
+										Log.d(LOG_NAME, "Disassociating " + devID + " with channel " + channel);
+									}
+								}
+								
+								// Replaces the Old ChannelARP with a New Version
+								channelARP = newARP;
+								
+								success = true;
 							}
 							else
 							{

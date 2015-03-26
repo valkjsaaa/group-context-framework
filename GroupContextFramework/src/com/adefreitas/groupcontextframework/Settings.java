@@ -10,10 +10,10 @@ public class Settings
 {
 	// The Multicast Channel Hosting GCF
 	public static final String DEV_MULTICAST_IP = "224.1.2.3";
-	public static final String DEV_TCP_IP       = "74.109.212.224";
+	public static final String DEV_TCP_IP       = "74.111.161.92";
 	public static final String DEV_MQTT_IP      = "epiwork.hcii.cs.cmu.edu";
-	public static final String DEV_SFTP_IP      = "74.109.212.224";
-	public static final String DEV_WEB_IP		= "74.109.212.224";
+	public static final String DEV_SFTP_IP      = "74.111.161.92";
+	public static final String DEV_WEB_IP		= "74.111.161.92";
 	
 	// The Port that the Above Server is Listening On
 	public static final int    DEV_MULTICAST_PORT = 12345;
@@ -84,5 +84,15 @@ public class Settings
 		}
 		
 		return result;
+	}
+
+	/**
+	 * This method generates the Bluewave Filename for this Device
+	 * @param deviceID
+	 * @return
+	 */
+	public static String getBluewaveFilename(String deviceID)
+	{
+		return "http://gcf.cmu-tbank.com/" + deviceID + ".txt";
 	}
 }

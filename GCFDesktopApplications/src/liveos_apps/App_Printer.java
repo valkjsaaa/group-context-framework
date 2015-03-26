@@ -37,7 +37,7 @@ public class App_Printer extends DesktopApplicationProvider
 				"AUTOMATION",
 				new String[] { },
 				new String[] { },
-				"http://74.111.161.33/gcf/universalremote/magic/ink.png",
+				"http://icons.iconarchive.com/icons/awicons/vista-artistic/96/2-Hot-Printer-icon.png",
 				30,
 				commMode,
 				ipAddress,
@@ -52,8 +52,8 @@ public class App_Printer extends DesktopApplicationProvider
 		System.out.println("CONTEXT: " + contextTxt);
 		
 		String ui = "<html><title>Printer Controls</title>" + 
-				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"200\" height=\"200\" alt=\"Printer\"></div>" +
-				"<div>You are connected to: Pewter</div>" +
+				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"150\" height=\"150\" alt=\"Printer\"></div>" +
+//				"<div>You are connected to: Pewter</div>" +
 				((busy) ? 
 						"<p style=\"color:white; background-color:red\">Status: PRINTING</p>" :
 							"<p style=\"color:white; background-color:green\">Status: READY</p>");

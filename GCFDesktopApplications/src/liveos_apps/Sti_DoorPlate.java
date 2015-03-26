@@ -1,47 +1,44 @@
 package liveos_apps;
 
-import java.util.Date;
+import java.util.ArrayList;
 
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.ComputeInstruction;
 
-public class App_PlayFeedly extends DesktopApplicationProvider
-{	
-	public App_PlayFeedly(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+public class Sti_DoorPlate extends SnapToItApplicationProvider
+{
+
+	public Sti_DoorPlate(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"FEEDLY",
-				"Feedly",
-				"It's your friendly news reader!",
-				"APP",
+				"STI_DOORPLATE",
+				"Bob's Office",
+				"Office 2602M.  Click here to get more information!",
+				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://files.softicons.com/download/android-icons/flat-icons-add-on-1-by-martz90/png/256x256/feedly.png", // LOGO
-				60,
+				"",				   // LOGO
+				30,
 				commMode,
 				ipAddress,
 				port);
+		
+		this.addPhoto(this.getLocalStorageFolder() + "Doorplate1.jpeg");
+		//this.addPhoto(this.getLocalStorageFolder() + "Map2.jpeg");
 	}
 	
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
-	{		
-		return new String[] { "PACKAGE=com.devhd.feedly" };
+	{
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/doorplate/index.html"};
 	}
 
-	@Override
-	public boolean sendAppData(String json)
-	{
-		Date date = new Date();
-		
-		return true;
-	}
-	
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
 		super.onComputeInstruction(instruction);
 	}
+
 }

@@ -78,7 +78,7 @@ public class JSInterface
 	    		alertDialog.dismiss();
 	    		
 	    		// Downloads the File
-	    		httpToolkit.download(url, Environment.getExternalStorageDirectory() + GCFApplication.ROOT_FOLDER, "DOWNLOAD_COMPLETE");
+	    		httpToolkit.download(url, Environment.getExternalStorageDirectory() + GCFApplication.DOWNLOAD_FOLDER, "DOWNLOAD_COMPLETE");
 	    		
 	    		try
 	    		{
@@ -152,7 +152,7 @@ public class JSInterface
 		try
 		{	
 			// Allows User to Select a File and Upload it via SCP
-			UploadFileDialog fd = new UploadFileDialog(context, dialogMessage, GCFApplication.ROOT_FOLDER, filetypes, application.getCloudToolkit(), GCFApplication.UPLOAD_PATH, "UPLOAD_COMPLETE");
+			UploadFileDialog fd = new UploadFileDialog(context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, application.getCloudToolkit(), GCFApplication.UPLOAD_SFTP_PATH, "UPLOAD_COMPLETE");
 			
 			this.callbackCommand = callbackCommand;
 		}

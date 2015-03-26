@@ -1,13 +1,12 @@
 package com.adefreitas.messages;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.google.gson.Gson;
 
 public class CommMessage 
 {
-	public static final boolean ContextData = false;
-
 	// Used to Differentiate Each Type of Message
 	protected String messageType;
 	   
@@ -20,6 +19,9 @@ public class CommMessage
 	// Used to Allow the Device to Send a Message to Everyone
 	protected String[] destination;
 	
+	// Experimental:  Attaches a Payload to Each Message
+	protected HashMap<String, String> payload;
+	
 	/**
 	 * Constructor
 	 * @param messageType 
@@ -28,6 +30,7 @@ public class CommMessage
 	{
 		this.messageType = messageType;
 		this.destination = null;
+		this.payload     = null;
 	}
 
 	/**
@@ -190,6 +193,15 @@ public class CommMessage
 	}
 	
 	/**
+	 * Sets the Destination for this Message
+	 * @param destination
+	 */
+	public void setDestination(String[] newDestination)
+	{
+		this.destination = newDestination;
+	}
+	
+	/**
 	 * Returns the Device IDs that this message is intended for!
 	 * @return
 	 */
@@ -207,10 +219,12 @@ public class CommMessage
 	{	
 		if (destination == null || destination.length == 0)
 		{
+			// If no destination is specified, assume that it is for everyone
 			return true;
 		}
 		else
 		{
+			// Otherwise, look for the specific destination
 			for (String destinationID : destination)
 			{
 				//System.out.println("Comparing " + destinationID + " to " + deviceID);
@@ -225,7 +239,37 @@ public class CommMessage
 	}
 	
 	/**
-	 * Converts this Message into a String
+	 * Inserts a Value to the Payload
+	 * @param key
+	 * @param value
+	 */
+	public void put(String key, String value)
+	{
+		if (payload == null)
+		{
+			payload = new HashMap<String, String>();
+		}
+		
+		payload.put(key, value);
+	}
+	
+	/**
+	 * Retrieves a Value from the Payload (if it exists).  Returns null otherwise.
+	 * @param key
+	 * @return
+	 */
+	public String get(String key)
+	{
+		if (payload != null && payload.containsKey(key))
+		{
+			return payload.get(key);
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Converts this Message into a String (primarily for debug purposes)
 	 */
 	public String toString()
 	{

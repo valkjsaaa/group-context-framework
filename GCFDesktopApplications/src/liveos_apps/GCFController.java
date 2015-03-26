@@ -14,6 +14,7 @@ import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextType;
 import com.adefreitas.groupcontextframework.Settings;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
@@ -29,7 +30,6 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	public static final CommManager.CommMode COMM_MODE       = CommMode.MQTT;
 	public static final String 				 IP_ADDRESS      = Settings.DEV_MQTT_IP;
 	public static final int    				 PORT 	         = Settings.DEV_MQTT_PORT;
-	public static final String				 DNS_APP_CHANNEL = "cmu/gcf_application";
 	
 	// GCF Variables
 	public DesktopBatteryMonitor      batteryMonitor;
@@ -57,7 +57,7 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		
 		// Opens the Connection
 		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
-		gcm.subscribe(connectionKey, DNS_APP_CHANNEL);
+		gcm.subscribe(connectionKey, ApplicationSettings.DNS_APP_CHANNEL);
 		
 		// Manages Debugging
 		gcm.setDebug(false);
@@ -69,22 +69,28 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		// Creates the Query Manager
 		queryProvider = new QueryApplicationProvider(gcm);
 		gcm.registerContextProvider(queryProvider);
-		
-		// Creates the App Provider
-		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
+
+		// Snap-To-It Apps
 		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		// Impromptu Apps
+		appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Game_PiratePig(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Flickr(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Game_Simon(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_PlayGmail(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		for (DesktopApplicationProvider app : appProviders)
 		{

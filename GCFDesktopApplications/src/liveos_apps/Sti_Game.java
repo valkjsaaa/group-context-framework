@@ -1,57 +1,57 @@
-package snap_to_it;
+package liveos_apps;
 
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 
+import com.adefreitas.desktoptoolkits.HttpToolkit;
+import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-public class RCP_Game extends RemoteControlProvider
-{
+public class Sti_Game extends SnapToItApplicationProvider
+{		
 	// Provider Specific Variables Go Here
 	private final String WEBSITE_URL_1 = "http://74.111.161.92/gcf/universalremote/Websites/controller.html";
-	private final String WEBSITE_URL_2 = "http://74.111.161.92/gcf/universalremote/Websites/controller2.html";
 	
-	/**
-	 * Constructor
-	 * @param groupContextManager
-	 */
-	public RCP_Game(GroupContextManager groupContextManager) 
+	public Sti_Game(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
-		super(groupContextManager);
+		super(groupContextManager, 
+				"STI_GAME_CONTROLLER",
+				"Game Controller",
+				"Game Controller Application",
+				"DEBUG",
+				new String[] { },  // Contexts
+				new String[] { },  // Preferences
+				"",				   // LOGO
+				30,
+				commMode,
+				ipAddress,
+				port);
+		
 		this.enableScreenshots(5000, 3);
-		//this.addPhoto(APP_DATA_FOLDER + "game1.jpg");
 	}
 
-	protected void initializeUserInterfaces()
+	@Override
+	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		super.initializeUserInterfaces();
+		// Retreives Preferences
+		String contextTxt = CommMessage.getValue(subscription.getParameters(), "context");
+		System.out.println("CONTEXT: " + contextTxt);
+
+		return new String[] { "WEBSITE=" + WEBSITE_URL_1 };
 	}
-	
-	public void sendMostRecentReading()
-	{
-		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
-		{
-			// Prints out Preferences
-			ArrayList<String> preferences = CommMessage.getValues(subscription.getParameters(), "preferences");
-			String 			  controller  = (preferences != null) ? CommMessage.getValue(preferences.toArray(new String[0]), "controller") : null;
-			String			  website	  = (controller != null && controller.equals("2")) ? WEBSITE_URL_2 : WEBSITE_URL_1;			
-			System.out.println("Controller Preference " + controller + ": " + website);
-			
-			this.getGroupContextManager().sendContext(
-					this.getContextType(), 
-					"", 
-					new String[] { subscription.getDeviceID() }, 
-					new String[] { "WEBSITE=" + website });
-		}
-	}
-	
+
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
+		super.onComputeInstruction(instruction);
+		
 		System.out.println("Received Instruction: " + instruction.toString());
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
@@ -102,4 +102,5 @@ public class RCP_Game extends RemoteControlProvider
 		    robot.keyRelease(keycode);
 		}
 	}
+	
 }

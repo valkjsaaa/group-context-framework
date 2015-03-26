@@ -25,7 +25,7 @@ public class App_Target extends DesktopApplicationProvider
 				"SHOPPING",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"", // LOGO
+				"http://icons.iconarchive.com/icons/iconshock/real-vista-business/96/shopping-cart-icon.png", // LOGO
 				120,
 				commMode,
 				ipAddress,
@@ -35,7 +35,7 @@ public class App_Target extends DesktopApplicationProvider
 		// NOTE:  I am using X, Y for Longitude, Latitude (the reverse of what you normally think)
 		coordinates.put("Monroeville Target", new Point2D.Double(40.433955,-79.772115));
 		coordinates.put("Penn Ave. Target", new Point2D.Double(40.461107,-79.921803));
-		//coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
+		coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
 	}
 	
 	private boolean nearLocation(JSONContextParser parser, double km)

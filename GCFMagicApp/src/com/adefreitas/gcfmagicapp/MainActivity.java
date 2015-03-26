@@ -344,7 +344,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	 * Updates the Visual Look of the Entire Activity
 	 */
 	public void updateViewContents()
-	{									
+	{						
+		// Determines What Icon to Display
 		if (application.getApplicationCatalog().size() == 0)
 		{
 			imgCameraSmall.setVisibility(View.GONE);
@@ -355,7 +356,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		{
 			adapter.notifyDataSetChanged();
 			
-			// Runs a Process to Auto Launch
+			// Runs a Process to Auto Launch the Best App
 			runAutoLaunch();
 			
 			imgCameraSmall.setVisibility(View.VISIBLE);
@@ -363,8 +364,9 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			layoutInstructions.setVisibility(View.GONE);
 		}
 		
+		// Determines What Message to Display
 		if (application.getBluewaveManager().getPersonalContextProvider().getContext() != null && 
-				application.getBluewaveManager().getPersonalContextProvider().getContext().getJSONObject("snap-to-it") != null)
+				!application.getBluewaveManager().getPersonalContextProvider().getContext().getJSONObject(GCFApplication.SNAP_TO_IT_TAG).isNull("PHOTO"))
 		{
 			txtInstructionTitle.setText("Searching For Your Device");
 			txtInstructionDescription.setText("Snap-To-It is looking for your device.  This may take a few seconds.");
@@ -372,13 +374,14 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		}
 		else
 		{
-			txtInstructionTitle.setText("Take A Picture!");
-			txtInstructionDescription.setText("Welcome to Snap-To-It!  To get started, press the above button and take a photograph of the appliance you want to control!");
+			txtInstructionTitle.setText("All Is Well");
+			txtInstructionDescription.setText("Impromptu is waiting for apps.  Check to make sure your network connections are good.  If they are, then sit back and wait!");
+			//txtInstructionDescription.setText("Welcome to Snap-To-It!  To get started, press the above button and take a photograph of the appliance you want to control!");
 			imgCameraBig.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
 		}
 		
 		// Determines if the Snap To It Button is Visible
-		if (new Date().getTime() - application.getLastSnapToItUpdate().getTime() > 120000)
+		if (new Date().getTime() - application.getLastSnapToItDeviceContact().getTime() > 120000)
 		{
 			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
 		}

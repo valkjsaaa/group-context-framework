@@ -1,9 +1,11 @@
 package com.adefreitas.gcfmagicapp;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,6 +42,7 @@ import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.liveos.ApplicationFunction;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.miscproviders.GoogleCalendarProvider;
@@ -48,22 +51,23 @@ import com.google.gson.Gson;
 public class GCFApplication extends Application
 {
 	// Application Constants
-	public static final String LOG_NAME          = "MAGIC_APP"; 
-	public static final String APP_CONTEXT_TAG   = "magic";
-	public static final String LOCATION_TAG      = "location";
-	public static final String SNAP_TO_IT_TAG    = "snap-to-it";
-	public static final String UPLOAD_PATH       = "/var/www/html/gcf/universalremote/magic/";		 			   // Folder Path on the Cloud Server
-	public static final String UPLOAD_WEB_PATH   = "http://" + Settings.DEV_SFTP_IP + "/gcf/universalremote/magic/"; // Web Path to the Path Above
-	public static final String ROOT_FOLDER       = "/Download/Impromptu/";							 			   // Path on the Phone
-	public static final int    UPDATE_SECONDS    = 15;
-	public static final String ACTION_APP_UPDATE = "APP_UPDATE";
+	public static final String LOG_NAME          	 = "MAGIC_APP"; 
+	public static final String IDENTITY_CONTEXT_TAG  = "identity";
+	public static final String LOCATION_CONTEXT_TAG  = "location";
+	public static final String TIME_CONTEXT_TAG	     = "time";
+	public static final String ACTIVITY_CONTEXT_TAG  = "activity";
+	public static final String SNAP_TO_IT_TAG    	 = "snap-to-it";
+	public static final int    UPDATE_SECONDS    	 = 15;
+	public static final String ACTION_APP_UPDATE 	 = "APP_UPDATE";
 	public static final String ACTION_IMAGE_UPLOADED = "STI_IMAGE_UPLOADED";
+	public static final String DOWNLOAD_FOLDER       = "/Download/Impromptu/";							 			     // Path on the Phone where Files are Downloaded
+	public static final String UPLOAD_SFTP_PATH      = "/var/www/html/gcf/universalremote/magic/";		 			     // Folder Path on the Cloud Server
+	public static final String UPLOAD_WEB_PATH   	 = "http://" + Settings.DEV_SFTP_IP + "/gcf/universalremote/magic/"; // Web Path to the Path Above
 	
-	// GCF Communication Settings (BROADCAST_MODE Assumes a Functional TCP Relay Running)
+	// GCF Communication Settings (Connection to DNS)
 	public static final CommMode COMM_MODE  = CommMode.MQTT;
 	public static final String   IP_ADDRESS = Settings.DEV_MQTT_IP;
 	public static final int      PORT 	    = Settings.DEV_MQTT_PORT;
-	public static final String   CHANNEL    = "cmu/gcf_dns";
 	public static final String   DEV_NAME   = Settings.getDeviceName(android.os.Build.SERIAL);
 		
 	// GCF Variables
@@ -96,12 +100,9 @@ public class GCFApplication extends Application
 	private TimerHandler timerHandler;
 	
 	// Snap To It
-	private Date    lastSnapToItUpdate;
+	private Date    lastSnapToItDeviceContact;
 	private Date    lastPhotoTaken;
 	private Date    lastAutoLaunch;
-	
-	// Experimental Webview
-	public WebView webview;
 	
 	/**
 	 * One-Time Application Initialization Method
@@ -112,7 +113,7 @@ public class GCFApplication extends Application
 		super.onCreate();
 		
 		// Initializes Timestamp
-		this.lastSnapToItUpdate = new Date(0);
+		this.lastSnapToItDeviceContact = new Date(0);
 		this.lastAutoLaunch     = new Date(0);
 		this.lastPhotoTaken     = new Date(0);
 		
@@ -125,7 +126,7 @@ public class GCFApplication extends Application
 		
 		// Connects to Default DNS Channel
 		String connectionKey = groupContextManager.connect(COMM_MODE, IP_ADDRESS, PORT);
-		groupContextManager.subscribe(connectionKey, CHANNEL);
+		groupContextManager.subscribe(connectionKey, ApplicationSettings.DNS_CHANNEL);
 		
 		// Creates Context Providers
 		calendarProvider = new GoogleCalendarProvider(groupContextManager, this.getContentResolver());
@@ -226,21 +227,33 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	// Application Specific Methods -------------------------------------------------------------
+	// Context Update Methods -------------------------------------------------------------
 	private void setPersonalContext(String photoFilePath)
-	{
+	{		
 		try
 		{
-			JSONObject context  = new JSONObject();
-			JSONObject location = new JSONObject();
-			JSONObject snapToIt = new JSONObject();
+			// Updates Via Bluewave
+			bluewaveManager.getPersonalContextProvider().setContext(IDENTITY_CONTEXT_TAG, getIdentityContext());
+			bluewaveManager.getPersonalContextProvider().setContext(LOCATION_CONTEXT_TAG, getLocationContext());
+			bluewaveManager.getPersonalContextProvider().setContext(TIME_CONTEXT_TAG, getTimeContext());
+			bluewaveManager.getPersonalContextProvider().setContext(ACTIVITY_CONTEXT_TAG, getActivityContext());
+			bluewaveManager.getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath));
 			
-			// Comm Settings
-			context.put("COMM_MODE", COMM_MODE);
-			context.put("IP_ADDRESS", IP_ADDRESS);
-			context.put("PORT", PORT);
-			context.put("SNAP_TO_IT", true);
-			
+			// PUBLISHES THE CHANGES AT ONCE
+			bluewaveManager.getPersonalContextProvider().publish();
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Error Creating Context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+	}
+
+	private JSONObject getLocationContext()
+	{
+		JSONObject location = new JSONObject();
+		
+		try
+		{
 			// TODO:  Experimental Location Code
 			LocationManager lm        = (LocationManager) getSystemService(Context.LOCATION_SERVICE);  
 	        List<String>    providers = lm.getProviders(true);
@@ -259,31 +272,91 @@ public class GCFApplication extends Application
 	        	location.put("LATITUDE", l.getLatitude());
 	            location.put("LONGITUDE", l.getLongitude());
 	        }
-	        
-	        // Sets Snap To It Value
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write location context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+        
+        return location;
+	}
+	
+	private JSONObject getActivityContext()
+	{
+		JSONObject activity = new JSONObject();
+		
+		try
+		{
+			
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write activity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+		
+		return activity;
+	}
+	
+	private JSONObject getIdentityContext()
+	{
+		JSONObject identity = new JSONObject();
+		
+		try
+		{
+			identity.put("COMM_MODE", COMM_MODE);
+			identity.put("IP_ADDRESS", IP_ADDRESS);
+			identity.put("PORT", PORT);
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write identity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+		
+		return identity;
+	}
+	
+	private JSONObject getTimeContext()
+	{
+		JSONObject time = new JSONObject();
+		
+		try
+		{
+			time.put("SYSTEM_CLOCK", new Date().getTime());
+			time.put("TIMEZONE", Calendar.getInstance().getTimeZone().getDisplayName(Locale.getDefault()));
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write activity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+		
+		return time;
+	}
+	
+	private JSONObject getSnapToItContext(String photoFilePath)
+	{
+		JSONObject snaptoit = new JSONObject();
+		
+		try
+		{
+			// Sets Snap To It Value
 	        if (photoFilePath != null)
 	        {
-	        	snapToIt.put("PHOTO", photoFilePath);
-	        	this.setPersonalContext(SNAP_TO_IT_TAG, snapToIt);
+	        	snaptoit.put("PHOTO", photoFilePath);
+	        	snaptoit.put("TIMESTAMP", this.getLastPhotoTimestamp().getTime());
 	        }
 	        else
 	        {
 	        	this.bluewaveManager.getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
 	        }
-	        
-			// Updates Via Bluewave
-			this.setPersonalContext(APP_CONTEXT_TAG, context);
-			this.setPersonalContext(LOCATION_TAG, location);
-			
-			// PUBLISHES THE CHANGES AT ONCE
-			bluewaveManager.getPersonalContextProvider().publish();
 		}
 		catch (Exception ex)
 		{
-			Toast.makeText(this, "Error Creating Context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "Could not write snap-to-it context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
 		}
+		
+		return snaptoit;
 	}
-
+	
 	// Running Application Methods --------------------------------------------------------------
 	public void addActiveApplication(AppInfo activeApp)
 	{
@@ -393,10 +466,15 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	// Snap-To-It --------------------------------------------------------------------------
-	public Date getLastSnapToItUpdate() 
+	// Snap-To-It Methods -----------------------------------------------------------------------
+	public Date getLastSnapToItDeviceContact() 
 	{
-		return lastSnapToItUpdate;
+		return lastSnapToItDeviceContact;
+	}
+	
+	public Date getLastPhotoTimestamp()
+	{
+		return lastPhotoTaken;
 	}
 	
 	public void clearSnapToItHistory()
@@ -418,18 +496,7 @@ public class GCFApplication extends Application
 	{
 		return lastPhotoTaken != null && lastAutoLaunch != null && lastPhotoTaken.getTime() > lastAutoLaunch.getTime();
 	}
-	
-	// Bluewave Methods -------------------------------------------------------------------------
-	public void setPersonalContext(String key, String value)
-	{
-		bluewaveManager.getPersonalContextProvider().setContext(key, value);
-	}
-	
-	public void setPersonalContext(String key, JSONObject value)
-	{
-		bluewaveManager.getPersonalContextProvider().setContext(key, value);
-	}
-	
+		
 	// Group Context Framework Methods ----------------------------------------------------------
 	public void setContextReceiver(ContextReceiver newContextReceiver)
 	{
@@ -505,7 +572,7 @@ public class GCFApplication extends Application
 	
 		private void onUserContextUpdated(Context context, Intent intent)
 		{
-			//sendQuery(groupContextManager, bluewaveManager);
+			
 		}
 	
 		private void onOtherUserContextReceived(Context context, Intent intent)
@@ -517,25 +584,12 @@ public class GCFApplication extends Application
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 			
 			// Determines if an Application is Snap-To-It Accessible
-			try
-			{				
-				JSONArray sharedContext = parser.getJSONObject("device").getJSONArray("contextproviders");
-				
-				for (int i=0; i<sharedContext.length(); i++)
-				{
-					String contextType = sharedContext.getString(i);
-					if (contextType.equals("SNAP_TO_IT"))
-					{
-						lastSnapToItUpdate = new Date();
-						
-						Intent appUpdateIntent = new Intent(ACTION_APP_UPDATE);
-						GCFApplication.this.sendBroadcast(appUpdateIntent);
-					}
-				}
-			}
-			catch (Exception ex)
+			if (parser.getJSONObject(SNAP_TO_IT_TAG) != null)
 			{
-				Toast.makeText(GCFApplication.this, "Problem Getting Context Providers: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+				lastSnapToItDeviceContact = new Date();
+				
+				Intent appUpdateIntent = new Intent(ACTION_APP_UPDATE);
+				GCFApplication.this.sendBroadcast(appUpdateIntent);
 			}
 			
 			// Forwards Values to the Application for Processing
@@ -614,7 +668,7 @@ public class GCFApplication extends Application
 		{
 			String channel = intent.getStringExtra("CHANNEL");
 			
-			if (channel.equals(CHANNEL))
+			if (channel.equals(ApplicationSettings.DNS_CHANNEL))
 			{
 				if (!timerHandler.isRunning())
 				{
@@ -626,15 +680,16 @@ public class GCFApplication extends Application
 		private void onSnapToItUploadComplete(Context context, Intent intent)
 		{
 			String uploadPath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
-			//Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
 			
 		    // Makes the File Visible!
 		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
 			
+		    // Erases All Applications
 			clearApplicationCatalog();
 			
 			// Updates Context with the New Upload Path
-			setPersonalContext(uploadPath);
+			setPersonalContext(uploadPath);		
 			
 			// Sends a New Query!
 			sendQuery(groupContextManager, bluewaveManager);

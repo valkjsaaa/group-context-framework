@@ -18,6 +18,7 @@ import com.adefreitas.liveos.ApplicationProvider;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public abstract class DesktopApplicationProvider extends ApplicationProvider
 {
@@ -250,11 +251,19 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	 */
 	protected double getDistance(JSONContextParser parser, double startLatitude, double startLongitude)
 	{
-		double latitude  = parser.getJSONObject("location").get("LATITUDE").getAsDouble();
-		double longitude = parser.getJSONObject("location").get("LONGITUDE").getAsDouble();
+		JsonObject locationObject = parser.getJSONObject("location");
 		
-		//return GeoMath.distance(40.4338964, -79.8537098, latitude, longitude, 'K');
-		return GeoMath.distance(startLatitude, startLongitude, latitude, longitude, 'K');
+		if (locationObject.has("LATITUDE") && locationObject.has("LONGITUDE"))
+		{
+			double latitude  = parser.getJSONObject("location").get("LATITUDE").getAsDouble();
+			double longitude = parser.getJSONObject("location").get("LONGITUDE").getAsDouble();
+			
+			return GeoMath.distance(startLatitude, startLongitude, latitude, longitude, 'K');
+		}
+		else
+		{
+			return Double.MAX_VALUE;
+		}
 	}
 	
 	// REPORTING THREAD -------------------------------------------------------------------------------

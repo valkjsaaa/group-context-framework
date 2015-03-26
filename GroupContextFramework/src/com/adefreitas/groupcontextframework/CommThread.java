@@ -1,12 +1,12 @@
 package com.adefreitas.groupcontextframework;
 
-
 import java.util.ArrayList;
 
 import com.adefreitas.messages.CommMessage;
 
 public abstract class CommThread extends Thread
 {	
+	// Connection Settings
 	private CommManager commManager;
 	private String 		ipAddress;
 	private int  		port;
@@ -14,6 +14,7 @@ public abstract class CommThread extends Thread
 	// DEBUG:  Tracks How Many Times a Comm Thread was Restarted
     protected int count = 0;
 	
+    // EXPERIMENTAL:  Determines what Devices Have Been Observed Through this Channel
 	private ArrayList<String> arp;
 		
 	/**

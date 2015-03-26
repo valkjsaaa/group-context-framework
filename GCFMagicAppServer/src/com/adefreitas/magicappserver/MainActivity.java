@@ -162,13 +162,10 @@ public class MainActivity extends Activity implements ContextReceiver
 
 	@Override
 	public void onBluewaveContext(JSONContextParser parser)
-	{
-		// Attempts to Extract Connection Information
-		JSONObject context   = parser.getJSONObject("magic");
-		
+	{		
 		try
 		{
-			boolean snapToItEnabled = context.has("SNAP_TO_IT") ? context.getBoolean("SNAP_TO_IT") : false;
+			boolean snapToItEnabled = parser.getJSONRoot().has("snap-to-it");
 			
 			if (snapToItEnabled)
 			{

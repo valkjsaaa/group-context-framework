@@ -25,7 +25,7 @@ public class App_Away extends DesktopApplicationProvider
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://74.111.161.33/gcf/universalremote/magic/travel.png",				   // LOGO
+				"",				   // LOGO
 				30,
 				commMode,
 				ipAddress,

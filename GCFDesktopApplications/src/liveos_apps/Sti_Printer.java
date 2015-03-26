@@ -22,12 +22,12 @@ public class Sti_Printer extends SnapToItApplicationProvider
 	{
 		super(groupContextManager, 
 				"STI_PRINTER",
-				"Print on Pewter",
-				"Printer Application for STI v2.0.",
+				"Printer App",
+				"Controls the Printer Pewter.  Powered by Snap-To-It!",
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://108.32.88.8/gcf/universalremote/magic/gears.png",				   // LOGO
+				"",				   // LOGO
 				30,
 				commMode,
 				ipAddress,
@@ -48,11 +48,7 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		System.out.println("CONTEXT: " + contextTxt);
 		
 		String ui = "<html><title>Printer Controls</title>" + 
-				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"200\" height=\"200\" alt=\"Printer\"></div>" +
-				"<div>You are connected to: Pewter</div>" +
-				((busy) ? 
-						"<p style=\"color:white; background-color:red\">Status: PRINTING</p>" :
-							"<p style=\"color:white; background-color:green\">Status: READY</p>");
+				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"200\" height=\"200\" alt=\"Printer\"></div>";
 				
 		if (contextTxt != null && contextTxt.length() >= 0)
 		{
@@ -61,15 +57,15 @@ public class Sti_Printer extends SnapToItApplicationProvider
 			JsonObject interactionObj = obj.getAsJsonObject("interaction");
 			String     url    		  = (interactionObj == null) ? "" : interactionObj.get("url").getAsString();
 			
-			if (url.length() > 0)
-			{
-				ui += "<h4>PRINT THE FOLLOWING RECENT DOCUMENT</h4>";	
-				ui += "<div><input value=\"Print " + url + "\" type=\"button\"  height=\"100\" onclick=\"device.sendComputeInstruction('PRINT', ['FILE=" + url + "']);\"/></div>";
-				ui += "<h4>PRINT ANOTHER DOCUMENT</h4>";
-			}
+//			if (url.length() > 0)
+//			{
+//				ui += "<h4>PRINT THE FOLLOWING RECENT DOCUMENT</h4>";	
+//				ui += "<div><input value=\"Print " + url + "\" type=\"button\"  height=\"100\" onclick=\"device.sendComputeInstruction('PRINT', ['FILE=" + url + "']);\"/></div>";
+//				ui += "<h4>PRINT ANOTHER DOCUMENT</h4>";
+//			}
 		}
 	
-		ui += "<div><input value=\"Print File\" type=\"button\"  height=\"100\" onclick=\"device.uploadFile('UPLOAD_PRINT', 'What do you want to print?', ['.docx', '.pdf']);\"/></div>";	
+		ui += "<div><input value=\"Print File\" type=\"button\" width-\"400\" height=\"200\" style=\"height:80px; font-size:50px\" onclick=\"device.uploadFile('UPLOAD_PRINT', 'What do you want to print?', ['.docx', '.pdf']);\"/></div>";	
 		ui += "</html>";
 
 		return new String[] { "UI=" + ui };

@@ -7,6 +7,7 @@ import com.adefreitas.desktopframework.RequestProcessor;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.Settings;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ContextRequest;
 
@@ -19,8 +20,6 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	public static final CommManager.CommMode COMM_MODE   = CommMode.MQTT;
 	public static final String 				 IP_ADDRESS  = Settings.DEV_MQTT_IP;
 	public static final int    				 PORT 	     = Settings.DEV_MQTT_PORT;
-	public static final String				 APP_CHANNEL = "cmu/gcf_application";
-	public static final String				 DNS_CHANNEL = "cmu/gcf_dns";
 	
 	// GCF Variables
 	public DesktopBatteryMonitor      batteryMonitor;
@@ -50,8 +49,8 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		
 		// Subscribes to a Communications Channel
 		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
-		gcm.subscribe(connectionKey, APP_CHANNEL);
-		gcm.subscribe(connectionKey, DNS_CHANNEL);
+		gcm.subscribe(connectionKey, ApplicationSettings.DNS_APP_CHANNEL);
+		gcm.subscribe(connectionKey, ApplicationSettings.DNS_CHANNEL);
 		
 		System.out.println("READY FOR ACTION!\n");
 	}

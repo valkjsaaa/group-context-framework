@@ -108,8 +108,6 @@ public class RCP_Paint extends RemoteControlProvider
 			{
 				leftClickMouse(31, 800);
 			}
-			
-			//sendMostRecentReading();
 		}
 	}
 	
