@@ -11,10 +11,10 @@ import com.adefreitas.androidframework.AndroidGroupContextManager;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.androidframework.toolkit.SftpToolkit;
 import com.adefreitas.awareproviders.AccelerometerContextProvider;
+import com.adefreitas.awareproviders.BluetoothContextProvider;
 import com.adefreitas.awareproviders.LocationContextProvider;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.miscproviders.BluetoothContextProvider;
 
 public class GCFApplication extends Application
 {

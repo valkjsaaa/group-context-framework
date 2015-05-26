@@ -9,8 +9,8 @@ import java.util.HashMap;
 import openimaj.OpenimajToolkit;
 import toolkits.ScreenshotToolkit;
 
-import com.adefreitas.desktoptoolkits.CloudStorageToolkit;
-import com.adefreitas.desktoptoolkits.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.desktopframework.toolkit.SftpToolkit;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -98,7 +98,7 @@ public abstract class RemoteControlProvider extends ContextProvider
 		super.onSubscription(newSubscription);
 		
 		// Sends the UI Immediately
-		sendMostRecentReading();
+		sendContext();
 		
 		// Determines Credentials
 		String username = CommMessage.getValue(newSubscription.getParameters(), "credentials");
@@ -240,19 +240,12 @@ public abstract class RemoteControlProvider extends ContextProvider
 //			return this.getGroupContextManager().getDeviceID().equals(device);
 //		}
 		
-		if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE)
-		{
-			return result;
-		}
-		else
-		{
-			return result && (getFitness(request.getParameters()) >= MIN_MATCH_QUALITY);	
-		}
+		return result && (getFitness(request.getPayload()) >= MIN_MATCH_QUALITY);
 	}
 	
 	// METHODS TO OVERLOAD ----------------------------------------------------------------------------
 	@Override
-	public abstract void sendMostRecentReading();
+	public abstract void sendContext();
 	
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)

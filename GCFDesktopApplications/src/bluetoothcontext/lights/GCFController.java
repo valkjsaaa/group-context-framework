@@ -4,8 +4,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 import bluetoothcontext.toolkit.GCFDesktopApplication;
-import bluetoothcontext.toolkit.JSONContextParser;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.desktopproviders.PhillipsHueProvider;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.messages.ContextData;

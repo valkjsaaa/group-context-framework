@@ -14,10 +14,10 @@ public class Sti_DoorPlate extends SnapToItApplicationProvider
 	{
 		super(groupContextManager, 
 				"STI_DOORPLATE",
-				"Bob's Office",
-				"Office 2602M.  Click here to get more information!",
+				"Office 2602M App",
+				"The occupant of this office is currently busy.  This app will tell you the next best time to meet!",
 				"DEBUG",
-				new String[] { },  // Contexts
+				new String[] { "Calendar Schedule (2 Days)" },  // Contexts
 				new String[] { },  // Preferences
 				"",				   // LOGO
 				30,
@@ -27,6 +27,8 @@ public class Sti_DoorPlate extends SnapToItApplicationProvider
 		
 		this.addPhoto(this.getLocalStorageFolder() + "Doorplate1.jpeg");
 		//this.addPhoto(this.getLocalStorageFolder() + "Map2.jpeg");
+		
+		this.setDebugMode(true);
 	}
 	
 	@Override

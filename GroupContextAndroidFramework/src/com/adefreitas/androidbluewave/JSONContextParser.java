@@ -43,7 +43,7 @@ public class JSONContextParser
 		try
 		{
 			jsonRoot = new JSONObject(json);
-			Log.d(LOG_NAME, "JSON Parsed Successfully");
+			//Log.d(LOG_NAME, "JSON Parsed Successfully");
 		}
 		catch (Exception ex)
 		{
@@ -54,7 +54,7 @@ public class JSONContextParser
 	
 	public void parseJSONFile(String filePath)
 	{
-		Log.d(LOG_NAME, "Parsing File: " + filePath);
+		//Log.d(LOG_NAME, "Parsing File: " + filePath);
 		File downloadedFile = new File(filePath);
 		
 		if (downloadedFile.exists())

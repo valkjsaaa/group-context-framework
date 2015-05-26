@@ -133,12 +133,12 @@ public class MagnetometerContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		if (!Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(z))
 		{
 			String[] data = new String[] { Double.toString(x), Double.toString(y), Double.toString(z), Double.toString(maxX), Double.toString(maxY), Double.toString(maxZ)};
-			this.getGroupContextManager().sendContext(getContextType(), "", new String[0], data);
+			this.getGroupContextManager().sendContext(getContextType(), new String[0], data);
 			
 			maxX = 0.0;
 			maxY = 0.0;

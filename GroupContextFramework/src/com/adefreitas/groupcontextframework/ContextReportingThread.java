@@ -26,7 +26,7 @@ public class ContextReportingThread extends Thread
 			{
 				if (provider.isInUse())
 				{
-					provider.sendMostRecentReading();
+					provider.sendContext();
 				}
 				
 				Thread.sleep(provider.getRefreshRate());

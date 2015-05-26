@@ -5,7 +5,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-import com.adefreitas.desktoptoolkits.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -56,7 +56,7 @@ public class Sti_Game extends SnapToItApplicationProvider
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
 		{
-			String key = CommMessage.getValue(instruction.getParameters(), "keycode");
+			String key = instruction.getPayload("keycode");
 			int keycode = -1;
 			
 			if (key.equals("up"))

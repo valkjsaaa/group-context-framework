@@ -1,0 +1,17 @@
+<resources>
+
+    <style name="Theme.MyTheme" parent="Theme.AppCompat.NoActionBar">
+    	
+       	<!-- Set AppCompat’s color theming attrs -->
+    	<item name="colorPrimary">@color/custom_primary</item>
+    	<item name="colorPrimaryDark">@color/custom_primary</item>
+    	<item name="colorAccent">@color/custom_green</item>
+    
+    	<!-- The rest of your attributes -->
+    	<item name="android:textColorPrimary">@color/custom_primary</item>
+    	<item name="android:textColorSecondary">@color/custom_primary</item>
+    	<item name="actionMenuTextColor">#333333</item>
+    	 
+	</style>
+
+</resources>

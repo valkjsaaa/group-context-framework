@@ -4,7 +4,7 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import com.adefreitas.desktoptoolkits.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -31,14 +31,14 @@ public class App_Printer extends DesktopApplicationProvider
 	public App_Printer(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"PRINT_PEWTER",
-				"Printer (Pewter)",
-				"This application lets you print documents to the HP 9050N printer in NSH 2nd Floor known as PEWTER.",
+				"PRINT_ZIRCON",
+				"Printer App",
+				"This application lets you print documents to the HP 9050N printer known as ZIRCON.",
 				"AUTOMATION",
 				new String[] { },
 				new String[] { },
 				"http://icons.iconarchive.com/icons/awicons/vista-artistic/96/2-Hot-Printer-icon.png",
-				30,
+				60,
 				commMode,
 				ipAddress,
 				port);
@@ -83,13 +83,15 @@ public class App_Printer extends DesktopApplicationProvider
 	public String getFunctions()
 	{
 		// Creates the Function
-		ApplicationFunction function = new ApplicationFunction("Print Document", "Prints a *.docx file using default settings.", "REMOTE_PRINT");
+		ApplicationFunction wordFunction 	   = new ApplicationFunction("Print Document", "Prints a *.docx file using default settings.", "PRINT_WORD");
+		ApplicationFunction powerPointFunction = new ApplicationFunction("Print Handouts", "Converts a *.pptx file into handouts.", "PRINT_PPTX");
 			
 		// Adds a Required Object to the Function
-		function.addRequiredObject(new ApplicationObject("FILE_DOCX", "FILE"));
+		wordFunction.addRequiredObject(new ApplicationObject("FILE_DOCX", "FILE"));
+		powerPointFunction.addRequiredObject(new ApplicationObject("FILE_PPTX", "FILE"));
 		
 		// Generates the JSON that Contains all Functions
-		String functionsJSON = ApplicationElement.toJSONArray(new ApplicationElement[] { function });
+		String functionsJSON = ApplicationElement.toJSONArray(new ApplicationElement[] { wordFunction, powerPointFunction });
 		System.out.println(functionsJSON);
 		
 		return functionsJSON;
@@ -104,9 +106,9 @@ public class App_Printer extends DesktopApplicationProvider
 		{
 			busy = true;
 			
-			sendMostRecentReading();
+			sendContext();
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			print(filePath, instruction.getDeviceID());
@@ -115,9 +117,9 @@ public class App_Printer extends DesktopApplicationProvider
 		{
 			busy = true;
 			
-			sendMostRecentReading();
+			sendContext();
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "FILE");
+			String filePath = instruction.getPayload("FILE");
 			System.out.println("*** I got told to print: " + filePath + " ***");
 			
 			print(filePath, instruction.getDeviceID());
@@ -192,6 +194,6 @@ public class App_Printer extends DesktopApplicationProvider
 		
 		busy = false;
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 }

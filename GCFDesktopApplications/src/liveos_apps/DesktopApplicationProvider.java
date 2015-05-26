@@ -9,11 +9,12 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import liveos_dns.GeoMath;
-import bluetoothcontext.toolkit.JSONContextParser;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.hashlibrary.SHA1;
 import com.adefreitas.liveos.ApplicationProvider;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
@@ -65,7 +66,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		super.onSubscription(newSubscription);
 		
 		// Sends the UI Immediately
-		sendMostRecentReading();
+		sendContext();
 		
 		// Determines Credentials
 		String username = CommMessage.getValue(newSubscription.getParameters(), "credentials");
@@ -106,12 +107,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 //			}
 //		}
 	}
-	
-	public ArrayList<String> getInformation()
-	{		
-		return super.getInformation();
-	}
-	
+		
 	// HELPER METHODS ---------------------------------------------------------------------------------
 	/**
 	 * Retrieves the Java Robot, which can press keys/move the mosue
@@ -244,6 +240,50 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		return parser.getJSONObject("device").get("deviceID").getAsString();
 	}
 
+	protected double getLatitude(JSONContextParser parser)
+	{
+		if (parser.getJSONObject("location") != null)
+		{
+			return parser.getJSONObject("location").get("LATITUDE").getAsDouble();	
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+
+	protected double getLongitude(JSONContextParser parser)
+	{
+		if (parser.getJSONObject("location") != null)
+		{
+			return parser.getJSONObject("location").get("LONGITUDE").getAsDouble();	
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+
+	protected String getActivity(JSONContextParser parser)
+	{
+		return parser.getJSONObject("activity").get("type").getAsString();
+	}
+	
+	protected boolean signedDisclaimer(JSONContextParser parser)
+	{
+		JsonObject preferences = parser.getJSONObject("preferences");
+		
+		if (preferences != null)
+		{
+			if (preferences.get("disclaimer") == null)
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	/**
 	 * Calculates the Distance between the Device's Location and a Specified Point
 	 * @param parser
@@ -253,10 +293,10 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	{
 		JsonObject locationObject = parser.getJSONObject("location");
 		
-		if (locationObject.has("LATITUDE") && locationObject.has("LONGITUDE"))
+		if (locationObject != null && locationObject.has("LATITUDE") && locationObject.has("LONGITUDE"))
 		{
-			double latitude  = parser.getJSONObject("location").get("LATITUDE").getAsDouble();
-			double longitude = parser.getJSONObject("location").get("LONGITUDE").getAsDouble();
+			double latitude  = getLatitude(parser);
+			double longitude = getLongitude(parser);
 			
 			return GeoMath.distance(startLatitude, startLongitude, latitude, longitude, 'K');
 		}
@@ -266,38 +306,74 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		}
 	}
 	
-	// REPORTING THREAD -------------------------------------------------------------------------------
-	private class DNSUpdateThread extends Thread
+	/**
+	 * Determines if a particular email address is inside of this context file
+	 * @param parser
+	 * @param emailAddress
+	 * @return
+	 */
+	protected boolean hasEmailAddress(JSONContextParser parser, String emailAddress)
 	{
-		// Amount of Time to Report to the DNS
-		public static final int DELAY_TIME = 60000;
-		
-		// Flag that Tells this Thread to Keep Running
-		private boolean keepRunning;
-		
-		/**
-		 * Periodically Sends a Message to the DNS Service
-		 */
-		public void run()
+		if (parser.getJSONObject("identity") != null && parser.getJSONObject("identity").has("email"))
 		{
-			keepRunning = true;
+			String 	  hash 			 = SHA1.getHash(emailAddress);
+			JsonArray emailAddresses = parser.getJSONObject("identity").get("email").getAsJsonArray();
 			
-			try
+			for (int i=0; i<emailAddresses.size(); i++)
 			{
-				while (keepRunning)
+				if (emailAddresses.get(i).getAsString().equals(hash))
 				{
-					System.out.println("Updating Live OS DNS:");
-					//System.out.println(Arrays.toString(getInformation()) + "\n");
-					
-					sleep((int)(0.05 * DELAY_TIME));	
-					getGroupContextManager().sendComputeInstruction("LOS_DNS", new String[] { "LOS_DNS" }, "REGISTER", getInformation().toArray(new String[0]));
-					sleep((int)(0.95 * DELAY_TIME));
+					return true;
 				}
 			}
-			catch (Exception ex)
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Determines if ONE of the following email addresses is inside of this context file
+	 */
+	protected boolean hasEmailAddress(JSONContextParser parser, String[] emailAddresses)
+	{
+		if (parser.getJSONObject("identity") != null && parser.getJSONObject("identity").has("email"))
+		{
+			for (String emailAddress : emailAddresses)
 			{
-				ex.printStackTrace();
+				String 	  hash 			     = SHA1.getHash(emailAddress);
+				JsonArray userEmailAddresses = parser.getJSONObject("identity").get("email").getAsJsonArray();
+				
+				for (int i=0; i<userEmailAddresses.size(); i++)
+				{
+					if (userEmailAddresses.get(i).getAsString().equals(hash))
+					{
+						return true;
+					}
+				}	
 			}
 		}
+		
+		return false;
+	}
+	
+	/**
+	 * Determines if a particular email domain is inside of this context
+	 * @param parser
+	 * @param emailDomain
+	 * @return
+	 */
+	protected boolean hasEmailDomain(JSONContextParser parser, String emailDomain)
+	{
+		JsonArray emailDomains = parser.getJSONObject("identity").get("emailDomains").getAsJsonArray();
+		
+		for (int i=0; i<emailDomains.size(); i++)
+		{
+			if (emailDomains.get(i).getAsString().equalsIgnoreCase(emailDomain))
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }

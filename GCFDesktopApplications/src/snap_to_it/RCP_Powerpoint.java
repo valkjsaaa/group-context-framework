@@ -15,6 +15,7 @@ import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextData;
+import com.adefreitas.messages.ContextRequest;
 
 public class RCP_Powerpoint extends RemoteControlProvider implements MessageProcessor
 {
@@ -148,11 +149,11 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 		
 		this.getGroupContextManager().cancelRequest("ACC", subscription.getDeviceID());
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 	
 	// THIS IS THE METHOD THAT DELIVERS THE USER INTERFACE
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
 		{
@@ -197,7 +198,6 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 			
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "UI=" + ui  });
 		}
@@ -212,7 +212,7 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
 		{
-			String key = CommMessage.getValue(instruction.getParameters(), "keycode");
+			String key = instruction.getPayload("keycode");
 			this.pressKey(key);
 		}
 		else if (instruction.getCommand().equals("PP_UPLOADED"))
@@ -220,7 +220,7 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 			PRIMARY_DEVICE = instruction.getDeviceID();
 			System.out.println("PRIMARY_DEVICE: " + PRIMARY_DEVICE);
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			// TODO:  Remove me:  I test preferences Code
@@ -247,7 +247,7 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 				// Uploads the Presentation to Dropbox
 				this.getCloudStorageToolkit().uploadFile(UPLOAD_FOLDER, new File(PRESENTATION_LOCATION));
 								
-				this.sendMostRecentReading();
+				this.sendContext();
 				
 				runPresentation(false);
 			}
@@ -271,7 +271,7 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 			robot.keyRelease(KeyEvent.VK_Q);
 			robot.delay(500);
 			
-			this.sendMostRecentReading();
+			this.sendContext();
 		}
 		else if (instruction.getCommand().equals("ACC_TOGGLE"))
 		{
@@ -281,14 +281,14 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 			if (accMode && PRIMARY_DEVICE != null && PRIMARY_DEVICE.length() > 0)
 			{
 				// Subscribes to their light provider
-				this.getGroupContextManager().sendRequest("ACC", new String[] { PRIMARY_DEVICE }, 250, new String[0]);
+				this.getGroupContextManager().sendRequest("ACC", ContextRequest.SINGLE_SOURCE, new String[] { PRIMARY_DEVICE }, 250, new String[0]);
 			}
 			else
 			{
 				this.getGroupContextManager().cancelRequest("ACC");
 			}
 			
-			this.sendMostRecentReading();
+			this.sendContext();
 		}
 	}
 	
@@ -318,7 +318,7 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 	    this.getCloudStorageToolkit().uploadFile(UPLOAD_FOLDER, screenshot);
 	    
 	    System.out.println("Uploaded New Screenshot");
-	    this.sendMostRecentReading();
+	    this.sendContext();
 	}
 	
 	@Override
@@ -326,24 +326,24 @@ public class RCP_Powerpoint extends RemoteControlProvider implements MessageProc
 	{
 		if (message instanceof ContextData)
 		{
-			ContextData data = (ContextData)message;
-			Double[] values = data.getValuesAsDoubles();
-			
-			double magnitude = Math.sqrt(Math.pow(values[3], 2.0) + Math.pow(values[4], 2.0) + Math.pow(values[5], 2.0));
-			
-			if (magnitude > 25.0)
-			{
-				if (values[5] <= 0)
-				{
-					pressKey("right");	
-				}
-				else
-				{
-					pressKey("right");
-				}				
-			}
-			
-			System.out.println("Magnitude: " + magnitude + "   " + data);
+//			ContextData data = (ContextData)message;
+//			Double[] values = data.getValuesAsDoubles();
+//			
+//			double magnitude = Math.sqrt(Math.pow(values[3], 2.0) + Math.pow(values[4], 2.0) + Math.pow(values[5], 2.0));
+//			
+//			if (magnitude > 25.0)
+//			{
+//				if (values[5] <= 0)
+//				{
+//					pressKey("right");	
+//				}
+//				else
+//				{
+//					pressKey("right");
+//				}				
+//			}
+//			
+//			System.out.println("Magnitude: " + magnitude + "   " + data);
 		}
 	}
 }

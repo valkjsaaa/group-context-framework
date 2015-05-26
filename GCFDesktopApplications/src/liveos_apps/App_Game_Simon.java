@@ -39,7 +39,7 @@ public class App_Game_Simon extends DesktopApplicationProvider
 		
 		if (instruction.getCommand().equals("SCORE"))
 		{
-			int value = Integer.valueOf(instruction.getParameters()[0]);
+			int value = Integer.valueOf(instruction.getPayload(0));
 			
 			System.out.println("SCORE = " + value);
 			

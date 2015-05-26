@@ -1,0 +1,1167 @@
+package com.adefreitas.gcfimpromptu;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.prefs.Preferences;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.location.LocationManager;
+import android.media.MediaScannerConnection;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.adefreitas.androidbluewave.BluewaveManager;
+import com.adefreitas.androidbluewave.JSONContextParser;
+import com.adefreitas.androidframework.AndroidCommManager;
+import com.adefreitas.androidframework.AndroidGroupContextManager;
+import com.adefreitas.androidframework.ContextReceiver;
+import com.adefreitas.androidframework.GCFService;
+import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.androidframework.toolkit.SftpToolkit;
+import com.adefreitas.awareproviders.LightContextProvider;
+import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
+import com.adefreitas.gcfimpromptu.lists.AppInfo;
+import com.adefreitas.gcfmagicapp.R;
+import com.adefreitas.groupcontextframework.CommManager.CommMode;
+import com.adefreitas.groupcontextframework.ContextProvider;
+import com.adefreitas.groupcontextframework.Settings;
+import com.adefreitas.hashlibrary.SHA1;
+import com.adefreitas.liveos.ApplicationFunction;
+import com.adefreitas.liveos.ApplicationSettings;
+import com.adefreitas.messages.CommMessage;
+import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.messages.ContextData;
+import com.adefreitas.messages.ContextRequest;
+import com.adefreitas.androidproviders.GoogleCalendarProvider;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+public class GCFApplication extends Application// implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+{	
+	// Application Constants
+	public static final String LOG_NAME          	  = "IMPROMPTU"; 
+	public static final String APP_PROCESS_ID		  = "" + new Date().getTime();										// DEBUG		 
+	public static final String PREFERENCES_NAME       = "com.adefreit.impromptu.preferences";
+	public static final String PREFERENCE_APP_CATALOG = "appCatalog";
+	public static final String PREFERENCE_APP_PREF    = "appPreferences";
+	public static final int    UPDATE_SECONDS    	  = 30;
+	public static final String ACTION_APP_UPDATE 	  = "APP_UPDATE";
+	public static final String ACTION_IMAGE_UPLOADED  = "STI_IMAGE_UPLOADED";
+	public static final String ACTION_APP_SELECTED   = "APP_SELECTED";
+	public static final String EXTRA_APP_ID          = "APP_ID";
+	public static final String DOWNLOAD_FOLDER        = "/Download/Impromptu/";							 			     // Path on the Phone where Files are Downloaded
+	public static final String UPLOAD_SFTP_PATH       = "/var/www/html/gcf/universalremote/magic/";		 			     // Folder Path on the Cloud Server
+	public static final String UPLOAD_WEB_PATH   	  = "http://" + Settings.DEV_SFTP_IP + "/gcf/universalremote/magic/"; // Web Path to the Path Above
+	
+	// Context Constants
+	public static final String IDENTITY_CONTEXT_TAG  = "identity";
+	public static final String LOCATION_CONTEXT_TAG  = "location";
+	public static final String TIME_CONTEXT_TAG	     = "time";
+	public static final String ACTIVITY_CONTEXT_TAG  = "activity";
+	public static final String SNAP_TO_IT_TAG    	 = "snap-to-it";
+	public static final String PREFERENCES_TAG		 = "preferences";
+	
+	// GCF Constants (Connection to App Server)
+	public static final CommMode COMM_MODE  = CommMode.MQTT;
+	public static final String   IP_ADDRESS = Settings.DEV_MQTT_IP;
+	public static final int      PORT 	    = Settings.DEV_MQTT_PORT;
+	
+	// GCF Variables
+	public  static String 	  connectionKey;
+	private GCFService 		  gcfService;
+	private ServiceConnection gcfServiceConnection = new ServiceConnection() 
+	{
+	    public void onServiceConnected(ComponentName name, IBinder service) 
+	    {
+	        GCFService.GCFServiceBinder mLocalBinder = (GCFService.GCFServiceBinder)service;
+	        gcfService 								 = mLocalBinder.getService();
+	    }
+		
+		public void onServiceDisconnected(ComponentName name) 
+		{
+	        gcfService = null;
+	    }
+	};
+	
+	// Object Serialization
+	private Gson gson;
+	
+	// App Storage
+	private SharedPreferences appSharedPreferences;
+	
+	// Cloud Storage Settings
+	private CloudStorageToolkit cloudToolkit;
+	
+	// Intent Filters
+	private ContextReceiver contextReceiver;
+	private IntentFilter    filter;
+	private IntentReceiver  intentReceiver;
+	
+	// Application Specific Tools
+	private boolean					   inForeground;
+	private HashMap<String, String>    appPreferences;
+	private ArrayList<AppCategoryInfo> appCatalog;
+	private ArrayList<AppInfo>		   activeApps;
+		
+	// Timer
+	private ContextAutoDeliveryHandler timerHandler;
+	
+	// Snap To It Variables
+	private Date lastSnapToItDeviceContact;
+	private Date lastPhotoTaken;
+	private Date lastAutoLaunch;
+	
+	/**
+	 * One-Time Application Initialization Method
+	 */
+	@Override
+	public void onCreate() 
+	{
+		super.onCreate();
+		
+		// Initializes Timestamp
+		this.lastSnapToItDeviceContact = new Date(0);
+		this.lastAutoLaunch    		   = new Date(0);
+		this.lastPhotoTaken     	   = new Date(0);
+		this.inForeground 			   = false;
+		
+		// Creates GSON
+		this.gson = new Gson();
+		
+		// Creates Service for GCF
+		Intent i = new Intent(this, GCFService.class);
+		this.bindService(i, gcfServiceConnection, BIND_AUTO_CREATE);
+		this.startService(i);
+		Log.d(LOG_NAME, "GCF Service Bound");
+				
+		// Application Preferences
+		appSharedPreferences = this.getApplicationContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+		
+		// Creates the Cloud Toolkit Helper
+		cloudToolkit = new SftpToolkit(this);
+		
+		// Initializes App Data Structures
+		this.appPreferences  = new HashMap<String, String>();
+		this.appCatalog 	 = new ArrayList<AppCategoryInfo>();
+		this.activeApps      = new ArrayList<AppInfo>();
+		
+		// Create Intent Filter and Receiver
+		this.intentReceiver = new IntentReceiver();
+		this.filter = new IntentFilter();
+		this.filter.addAction(GCFService.ACTION_GCF_STARTED);
+		this.filter.addAction(AndroidGroupContextManager.ACTION_GCF_DATA_RECEIVED);
+		this.filter.addAction(AndroidGroupContextManager.ACTION_GCF_OUTPUT);
+		this.filter.addAction(BluewaveManager.ACTION_USER_CONTEXT_UPDATED);
+		this.filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
+		this.filter.addAction(BluewaveManager.ACTION_COMPUTE_INSTRUCTION_RECEIVED);
+		this.filter.addAction(AndroidCommManager.ACTION_CHANNEL_SUBSCRIBED);
+		this.filter.addAction(ACTION_IMAGE_UPLOADED);
+		this.registerReceiver(intentReceiver, filter);
+		
+		// Performs an Initial Context Update
+		setPersonalContext(null);
+		
+		// Loads App Directory
+		if (appSharedPreferences.contains(PREFERENCE_APP_CATALOG))
+		{
+			String json = appSharedPreferences.getString(PREFERENCE_APP_CATALOG, "");
+			
+			if (json.length() > 0)
+			{
+				// Attempts to Extract the App Catalog from JSON
+				try
+				{
+					appCatalog = (ArrayList<AppCategoryInfo>) gson.fromJson(json, new TypeToken<ArrayList<AppCategoryInfo>>(){}.getType());
+				}
+				catch (Exception ex)
+				{
+					Toast.makeText(this, "App Catalog Corruped.  Using Blank.", Toast.LENGTH_SHORT).show();
+				}
+				
+				this.updateCatalog();
+			}
+		}
+		else
+		{
+			Log.d(LOG_NAME, "Creating New App Catalog");
+		}
+		
+		// Loads App Preferences
+		if (appSharedPreferences.contains(PREFERENCE_APP_PREF))
+		{
+			String json = appSharedPreferences.getString(PREFERENCE_APP_PREF, "");
+			
+			if (json.length() > 0)
+			{
+				// Attempts to Extract the App Preferences from JSON
+				try
+				{
+					appPreferences = (HashMap<String, String>) gson.fromJson(json, new TypeToken<HashMap<String, String>>(){}.getType());
+				}
+				catch (Exception ex)
+				{
+					Toast.makeText(this, "App Preferences Corruped.  Using Blank.", Toast.LENGTH_SHORT).show();
+				}
+				
+				this.updateCatalog();
+			}
+		}
+		else
+		{
+			Log.d(LOG_NAME, "Creating New App Preferences");
+		}
+		
+	}
+	
+	/**
+	 * Returns the GCF Service
+	 * @return
+	 */
+	public GCFService getGCFService()
+	{
+		return gcfService;
+	}
+	
+	/**
+	 * Returns the Group Contest Manager
+	 * @return
+	 */
+	public AndroidGroupContextManager getGroupContextManager()
+	{
+		return gcfService.getGroupContextManager();
+	}
+	
+	/**
+	 * Returns the Bluewave Manager
+	 * @return
+	 */
+	public BluewaveManager getBluewaveManager()
+	{
+		return gcfService.getGroupContextManager().getBluewaveManager();
+	}
+	
+	/**
+	 * Retrieves the Current Cloud Storage Toolkit
+	 * @return
+	 */
+	public CloudStorageToolkit getCloudToolkit()
+	{
+		if (cloudToolkit == null)
+		{
+			Log.e(LOG_NAME, "Cloud code not instantiated.  Check GCFApplication.java");
+		}
+		
+		return cloudToolkit;
+	}
+	
+	/**
+	 * Creates a Toast Notification
+	 * @param title
+	 * @param subtitle
+	 */
+	public void createNotification(String title, String subtitle, String appID)
+	{
+		Intent intent = new Intent(this.getApplicationContext(), AppEngine.class);
+		intent.putExtra("APP_ID", appID);
+
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
+		{
+			 Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			
+			 Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+			 
+			 PendingIntent 		 pendingIntent 		 = PendingIntent.getActivity(this, 0, intent, 0);
+			 NotificationManager notificationManager = (NotificationManager)this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+			 Notification 		 note 				 = new Notification.Builder(this)
+			 	.setLargeIcon(bm)
+			 	.setSmallIcon(R.drawable.ic_notification)
+			 	.setContentTitle(title)
+			 	.setContentText(subtitle)
+			 	.setAutoCancel(true)
+			 	.setSound(soundUri)
+			 	.setContentIntent(pendingIntent).build();
+			 
+			 notificationManager.notify(0, note);
+		}
+		else
+		{
+			Toast.makeText(this, title + ": " + subtitle, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	/**
+	 * Sets a Flag to Let the Application Know if it is in the Foreground
+	 * @param value
+	 */
+	public void setInForeground(boolean value)
+	{
+		inForeground = value;
+		//Toast.makeText(this, "inForeground = " + inForeground, Toast.LENGTH_SHORT).show();
+	}
+	
+	/**
+	 * Returns TRUE if the application is in the foreground, and false otherwise
+	 * @return
+	 */
+	public boolean isInForeground()
+	{
+		return inForeground;
+	}
+		
+	/**
+	 * Removes All Extraneous Information
+	 */
+	public void clearCache()
+	{
+		appCatalog.clear();
+		this.saveCatalog();
+		
+		appPreferences.clear();
+		this.savePreferences();
+		
+		Toast.makeText(this, "Cache Cleared", Toast.LENGTH_SHORT).show();
+		
+		// Notifies the Application that the App List has Changed (or been erased)
+		Intent i = new Intent(ACTION_APP_UPDATE);
+		sendBroadcast(i);
+	}
+	
+	// Context Update Methods -------------------------------------------------------------
+	private void setPersonalContext(String photoFilePath)
+	{		
+		try
+		{			
+			if (gcfService != null)
+			{
+				// Updates Via Bluewave
+				getBluewaveManager().getPersonalContextProvider().setContext(IDENTITY_CONTEXT_TAG, getIdentityContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(LOCATION_CONTEXT_TAG, getLocationContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(TIME_CONTEXT_TAG, getTimeContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(ACTIVITY_CONTEXT_TAG, getActivityContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath));
+				getBluewaveManager().getPersonalContextProvider().setContext(PREFERENCES_TAG, getPreferences());
+				
+				// PUBLISHES THE CHANGES AT ONCE
+				getBluewaveManager().getPersonalContextProvider().publish();	
+			}
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Error Creating Context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	private JSONObject getLocationContext()
+	{
+		JSONObject location = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_location", true))
+		{
+			try
+			{
+				// TODO:  Experimental Location Code
+				LocationManager lm        = (LocationManager) getSystemService(Context.LOCATION_SERVICE);  
+		        List<String>    providers = lm.getProviders(true);
+
+		        /* Loop over the array backwards, and if you get an accurate location, then break out the loop*/
+		        Location l = null;
+		        
+		        for (int i=providers.size()-1; i>=0; i--) 
+		        {
+		                l = lm.getLastKnownLocation(providers.get(i));
+		                if (l != null) break;
+		        }
+
+		        if (l != null) 
+		        {
+		        	location.put("LATITUDE", l.getLatitude());
+		            location.put("LONGITUDE", l.getLongitude());
+		        }
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write location context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			}
+		}
+        
+        return location;
+	}
+	
+	private JSONObject getActivityContext()
+	{
+		JSONObject activity = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_activity", true))
+		{
+			try
+			{
+				ActivityContextProvider acp = (ActivityContextProvider)gcfService.getGroupContextManager().getContextProvider("ACT");
+				
+				if (acp != null)
+				{
+					activity.put("type", acp.getActivity());
+					activity.put("confidence", acp.getConfidence());
+				}
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write activity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			}	
+		}
+		
+		return activity;
+	}
+	
+	private JSONObject getIdentityContext()
+	{
+		JSONObject identity = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_identity", true))
+		{
+			try
+			{
+				// Communications Settings
+				identity.put("COMM_MODE", COMM_MODE);
+				identity.put("IP_ADDRESS", IP_ADDRESS);
+				identity.put("PORT", PORT);
+				
+				// Already Accessible Applications
+				JSONArray availableApps = new JSONArray();
+				
+				if (appCatalog != null)
+				{
+					for (AppInfo app : getAvailableApps())
+					{
+						if (app.getTimeToExpire() > 0)
+						{
+							JSONObject appObject = new JSONObject();
+							appObject.put("name", app.getAppContextType());
+							appObject.put("expires", app.getTimeToExpire() / 1000);
+							availableApps.put(appObject);
+						}
+					}
+					
+					identity.put("APPS", availableApps);
+				}
+				
+				// Accounts!
+				JSONArray emailHashes  = new JSONArray();
+				JSONArray emailDomains = new JSONArray();
+				
+				for (String email : getUniqueEmail())
+				{
+					emailHashes.put(SHA1.getHash(email.toLowerCase()));
+					emailDomains.put(email.split("@")[1]);
+				}
+				
+				// Adds Domains and Hashes
+				identity.put("emailDomains", emailDomains);
+				identity.put("email", emailHashes);
+				
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write identity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+				ex.printStackTrace();
+			}	
+		}
+		
+		return identity;
+	}
+	
+	private JSONObject getTimeContext()
+	{
+		JSONObject time = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_time", true))
+		{
+			try
+			{
+				//time.put("SYSTEM_CLOCK", new Date().getTime());
+				time.put("TIMEZONE", Calendar.getInstance().getTimeZone().getDisplayName(Locale.getDefault()));
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write activity context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			}	
+		}
+		
+		return time;
+	}
+	
+	private JSONObject getSnapToItContext(String photoFilePath)
+	{
+		JSONObject snaptoit = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_snap-to-it", true))
+		{
+			try
+			{
+				// Sets Snap To It Value
+		        if (photoFilePath != null)
+		        {
+		        	snaptoit.put("PHOTO", photoFilePath);
+		        	snaptoit.put("TIMESTAMP", this.getLastPhotoTimestamp().getTime());
+		        }
+		        else
+		        {
+		        	getBluewaveManager().getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
+		        }
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write snap-to-it context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			}	
+		}
+		
+		return snaptoit;
+	}
+	
+	private JSONObject getPreferences()
+	{
+		JSONObject preferences = new JSONObject();
+		
+		if (appSharedPreferences.getBoolean("BLUEWAVE_preferences", true))
+		{
+			try
+			{
+				for (String key : appPreferences.keySet())
+				{
+					preferences.put(key, appPreferences.get(key));
+				}
+			}
+			catch (Exception ex)
+			{
+				Toast.makeText(this, "Could not write preferences context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		return preferences;
+	}
+	
+	private ArrayList<String> getUniqueEmail()
+	{
+		ArrayList<String> result = new ArrayList<String>();
+		
+		// Gets All Accounts on this Device
+		Account[] accounts = AccountManager.get(this).getAccounts();
+        for (Account account : accounts) 
+        {
+        	if (!result.contains(account.name) && account.name.contains("@"))
+        	{
+        		result.add(account.name);
+        	}
+        }
+        
+        return result;
+	}
+	
+	// Running Application Methods --------------------------------------------------------------
+	public void addActiveApplication(AppInfo activeApp)
+	{
+		if (!activeApps.contains(activeApp))
+		{
+			activeApps.add(activeApp);
+		}
+	}
+	
+	public ArrayList<AppInfo> getActiveApplications()
+	{
+		return activeApps;
+	}
+	
+	public void removeActiveApplications()
+	{
+		activeApps.clear();
+	}
+		
+	// Preference Methods (Application and app) -------------------------------------------------
+	public void setPreference(String name, String value)
+	{
+		// Stores the Context
+		this.appPreferences.put(name, value);
+		
+		savePreferences();
+		
+		// Allows the Device's Personal Context
+		setPersonalContext(null);
+	}
+	
+	public String getPreference(String name)
+	{
+		return this.appPreferences.get(name);
+	}
+		
+	public SharedPreferences getAppSharedPreferences()
+	{
+		return appSharedPreferences;
+	}
+	
+	private void savePreferences()
+	{
+		// Saves this in Memory
+		SharedPreferences.Editor editor = appSharedPreferences.edit();
+		editor.putString(PREFERENCE_APP_PREF, gson.toJson(appPreferences));
+		editor.commit();
+	}
+	
+	// Catalog Methods --------------------------------------------------------------------------
+	public void addApplicationToCatalog(AppInfo newApp)
+	{	
+		boolean foundCategory = false;
+		
+		for (AppCategoryInfo category : appCatalog)
+		{
+			// Looks for the Category
+			if (category.getName().equalsIgnoreCase(newApp.getCategory()))
+			{
+				// Sets a Flag to Let us Know that the Category Already Exists
+				foundCategory = true;
+				
+				if (category.hasApp(newApp.getAppID()))
+				{
+					category.updateApp(newApp);
+				}
+				else
+				{
+					createNotification("New App Available", newApp.getAppName(), newApp.getAppID());
+					category.addApp(newApp);
+				}
+
+				// Notifies the Application that the App List has Changed (or been erased)
+				Intent i = new Intent(ACTION_APP_UPDATE);
+				sendBroadcast(i);
+				
+				break;
+			}
+		}
+		
+		// Creates the Category if it does not yet exist
+		if (!foundCategory)
+		{
+			AppCategoryInfo newCategory = new AppCategoryInfo(newApp.getCategory());
+			newCategory.addApp(newApp);
+			appCatalog.add(newCategory);
+			
+			createNotification("New App Available", "Tap to run: " + newApp.getAppName() + " [" + newApp.getAppID() + "]", newApp.getAppID());
+			
+			// Notifies the Application that the App List has Changed (or been erased)
+			Intent i = new Intent(ACTION_APP_UPDATE);
+			sendBroadcast(i);
+		}
+								
+		// Stores the Catalog in Long Term Memory
+		saveCatalog();
+	}
+	
+	public void removeApplicationFromCatalog(AppInfo appToRemove)
+	{
+		for (AppCategoryInfo category : appCatalog)
+		{
+			if (category.getName().equalsIgnoreCase(appToRemove.getCategory()))
+			{
+				if (category.hasApp(appToRemove.getAppID()))
+				{
+					category.removeApp(appToRemove);
+					
+					// Notifies the Application that the App List has Changed (or been erased)
+					Intent i = new Intent(ACTION_APP_UPDATE);
+					sendBroadcast(i);
+				}
+				
+				break;
+			}
+		}
+		
+		saveCatalog();
+	}
+	
+	public AppInfo getApplicationFromCatalog(String appID)
+	{
+		for (AppCategoryInfo category : appCatalog)
+		{
+			for (AppInfo app : category.getApps())
+			{
+				if (app.getAppID().equalsIgnoreCase(appID))
+				{
+					return app;
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	public ArrayList<AppInfo> getAvailableApps()
+	{
+		ArrayList<AppInfo> catalog = new ArrayList<AppInfo>();
+		
+		for (AppCategoryInfo category : appCatalog)
+		{
+			for (AppInfo app : category.getApps())
+			{
+				if (!app.isExpired())
+				{
+					catalog.add(app);
+				}
+			}
+		}
+		
+		return catalog;
+	}
+	
+	public ArrayList<AppCategoryInfo> getCatalog()
+	{
+		return appCatalog;
+	}
+		
+	public void clearApplicationCatalog()
+	{
+		//appCatalog.clear();
+		
+		appCatalog.clear();
+		
+		// Notifies the Application that the App List has Changed (or been erased)
+		Intent i = new Intent(ACTION_APP_UPDATE);
+		GCFApplication.this.sendBroadcast(i);
+	}
+			
+	private void updateCatalog()
+	{
+		boolean changed = false;
+		
+		// Updates App Catalog Contents
+		// Looking for Canceled Application
+		for (AppCategoryInfo category : new ArrayList<AppCategoryInfo>(appCatalog))
+		{
+			for (AppInfo app : new ArrayList<AppInfo>(category.getApps()))
+			{
+				long timeElapsedInMS = new Date().getTime() - app.getDateExpires().getTime();
+				
+				if (timeElapsedInMS > 60000 * 60)
+				{
+					category.removeApp(app);
+					changed = true;
+				}
+			}
+			
+			if (!category.containsAvailableApps())
+			{
+				appCatalog.remove(category);
+				appCatalog.add(category);
+			}
+		}
+				
+		// Notifies Activities if Something Changed
+		if (changed)
+		{
+			// Notifies the Application that the App List has Changed
+			Intent i = new Intent(ACTION_APP_UPDATE);
+			sendBroadcast(i);
+			
+			saveCatalog();
+		}
+	}
+	
+	private void saveCatalog()
+	{
+		Log.d(LOG_NAME, "Saving App Catalog (" + appCatalog.size() + " categories)");
+		SharedPreferences.Editor editor = appSharedPreferences.edit();
+		editor.putString(PREFERENCE_APP_CATALOG, gson.toJson(appCatalog));
+		editor.commit();
+	}
+	
+	// Snap-To-It Methods -----------------------------------------------------------------------
+	public Date getLastSnapToItDeviceContact() 
+	{
+		return lastSnapToItDeviceContact;
+	}
+	
+	public Date getLastPhotoTimestamp()
+	{
+		return lastPhotoTaken;
+	}
+	
+	public void clearSnapToItHistory()
+	{
+		setPersonalContext(null);
+	}
+		
+	public void setPhotoTaken()
+	{
+		lastPhotoTaken = new Date();
+	}
+	
+	public void setAutoLaunch()
+	{
+		lastAutoLaunch = new Date();
+	}
+	
+	public boolean shouldAutoLaunch()
+	{
+		return lastPhotoTaken != null && lastAutoLaunch != null && lastPhotoTaken.getTime() > lastAutoLaunch.getTime();
+	}
+		
+	// Group Context Framework Methods ----------------------------------------------------------
+	public void setContextReceiver(ContextReceiver newContextReceiver)
+	{
+		this.contextReceiver = newContextReceiver;
+	}
+		
+	// Intent Receiver --------------------------------------------------------------------------
+	private class IntentReceiver extends BroadcastReceiver
+	{
+		@Override
+		public void onReceive(Context context, Intent intent) 
+		{	
+			if (intent.getAction().equals(GCFService.ACTION_GCF_STARTED))
+			{
+				onGCFServiceStarted(context, intent);
+			}
+			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_DATA_RECEIVED))
+			{
+				onContextDataReceived(context, intent);
+			}
+			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_OUTPUT))
+			{
+				onOutput(context, intent);
+			}
+			else if (intent.getAction().equals(BluewaveManager.ACTION_USER_CONTEXT_UPDATED))
+			{
+				onUserContextUpdated(context, intent);
+			}
+			else if (intent.getAction().equals(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED))
+			{
+				onOtherUserContextReceived(context, intent);
+			}
+			else if (intent.getAction().equals(BluewaveManager.ACTION_COMPUTE_INSTRUCTION_RECEIVED))
+			{
+				onComputeInstructionReceived(context, intent);
+			}
+			else if (intent.getAction().equals(AndroidCommManager.ACTION_CHANNEL_SUBSCRIBED))
+			{
+				onChannelSubscribed(context, intent);
+			}
+			else if (intent.getAction().equals(ACTION_IMAGE_UPLOADED))
+			{
+				onSnapToItUploadComplete(context, intent);
+			}
+			else
+			{
+				Log.e("", "Unknown Action: " + intent.getAction());
+			}
+		}
+	
+		private void onGCFServiceStarted(Context context, Intent intent)
+		{
+			if (gcfService != null && gcfService.isReady())
+			{
+				// Connects to Default DNS Channel and Channels
+				connectionKey = gcfService.getGroupContextManager().connect(COMM_MODE, IP_ADDRESS, PORT);
+				
+				// Creates Context Providers
+				ContextProvider 		calendarProvider = new GoogleCalendarProvider(gcfService.getGroupContextManager(), GCFApplication.this.getContentResolver());
+				ContextProvider 		lightProvider    = new LightContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				ActivityContextProvider acp 			 = new ActivityContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				
+				gcfService.getGroupContextManager().unregisterContextProvider("CAL");
+				gcfService.getGroupContextManager().unregisterContextProvider("LGT");
+				gcfService.getGroupContextManager().unregisterContextProvider("ACT");
+				
+				// Registers Context Providers
+				gcfService.getGroupContextManager().registerContextProvider(calendarProvider);
+				gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
+				gcfService.getGroupContextManager().registerContextProvider(acp);
+				
+				acp.start(true);
+				
+		        Toast.makeText(GCFApplication.this, "GCF Ready [" + gcfService.getGroupContextManager().getRegisteredProviders().length + " context providers]", Toast.LENGTH_SHORT).show();
+			}
+		}
+		
+		private void onContextDataReceived(Context context, Intent intent)
+		{
+			// Extracts the values from the intent
+			String   contextType = intent.getStringExtra(ContextData.CONTEXT_TYPE);
+			String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
+			String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
+			
+			// Forwards Values to the ContextReceiver for Processing
+			if (contextReceiver != null)
+			{
+				contextReceiver.onContextData(new ContextData(contextType, deviceID, values));
+			}
+		}
+	
+		private void onOutput(Context context, Intent intent)
+		{
+			// Extracts the values from the intent
+			String text = intent.getStringExtra(AndroidGroupContextManager.GCF_OUTPUT);
+			
+			// Forwards Values to the Application for Processing
+			if (contextReceiver != null)
+			{
+				contextReceiver.onGCFOutput(text);
+			}
+		}
+	
+		private void onUserContextUpdated(Context context, Intent intent)
+		{
+			
+		}
+	
+		private void onOtherUserContextReceived(Context context, Intent intent)
+		{
+			// This is the Raw JSON from the Device
+			String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+			
+			// Creates a Parser
+			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
+			
+			// Determines if an Application is Snap-To-It Accessible
+			if (parser.getJSONObject(SNAP_TO_IT_TAG) != null)
+			{
+				lastSnapToItDeviceContact = new Date();
+				
+				Intent appUpdateIntent = new Intent(ACTION_APP_UPDATE);
+				GCFApplication.this.sendBroadcast(appUpdateIntent);
+			}
+			
+			// Forwards Values to the Application for Processing
+			if (contextReceiver != null)
+			{
+				contextReceiver.onBluewaveContext(parser);
+			}
+		}
+	
+		private void onComputeInstructionReceived(Context context, Intent intent)
+		{
+			String   contextType = intent.getExtras().getString(ComputeInstruction.COMPUTE_CONTEXT_TYPE);
+			String   command     = intent.getExtras().getString(ComputeInstruction.COMPUTE_COMMAND);
+			String   sender      = intent.getExtras().getString(ComputeInstruction.COMPUTE_SENDER);
+			String[] payload     = intent.getExtras().getStringArray(ComputeInstruction.COMPUTE_PARAMETERS);
+			
+			ComputeInstruction instruction = new ComputeInstruction(contextType, sender, new String[0], command, payload);
+			
+			// Registers an Application in the Catalog
+			if (command.equalsIgnoreCase("APPLICATION"))
+			{
+				try
+				{
+					String 			  appID       	 = instruction.getPayload("APP_ID");
+					String			  appContextType = instruction.getPayload("APP_CONTEXT_TYPE");
+					String 			  appName     	 = instruction.getPayload("NAME");
+					String			  deviceID		 = instruction.getPayload("DEVICE_ID");
+					String 			  description    = instruction.getPayload("DESCRIPTION");
+					String 			  category	     = instruction.getPayload("CATEGORY");
+					String 			  logo		  	 = instruction.getPayload("LOGO");
+					int			      lifetime		 = Integer.parseInt(instruction.getPayload("LIFETIME"));
+					ArrayList<String> contexts    	 = CommMessage.getValues(payload, "CONTEXTS");
+					ArrayList<String> preferences 	 = CommMessage.getValues(payload, "PREFERENCES");
+					CommMode		  commMode		 = CommMode.valueOf(instruction.getPayload("COMM_MODE"));
+					String 			  ipAddress   	 = instruction.getPayload("APP_ADDRESS");
+					int				  port		  	 = Integer.valueOf(instruction.getPayload("APP_PORT"));
+					String 			  channel    	 = instruction.getPayload("APP_CHANNEL");
+					Double			  photoMatches   = (instruction.getPayload("PHOTO_MATCHES") != null) ? Double.valueOf(instruction.getPayload("PHOTO_MATCHES")) : 0.0;
+					
+					// Creates Individual Function Objects
+					ArrayList<ApplicationFunction> functions    = new ArrayList<ApplicationFunction>();
+					String 						   functionJSON = instruction.getPayload("FUNCTIONS");
+					
+					if (functionJSON != null && !functionJSON.equals("null"))
+					{					
+						JSONArray functionArray = new JSONArray(functionJSON);
+						
+						for (int i=0; i<functionArray.length(); i++)
+						{
+							// Gets Each Object Element and Converts It to an 
+							JSONObject 			functionElement = (JSONObject)functionArray.get(i);
+							ApplicationFunction function 	    = gson.fromJson(functionElement.toString(), ApplicationFunction.class);
+						
+							if (function != null)
+							{
+								functions.add(function);	
+							}
+						}
+					}
+											
+					// Adds the App
+					AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
+					GCFApplication.this.addApplicationToCatalog(app);
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+					Toast.makeText(GCFApplication.this, "Problem With App: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+				}
+			}
+		}
+	
+		private void onChannelSubscribed(Context context, Intent intent)
+		{
+			String channel = intent.getStringExtra("CHANNEL");
+			
+			if (channel.equals("dev/" + getGroupContextManager().getDeviceID()))
+			{				
+				// Creates the Scheduled Event Timer	
+				timerHandler = new ContextAutoDeliveryHandler(GCFApplication.this, gcfService);				
+				timerHandler.start();
+			}
+		}
+	
+		private void onSnapToItUploadComplete(Context context, Intent intent)
+		{
+			String uploadPath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
+			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+			
+		    // Makes the File Visible!
+		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
+			
+		    // Erases All Applications
+			clearApplicationCatalog();
+			
+			// Updates Context with the New Upload Path
+			setPersonalContext(uploadPath);		
+			
+			// Sends a New Query!
+			sendQuery(GCFApplication.this, true);
+		}
+	}
+	
+	// Used to Prevent the Application from Uploading Context Any More than it Has To!
+	static Date lastTransmission = new Date(0);
+	
+	public static void sendQuery(GCFApplication application, boolean force)
+	{
+		if (application.getGCFService() != null)
+		{
+			JSONContextParser context = application.getGCFService().getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext(); 
+			
+			long timeElapsed = new Date().getTime() - lastTransmission.getTime();
+			
+			if (force || context != null && timeElapsed > UPDATE_SECONDS * 1000)
+			{
+				Log.d(LOG_NAME, "Sending Context to DNS: " + context.toString().length() + " bytes");
+				
+				// Updates the Application Catalog to Remove Expired Entries
+				application.updateCatalog();
+				
+				// Updates the Device's Personal Context
+				application.setPersonalContext(null);
+				
+				// Sends a Context Update to the System
+				application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
+						ApplicationSettings.DNS_CHANNEL, 
+						"LOS_DNS", 
+						new String[] { "LOS_DNS" }, 
+						"QUERY", 
+						new String[] { "CONTEXT=" + context.toString(), "TIMESTAMP=" + new Date().toString(), "PID=" + APP_PROCESS_ID });
+								
+				lastTransmission = new Date();
+			}		
+		}
+		else
+		{
+			Log.d(LOG_NAME, "Cannot Send Context to DNS: GCF Service is NULL");
+		}
+	}
+	
+	// Timed Event ------------------------------------------------------------------------------
+	/**
+	 * This Class Allows the App To Update Its Context Once per Interval
+	 * @author adefreit
+	 */
+	private static class ContextAutoDeliveryHandler extends Handler
+	{
+		private boolean 		     running;
+		private final GCFApplication app;
+		private final GCFService 	 gcfService;
+		
+		public ContextAutoDeliveryHandler(final GCFApplication app, final GCFService gcfService)
+		{			
+			running 		= false;
+			this.app 		= app;
+			this.gcfService = gcfService;
+		}
+		
+		private Runnable scheduledTask = new Runnable() 
+		{	
+			public void run() 
+			{ 	
+				Date currentDate = new Date();
+				Date nextExecute = (app.isInForeground()) ? 
+						new Date(currentDate.getTime() + UPDATE_SECONDS * 1000) :
+						new Date(currentDate.getTime() + 2 * UPDATE_SECONDS * 1000);
+				
+				// Sends the Context to the Application Directory
+				sendQuery(app, false);
+				
+				// Removes Any Existing Callbacks
+				removeCallbacks(this);
+				
+				// Notifies the Application that the App List has Changed (or been erased)
+				Intent i = new Intent(ACTION_APP_UPDATE);
+				app.sendBroadcast(i);
+				
+				// Sleep Time Depends on Whether or Not the Application is in the Foreground
+				postDelayed(this, nextExecute.getTime() - currentDate.getTime());	
+			}
+		};
+		
+		public void start()
+		{
+			// Stops Any Existing Delays
+			stop();
+			
+			// Creates the Next Task Instance
+			postDelayed(scheduledTask, 100);
+			
+			running = true;
+		}
+		
+		public void stop()
+		{
+			removeCallbacks(scheduledTask);	
+			
+			running = false;
+		}
+		
+		public boolean isRunning()
+		{
+			return running;
+		}
+	}
+
+}

@@ -124,11 +124,11 @@ public class BarometerContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{	
 		maxPressure = Math.max(currentPressure, maxPressure);
 		
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], new String[] { String.format("%f", currentPressure), String.format("%f", maxPressure) });		
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { String.format("%f", currentPressure), String.format("%f", maxPressure) });		
 		
 		maxPressure = 0.0;
 		

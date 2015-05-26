@@ -2,24 +2,35 @@ package liveos_dns;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 
 public class DNSProvider extends ContextProvider
 {	
 	// Constants
-	private static String CONTEXT_TYPE = "LOS_DNS";
+	private static String CONTEXT_TYPE 	  = "LOS_DNS";
+	private static int    MIN_REPEAT_TIME = 10000;
+	
+	// Parameters
+	private String connectionKey;
+	
+	// Archives
+	private HashMap<String, Date> archives = new HashMap<String, Date>();
 	
 	/**
 	 * Constructor
 	 * @param groupContextManager
 	 */
-	public DNSProvider(GroupContextManager groupContextManager) 
+	public DNSProvider(GroupContextManager groupContextManager, String connectionKey) 
 	{
 		super(CONTEXT_TYPE, groupContextManager);
+		
+		this.connectionKey = connectionKey;
 				
 		// Sets it So That Any Device can Send a Command Message to this Device at Any Time!
 		this.setSubscriptionDependentForCompute(false);
@@ -30,16 +41,22 @@ public class DNSProvider extends ContextProvider
 	{
 		if (instruction.getCommand().equalsIgnoreCase("QUERY"))
 		{
-			runQuery(instruction.getDeviceID(), instruction.getParameters());
+			// Analyzes the Query Message
+			runQuery(instruction.getDeviceID(), instruction.getPayload());
+			
+			// Archives the Date Since the Last Query
+			archives.put(instruction.getDeviceID(), new Date());
 		}
 		else if (instruction.getCommand().equalsIgnoreCase("SEND_ADVERTISEMENT"))
 		{
-			String appID    = CommMessage.getValue(instruction.getParameters(), "APP_ID");
-			String deviceID = CommMessage.getValue(instruction.getParameters(), "DESTINATION");
+			String appID    = instruction.getPayload("APP_ID");
+			String deviceID = instruction.getPayload("DESTINATION");
 						
 			// Sends a Message about an Incoming Application
-			System.out.println("Sending Application " + appID + " to " + deviceID + "\n");
-			this.getGroupContextManager().sendComputeInstruction("PCP", new String[] { deviceID }, "APPLICATION", instruction.getParameters());
+			System.out.println("" + appID + " -> " + deviceID);
+			
+			this.getGroupContextManager().sendComputeInstruction(connectionKey, "dev/" + deviceID, "PCP", new String[] { deviceID }, "APPLICATION", instruction.getPayload());
+			//this.getGroupContextManager().sendComputeInstruction("PCP", new String[] { deviceID }, "APPLICATION", instruction.getParameters());
 		}
 		else
 		{
@@ -66,7 +83,7 @@ public class DNSProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		// Do Nothing
 	}
@@ -77,22 +94,29 @@ public class DNSProvider extends ContextProvider
 	 */
 	public void runQuery(String deviceID, String[] parameters)
 	{
-		//Creates Query Parameters
-		ArrayList<String> queryParameters = new ArrayList<String>();
-		
-		// Creates a Copy of Parameters
-		for (String s : parameters)
-		{
-			queryParameters.add(s);
-		}
-		
-		// Creates Custom Query Parameters
-		queryParameters.add("DEVICE_ID=" + deviceID);
-		
 		System.out.println("\n--- DNS QUERY " + new Date() + " -----");
-		System.out.println("Device:  " + deviceID + "\n");
+		System.out.println("Device:  " + deviceID);
 		
-		// Sends the Query
-		this.getGroupContextManager().sendComputeInstruction("QUERY", new String[] { }, "DEVICE_QUERY", queryParameters.toArray(new String[0]));
+		if (!archives.containsKey(deviceID) || (new Date().getTime() - archives.get(deviceID).getTime() >= MIN_REPEAT_TIME))
+		{
+			//Creates Query Parameters
+			ArrayList<String> queryParameters = new ArrayList<String>();
+			
+			// Creates a Copy of Parameters
+			for (String s : parameters)
+			{
+				queryParameters.add(s);
+			}
+			
+			// Creates Custom Query Parameters
+			queryParameters.add("DEVICE_ID=" + deviceID);
+			
+			// Sends the Query to All Application Providers
+			this.getGroupContextManager().sendComputeInstruction(connectionKey, ApplicationSettings.DNS_APP_CHANNEL, "QUERY", new String[] { }, "DEVICE_QUERY", queryParameters.toArray(new String[0]));
+		}
+		else
+		{
+			System.out.println("Ignoring due to multiple repeated messages in last " + MIN_REPEAT_TIME + "ms.");
+		}
 	}
 }

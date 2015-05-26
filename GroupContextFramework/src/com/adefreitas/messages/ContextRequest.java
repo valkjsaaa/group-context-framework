@@ -8,12 +8,10 @@ public class ContextRequest extends CommMessage
 	public static final int LOCAL_ONLY      = 1;
 	public static final int SINGLE_SOURCE   = 2;
 	public static final int MULTIPLE_SOURCE = 3;
-	public static final int SPECIFIC_SOURCE = 4;
 	
 	private String   		  contextType;
 	private int		 		  requestType;
 	private int 	 		  refreshRate;
-	private ArrayList<String> parameters;	// Adrian:  Someday, you'll want to change this, but you're going to have to change GCM
 	
 	// Weights (Only Used by Single Source Arbiter)
 	private double w_battery;
@@ -37,9 +35,9 @@ public class ContextRequest extends CommMessage
 	 */
 	public ContextRequest(String deviceID, String contextType, int requestType, int refreshRate, 
 						  double w_battery, double w_sensorFitness, double w_foreign, double w_providing, 
-						  double w_reliability, String[] parameters, String[] destination)
+						  double w_reliability, String[] payload, String[] destination)
 	{
-		super("CREQ");
+		super(CommMessage.MESSAGE_TYPE_REQUEST);
 		this.deviceID        = deviceID;
 		this.contextType     = contextType;
 		this.requestType     = requestType;
@@ -49,17 +47,10 @@ public class ContextRequest extends CommMessage
 		this.w_foreign 	  	 = w_foreign;
 		this.w_providing 	 = w_providing;
 		this.w_reliability 	 = w_reliability;
-		
-		// Creates Parameters
-		this.parameters = new ArrayList<String>();
-		
+				
 		// Sets Destination
 		this.destination = destination;
-		
-		for (String parameter : parameters)
-		{
-			this.parameters.add(parameter);
-		}
+		this.putPayload(payload);
 	}
 	
 	public String getContextType()
@@ -106,22 +97,7 @@ public class ContextRequest extends CommMessage
 	{
 		return w_reliability;
 	}
-	
-	public String[] getParameters()
-	{
-		return parameters.toArray(new String[0]);
-	}
-	
-	public void setParameters(String[] newParameters)
-	{
-		parameters.clear();
 		
-		for (String parameter : newParameters)
-		{
-			this.parameters.add(parameter);
-		}
-	}
-	
 	public boolean equals(ContextRequest otherRequest)
 	{
 		return contextType.equals(otherRequest.getContextType()) && 
@@ -130,15 +106,15 @@ public class ContextRequest extends CommMessage
 	
 	public String toString()
 	{
-		String parameterContents = "{";
+		String payloadContents = "{";
 		
-		for (String parameter : parameters)
+		for (String parameter : getPayload())
 		{
-			parameterContents += parameter + " ";
+			payloadContents += parameter + " ";
 		}
 		
-		parameterContents += "}";
+		payloadContents += "}";
 		
-		return String.format("REQUEST [%s] (Device=%s; RequestType=%s; Refresh=%d):  %d bytes", contextType, deviceID, requestType, refreshRate, parameterContents.length());
+		return String.format("REQUEST [%s] (Device=%s; RequestType=%s; Refresh=%d):  %d byte payload", contextType, deviceID, requestType, refreshRate, payloadContents.length()-2);
 	}
 }

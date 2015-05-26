@@ -139,7 +139,7 @@ public class LinearAccelerometerContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{	
 		// One Last Chance to Find the Highest Magnitude
 		double amplitude    = Math.sqrt(x*x + y*y + z*z);
@@ -155,7 +155,7 @@ public class LinearAccelerometerContextProvider extends ContextProvider
 		}
 		
 		// Reports the Current Vector, as Well as the Maximum
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], data);		
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], data);		
 		
 		// Resets Max Vector Since we Already Reported It
 		maxX = 0.0;

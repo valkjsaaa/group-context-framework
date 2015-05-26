@@ -127,10 +127,10 @@ public class AccelerometerContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{	
 		String[] data = new String[] { Double.toString(x), Double.toString(y), Double.toString(z), Double.toString(maxX), Double.toString(maxY), Double.toString(maxZ)};
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], data);		
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], data);		
 		
 		maxX = 0.0;
 		maxY = 0.0;

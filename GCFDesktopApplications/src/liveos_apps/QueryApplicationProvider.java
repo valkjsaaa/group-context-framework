@@ -1,85 +1,108 @@
 package liveos_apps;
 
 import java.util.ArrayList;
+import java.util.Date;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.liveos.ApplicationProvider;
-import com.adefreitas.messages.CommMessage;
+import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ComputeInstruction;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public class QueryApplicationProvider extends ContextProvider
 {	
+	private String connectionKey;
+	
 	/**
 	 * Constructor
 	 * @param groupContextManager
 	 */
-	public QueryApplicationProvider(GroupContextManager groupContextManager) 
+	public QueryApplicationProvider(GroupContextManager groupContextManager, String connectionKey) 
 	{
 		super("QUERY", groupContextManager);
+		
+		this.connectionKey = connectionKey;
 
 		// Sets it So That Any Device can Send a Command Message to this Device at Any Time!
 		this.setSubscriptionDependentForCompute(false);
 	}
 	
+	/**
+	 * Matches the Apps to the User
+	 */
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{		
 		if (instruction.getCommand().equals("DEVICE_QUERY"))
 		{			
-			String deviceID = CommMessage.getValue(instruction.getParameters(), "DEVICE_ID");
-			String context  = CommMessage.getValue(instruction.getParameters(), "CONTEXT");
+			String deviceID  = instruction.getPayload("DEVICE_ID");
+			String context   = instruction.getPayload("CONTEXT");
 			
-			if (context != null && deviceID != null)
+			processContext(deviceID, context, "APP_DIRECTORY");
+		}
+	}
+	
+	public void processContext(String deviceID, String context, String source)
+	{
+		Date startTime = new Date();
+		
+		// Prints a Debug Line
+		System.out.println("QUERY [" + deviceID + "]: "+ new Date() + " (from " + source + ")");
+				
+		if (context != null && deviceID != null)
+		{
+			// Looks for All Available Application Providers
+			for (ContextProvider provider : this.getGroupContextManager().getRegisteredProviders())
 			{
-				// Looks for All Available Application Providers
-				for (ContextProvider provider : this.getGroupContextManager().getRegisteredProviders())
+				if (provider instanceof ApplicationProvider)
 				{
-					if (provider instanceof ApplicationProvider)
+					DesktopApplicationProvider application = (DesktopApplicationProvider)provider;
+					
+					System.out.print("  " + application.getAppID() + ": ");
+					
+					// Determines if Sending an App Advertisement would be Redundant
+					boolean redundant = isRedundant(application, context);
+					
+					if (!redundant && application.sendAppData(context) && 
+							(application.signedDisclaimer(new JSONContextParser(JSONContextParser.JSON_TEXT, context)) || application.getAppID().equals("DISCLAIMER")))
 					{
-						ApplicationProvider application = (ApplicationProvider)provider;
-						
-						System.out.print("Giving context to " + application.getAppID() + " . . . ");
-						
-						if (application.sendAppData(context))
+						System.out.print("YES ");
+						sendAdvertisement(deviceID, context, application);
+					}	
+					else
+					{
+						if (redundant)
 						{
-							System.out.println("MATCH " + deviceID);
-							
-							// Creates a List of Parameters
-							ArrayList<String> parameters = new ArrayList<String>();
-							
-							for (String s : application.getInformation())
-							{
-								parameters.add(s);
-							}
-							
-							// Adds a Custom Parameter Needed by the DNS to Know Which Device this Advertisement is For
-							parameters.add("DESTINATION=" + deviceID);
-							
-							// Adds the Number of Matches for a Snap To It Capable Device
-							if (application instanceof SnapToItApplicationProvider)
-							{
-								SnapToItApplicationProvider stiApp = (SnapToItApplicationProvider)application;
-								
-								// Adds the Number of Matches!
-								parameters.add("PHOTO_MATCHES=" + stiApp.getFitness(context));
-							}
-							
-							// Directs the DNS to Send the Advertisement to the Device
-							getGroupContextManager().sendComputeInstruction("LOS_DNS", new String[] { "LOS_DNS" }, "SEND_ADVERTISEMENT", parameters.toArray(new String[0]));
-						}	
+							System.out.print("NO (REDUNDANT) ");
+						}
 						else
 						{
-							System.out.println("NO MATCH " + deviceID);
+							System.out.print("NO ");
 						}
 					}
+					
+					// Prints the Amount of Processing Time
+					System.out.println("(" + (new Date().getTime() - startTime.getTime()) + " ms)");
 				}
 			}
-			else
+		}
+		else
+		{
+			if (context == null)
 			{
-				System.out.println("CONTEXT OR DEVICE ID IS NULL");
+				System.out.println("PROBLEM: Context is Null");
+			}
+			else if (deviceID == null)
+			{
+				System.out.println("PROBLEM: Device ID is Null");
 			}
 		}
+		
+		// Prints a Blank Line
+		System.out.println();
 	}
 	
 	@Override
@@ -101,7 +124,69 @@ public class QueryApplicationProvider extends ContextProvider
 	}
 	
 	@Override
-	public void sendMostRecentReading() {
+	public void sendContext() {
 		
+	}
+
+	private void sendAdvertisement(String deviceID, String userContext, ApplicationProvider application)
+	{
+		// Creates a List of Parameters
+		ArrayList<String> parameters = new ArrayList<String>();
+		
+		for (String s : application.getInformation(userContext))
+		{
+			parameters.add(s);
+		}
+		
+		// Adds a Custom Parameter Needed by the DNS to Know Which Device this Advertisement is For
+		parameters.add("DESTINATION=" + deviceID);
+		
+		// Adds the Number of Matches for a Snap To It Capable Device
+		if (application instanceof SnapToItApplicationProvider)
+		{
+			SnapToItApplicationProvider stiApp = (SnapToItApplicationProvider)application;
+			
+			// Adds the Number of Matches!
+			parameters.add("PHOTO_MATCHES=" + stiApp.getFitness(userContext));
+		}
+		
+		// Directs the DNS to Send the Advertisement to the Device
+		getGroupContextManager().sendComputeInstruction(connectionKey, 
+				ApplicationSettings.DNS_CHANNEL, 
+				"LOS_DNS", 
+				new String[] { "LOS_DNS" }, 
+				"SEND_ADVERTISEMENT", 
+				parameters.toArray(new String[0]));
+	}
+	
+	// Private Methods --------------------------------------------------------------------------
+	private boolean isRedundant(ApplicationProvider appProvider, String context)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, context);
+		
+		if (parser.getJSONObject("identity") != null && parser.getJSONObject("identity").has("APPS"))
+		{
+			try
+			{
+				JsonArray apps = parser.getJSONObject("identity").getAsJsonArray("APPS");
+				
+				for (int i=0; i<apps.size(); i++)
+				{			
+					JsonObject appObject = apps.get(i).getAsJsonObject();
+					
+					if (appObject.get("name").getAsString().equals(appProvider.getContextType()) &&
+						appObject.get("expires").getAsInt() >= 60)
+					{
+						return true;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
+		return false;
 	}
 }

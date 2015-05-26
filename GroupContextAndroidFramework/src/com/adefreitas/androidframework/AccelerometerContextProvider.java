@@ -98,7 +98,7 @@ public class AccelerometerContextProvider extends ContextProvider implements Sen
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		String[] gravityData = new String[] { Double.toString(previousX), Double.toString(previousY), Double.toString(previousZ) }; 
 		String[] deltaData   = new String[] { Double.toString(previousX), Double.toString(previousY), Double.toString(previousZ) }; 
@@ -109,17 +109,17 @@ public class AccelerometerContextProvider extends ContextProvider implements Sen
 			{	
 				if (operation.equalsIgnoreCase("GRAVITY"))
 				{	
-					this.getGroupContextManager().sendContext(getContextType(), operation, new String[0], gravityData);	
+					this.getGroupContextManager().sendContext(getContextType(), new String[0], gravityData);	
 				}
 				else
 				{ 
-					this.getGroupContextManager().sendContext(getContextType(), operation, new String[0], deltaData);
+					this.getGroupContextManager().sendContext(getContextType(), new String[0], deltaData);
 				}
 			}
 		}
 		else
 		{
-			this.getGroupContextManager().sendContext(getContextType(), "GRAVITY", new String[0], gravityData);	
+			this.getGroupContextManager().sendContext(getContextType(), new String[0], gravityData);	
 		}
 	}
 

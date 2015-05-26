@@ -22,12 +22,7 @@ import com.adefreitas.messages.ComputeInstruction;
  *
  */
 public class PersonalContextProvider extends ContextProvider
-{
-	// Intent
-	public static final String COMPUTE_SENDER 	  = "SENDER";
-	public static final String COMPUTE_COMMAND 	  = "COMMAND";
-	public static final String COMPUTE_PARAMETERS = "PARAMETERS";
-	
+{	
 	// Context Configuration
 	private static final String FRIENDLY_NAME = "PersonalContext";	
 	private static final String CONTEXT_TYPE  = ContextType.PERSONAL;
@@ -114,11 +109,11 @@ public class PersonalContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		if (parser != null)
 		{
-			this.getGroupContextManager().sendContext(getContextType(), "", new String[0], new String[] { "context=" + parser.toString() });	
+			this.getGroupContextManager().sendContext(getContextType(), new String[0], new String[] { "context=" + parser.toString() });	
 		}
 	}
 
@@ -129,9 +124,10 @@ public class PersonalContextProvider extends ContextProvider
 		
 		// Creates and Sends a Broadcast Containing Compute Instructions
 		Intent intent = new Intent(BluewaveManager.ACTION_COMPUTE_INSTRUCTION_RECEIVED);
-		intent.putExtra(COMPUTE_SENDER, instruction.getDeviceID());
-		intent.putExtra(COMPUTE_COMMAND, instruction.getCommand());
-		intent.putExtra(COMPUTE_PARAMETERS, instruction.getParameters());
+		intent.putExtra(ComputeInstruction.COMPUTE_CONTEXT_TYPE, instruction.getContextType());
+		intent.putExtra(ComputeInstruction.COMPUTE_SENDER, instruction.getDeviceID());
+		intent.putExtra(ComputeInstruction.COMPUTE_COMMAND, instruction.getCommand());
+		intent.putExtra(ComputeInstruction.COMPUTE_PARAMETERS, instruction.getPayload());
 		context.sendBroadcast(intent);
 	}
 	

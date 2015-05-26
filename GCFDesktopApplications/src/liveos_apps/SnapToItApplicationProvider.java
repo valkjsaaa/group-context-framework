@@ -10,10 +10,10 @@ import openimaj.OpenimajToolkit;
 import org.codehaus.plexus.util.FileUtils;
 
 import toolkits.ScreenshotToolkit;
-import bluetoothcontext.toolkit.JSONContextParser;
 
-import com.adefreitas.desktoptoolkits.CloudStorageToolkit;
-import com.adefreitas.desktoptoolkits.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
+import com.adefreitas.desktopframework.toolkit.SftpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -32,7 +32,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	private CloudStorageToolkit cloudToolkit;
 	
 	// Behavior Flags
-	protected boolean debugMode       = false;
+	private   boolean debugMode       = false;
 	protected boolean storeUserPhotos = false;
 	protected int	  maxUserPhotos   = 5;
 	protected double  minMatches      = 10.0;
@@ -64,11 +64,6 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		
 		// Generates the Local Storage Folder on Initialization
 		this.getLocalStorageFolder();
-		
-		if (debugMode)
-		{
-			System.out.println("*** WARNING:  DEBUG MODE ENABLED ***");
-		}
 	}
 	
 	@Override
@@ -124,7 +119,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		
 		JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
 		
-		if (snapToItObject != null)
+		if (snapToItObject != null && snapToItObject.has("PHOTO") && snapToItObject.has("TIMESTAMP"))
 		{
 			String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
 			long   timestamp      = snapToItObject.get("TIMESTAMP").getAsLong();
@@ -147,20 +142,19 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		{
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 			
-			String deviceID		  = this.getDeviceName(parser);
+			String deviceID = this.getDeviceName(parser);
 			
 			JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
 			
-			if (snapToItObject != null)
+			if (snapToItObject != null && snapToItObject.has("PHOTO") && snapToItObject.has("TIMESTAMP"))
 			{
 				String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
 				long   timestamp      = snapToItObject.get("TIMESTAMP").getAsLong();
-				double matches = processPhoto(deviceID, cloudPhotoPath, timestamp);
+				double matches 		  = processPhoto(deviceID, cloudPhotoPath, timestamp);
 				System.out.println("Matches = " + matches);
-				
 				return matches >= minMatches;
 			}
-			
+
 			return false;		
 		}	
 	}
@@ -510,6 +504,20 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		System.out.println("*** Analysis Complete [" + result + "] *** sd:" + sd + " mean:" + mean + "; " + skew1 + "; " + skew2 + "; " + skew3 + "; " + correctAutoLaunch + "\n");
 		
 		return result;
+	}
+	
+	public void setDebugMode(boolean mode)
+	{		
+		this.debugMode = mode;
+		
+		if (debugMode)
+		{
+			System.out.println("*** DEBUG MODE ENABLED ***");
+		}
+		else
+		{
+			System.out.println("*** DEBUG MODE DISABLED ***");
+		}
 	}
 	
 	public void viewComparison(String file1, String file2)

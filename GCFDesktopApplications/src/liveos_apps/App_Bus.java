@@ -3,8 +3,8 @@ package liveos_apps;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 
-import bluetoothcontext.toolkit.JSONContextParser;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -25,7 +25,7 @@ public class App_Bus extends DesktopApplicationProvider
 				"TRANSPORTATION",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://findthestop.co.uk/img/bus-stop.jpg",				   // LOGO
+				"http://files.softicons.com/download/web-icons/awt-travel-blue-icons-by-awt-media/png/200x200/AWT-Bus.png",				   // LOGO
 				60,
 				commMode,
 				ipAddress,
@@ -35,6 +35,7 @@ public class App_Bus extends DesktopApplicationProvider
 		// NOTE:  I am using X, Y for Longitude, Latitude (the reverse of what you normally think)
 		coordinates.put("Home", new Point2D.Double(40.4338964, -79.8537098));
 		coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
+		coordinates.put("CMU University Center", new Point2D.Double(40.44449351, -79.7425490200));
 	}
 	
 	private String getNearestLocation(JSONContextParser parser)
@@ -67,6 +68,10 @@ public class App_Bus extends DesktopApplicationProvider
 		if (closestLocation.equals("NSH"))
 		{
 			return new String[] { "WEBSITE=http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=67&direction=OUTBOUND&id=7116&showAllBusses=on", "FORCE=true" };	
+		}
+		else if (closestLocation.equals("CMU University Center"))
+		{
+			return new String[] { "WEBSITE=http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=67&direction=OUTBOUND&id=7117&showAllBusses=on", "FORCE=true" };
 		}
 		else if (closestLocation.equals("Home"))
 		{

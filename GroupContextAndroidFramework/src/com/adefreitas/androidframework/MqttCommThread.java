@@ -17,6 +17,7 @@ import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.adefreitas.androidframework.MqttCommThread_Old.ConnectionThread;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.messages.CommMessage;
@@ -26,7 +27,7 @@ import com.google.gson.Gson;
 public class MqttCommThread extends CommThread implements MqttCallback
 {
 	private static final String  LOG_NAME = "MqttCommThread";
-	private static final boolean DEBUG    = false; 
+	private static final boolean DEBUG    = true; 
 	
 	// No MQTT Messages are Ever Expected to be Guaranteed to Arrive
 	private static final int QOS = 0;
@@ -60,7 +61,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
     	super(commManager);
     	
 		this.deviceID    = deviceID;
-	    gson 	   	     = new Gson();
+	    this.gson 	   	 = new Gson();
 	    this.commHandler = commHandler;
 	    this.cw 		 = cw;
 	    this.channels	 = new ArrayList<String>();
@@ -78,12 +79,12 @@ public class MqttCommThread extends CommThread implements MqttCallback
     		{
     			if (run && client != null && !client.isConnected())
     			{
-    				sleep(2000);
+    				sleep(5000);
     				connect(serverIP, port);
     			}
     			else
     			{
-    				sleep(30000);
+    				sleep(60000);
     				
     				if (DEBUG)
     				{
@@ -91,6 +92,12 @@ public class MqttCommThread extends CommThread implements MqttCallback
     				}
     			}
     		}
+    		
+    		// Experimental:  Kills the MQTT Thread
+			if (client != null)
+			{
+				disconnect();
+			}
     		
     		Log.d(LOG_NAME, "MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])) + " TERMINATED.");
     	}
@@ -113,61 +120,29 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		// Tracking the Port and IP Address
 		this.port      = port;
 		this.serverIP  = serverIP;
-		this.gson      = new Gson();
 
 		Log.d(LOG_NAME, "Attempting to connect to " + serverIP + ":" + port + " . . . ");
 		
 		// Creates a Networking Thread to Establish the Connection
-		Thread connectThread = new Thread()
-		{
-			public void run()
-			{
-				try
-				{
-		    		Log.d(LOG_NAME, "Attempting to connect to " + serverIP + ":" + port + " . . . ");
-		    		
-					MqttConnectOptions options = new MqttConnectOptions();
-					options.setUserName(deviceID);
-					options.setKeepAliveInterval(120);
-					options.setCleanSession(true);
-					
-					client = new MqttClient("tcp://" + serverIP + ":" + port, "mqtt_" + new Date().getTime(), null);
-					client.connect(options);
-					client.setCallback(MqttCommThread.this);
-					
-					if (client.isConnected())
-					{
-						// Creates a Backup List of Channels
-						ArrayList<String> previousChannels = new ArrayList<String>(channels);
-						channels.clear();
-						
-						// Reconnects to Previously Connected Channels
-						for (String channel : previousChannels)
-						{
-							Log.d(LOG_NAME, "Reconnecting to: " + channel);
-							subscribeToChannel(channel);
-						}
-						
-						// Reports Success
-						Log.d(LOG_NAME, "SUCCESS");
-						
-						// Reports that the Connection was Successful
-						((AndroidCommManager)(getCommManager())).notifyConnected(MqttCommThread.this);	
-					}
-				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-					Log.d(LOG_NAME, "FAILURE!");
-					
-					if (client != null)
-					{
-						close();
-					}
-				}		
-			}
-		};
+		Thread connectThread = new ConnectionThread();
 		connectThread.start();
+	}
+	
+	public void disconnect()
+	{	
+		try
+		{
+			if (client != null)
+			{
+				client.disconnect();
+				client.close();
+				client = null;		
+			}	
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -175,20 +150,6 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		// Stops the Maintenance Thread
 		run = false;
-		
-		try
-    	{
-			if (client != null)
-			{
-				client.disconnect();
-	    		client.close();
-	    		client = null;	
-			}
-		}
-    	catch (Exception ex)
-    	{
-    		ex.printStackTrace();
-    	}
 	}
 
 	// Communication Methods
@@ -220,7 +181,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		{
 			for (String channel : channels)
 			{
-				send(channel, gson.toJson(message));	
+				send(message.getMessageType(), channel, gson.toJson(message));	
 			}
 		}
 		else
@@ -233,7 +194,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			{
 				for (String channel : channelsToSend)
 				{
-					send(channel, gson.toJson(message));
+					send(message.getMessageType(), channel, gson.toJson(message));
 				}	
 			}
 		}
@@ -243,11 +204,11 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		if (message != null)
 		{
-			send(channel, gson.toJson(message));		
+			send(message.getMessageType(), channel, gson.toJson(message));		
 		}
 	}
 
-	private void send(String channel, String message)
+	private void send(String messageType, String channel, String message)
 	{
 		try
 		{
@@ -257,7 +218,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			msg.setRetained(false);
 			sendBuffer.add(msg);
 			
-			if (sendBuffer.size() > 5)
+			if (sendBuffer.size() > 1)
 			{
 				Log.d(LOG_NAME,  "Buffer exceeding max size.  Removing the oldest message.");
 				sendBuffer.remove(0);
@@ -267,7 +228,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			{
 				for (MqttMessage m : sendBuffer)
 				{
-					Log.d(LOG_NAME,  "Sending " + message.length() + " bytes to channel " + channel);
+					Log.d(LOG_NAME,  "Sending " + messageType + " [" + message.length() + " bytes] to channel " + channel);
 					client.getTopic(channel).publish(m);
 				}
 		
@@ -317,8 +278,11 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				this.addToArp(msg.getDeviceID());
 				
 				// Allows this Thread to Track WHICH CHANNEL a Device is On
-				channelARP.put(msg.getDeviceID(), channel);
-				Log.d(LOG_NAME, "Associating " + msg.getDeviceID() + " with channel " + channel);
+				if (!channelARP.containsKey(msg.getDeviceID()) || !channelARP.get(msg.getDeviceID()).equals(channel))
+				{
+					channelARP.put(msg.getDeviceID(), channel);
+					Log.d(LOG_NAME, "Associating " + msg.getDeviceID() + " with channel [" + channel + "]");	
+				}
 			}
 			
 			Message m = commHandler.obtainMessage();
@@ -355,9 +319,6 @@ public class MqttCommThread extends CommThread implements MqttCallback
 								channels.add(channel);
 								client.subscribe(channel);
 								
-								// Reports that the Subscription was Successful
-								((AndroidCommManager)(getCommManager())).notifySubscribed(MqttCommThread.this, channel);
-								
 								success = true;
 								break;
 							}
@@ -370,6 +331,9 @@ public class MqttCommThread extends CommThread implements MqttCallback
 							
 							i++;
 						}
+						
+						// Reports that the Subscription was Successful
+						((AndroidCommManager)(getCommManager())).notifySubscribed(MqttCommThread.this, channel);
 					}
 				}
 				catch (Exception ex)
@@ -446,4 +410,54 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		return channels.contains(channel);
 	}
 
+	// Threads
+	public class ConnectionThread extends Thread
+	{
+		public void run()
+		{
+			try
+			{
+	    		Log.d(LOG_NAME, "Attempting to connect to " + serverIP + ":" + port + " . . . ");
+	    		
+				MqttConnectOptions options = new MqttConnectOptions();
+				options.setUserName(deviceID);
+				options.setKeepAliveInterval(60);
+				options.setCleanSession(true);
+				
+				client = new MqttClient("tcp://" + serverIP + ":" + port, "mqtt_" + new Date().getTime(), null);
+				client.connect(options);
+				client.setCallback(MqttCommThread.this);
+				
+				if (client.isConnected())
+				{
+					// Creates a Backup List of Channels
+					ArrayList<String> previousChannels = new ArrayList<String>(channels);
+					channels.clear();
+					
+					// Reconnects to Previously Connected Channels
+					for (String channel : previousChannels)
+					{
+						Log.d(LOG_NAME, "Reconnecting to: " + channel);
+						subscribeToChannel(channel);
+					}
+					
+					// Reports Success
+					Log.d(LOG_NAME, "MQTT Connected: " + serverIP);
+					
+					// Reports that the Connection was Successful
+					((AndroidCommManager)(getCommManager())).notifyConnected(MqttCommThread.this);	
+				}
+			}
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+				Log.d(LOG_NAME, "MQTT Connection Failure: " + serverIP);
+				
+				if (client != null)
+				{
+					close();
+				}
+			}		
+		}
+	}
 }

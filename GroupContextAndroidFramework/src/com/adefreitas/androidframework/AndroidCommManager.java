@@ -1,21 +1,31 @@
 package com.adefreitas.androidframework;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
+import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.CommMessage;
 
 public class AndroidCommManager extends CommManager
 {
+	public static final boolean DEBUG_MODE = true;
+	
 	// Static Intents
 	public static final String ACTION_COMMTHREAD_CONNECTED = "comm_connected";
 	public static final String ACTION_CHANNEL_SUBSCRIBED   = "comm_subscribed";
+	
+	// Static Extras
+	public static final String EXTRA_IP_ADDRESS = "IP_ADDRESS";
+	public static final String EXTRA_PORT		= "PORT";
+	public static final String EXTRA_CHANNEL	= "CHANNEL";
 	
 	private CommHandler    commHandler;  // Used by the Communications Thread to Deliver Messages Received
 	private ContextWrapper cw;
@@ -26,6 +36,30 @@ public class AndroidCommManager extends CommManager
 
 		commHandler = new CommHandler(gcm, cw);
 		this.cw     = cw;
+		
+		if (DEBUG_MODE)
+		{
+			Thread debugThread = new Thread()
+			{
+				public void run()
+				{
+					while (true)
+					{					
+						try
+						{
+							String entry = "Active Comm Threads: " + Arrays.toString(getCommThreadKeys());
+							Log.d(GroupContextManager.LOG_COMMUNICATIONS, entry);
+							sleep(60000);
+						}
+						catch (Exception ex)
+						{
+							ex.printStackTrace();
+						}
+					}
+				}
+			};
+			debugThread.start();	
+		}
 	}
 
 	@Override
@@ -62,12 +96,12 @@ public class AndroidCommManager extends CommManager
 				}
 				else
 				{
-					System.out.println("Communications Mode Not Recognized " + commMode);
+					Log.d(GroupContextManager.LOG_COMMUNICATIONS, "Communications Mode Not Recognized " + commMode);
 				}	
 			}
 			else
 			{
-				System.out.println("Socket " + socketKey + " Already Created");
+				Log.d(GroupContextManager.LOG_COMMUNICATIONS, "Socket " + socketKey + " Already Created");
 				this.notifyConnected(this.getCommThread(socketKey));
 			}
 			
@@ -84,15 +118,17 @@ public class AndroidCommManager extends CommManager
 	public void notifyConnected(CommThread ct)
 	{
 		Intent intent = new Intent(ACTION_COMMTHREAD_CONNECTED);
-		intent.putExtra("IP_ADDRESS", ct.getIPAddress());
-		intent.putExtra("PORT", ct.getPort());
+		intent.putExtra(EXTRA_IP_ADDRESS, ct.getIPAddress());
+		intent.putExtra(EXTRA_PORT, ct.getPort());
 		cw.getBaseContext().sendBroadcast(intent);
 	}
 	
 	public void notifySubscribed(CommThread ct, String channel)
 	{
 		Intent intent = new Intent(ACTION_CHANNEL_SUBSCRIBED);
-		intent.putExtra("CHANNEL", channel);
+		intent.putExtra(EXTRA_IP_ADDRESS, ct.getIPAddress());
+		intent.putExtra(EXTRA_PORT, ct.getPort());
+		intent.putExtra(EXTRA_CHANNEL, channel);
 		cw.getBaseContext().sendBroadcast(intent);
 	}
 	

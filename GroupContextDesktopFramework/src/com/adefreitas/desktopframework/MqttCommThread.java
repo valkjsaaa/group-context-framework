@@ -108,7 +108,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		{
 			MqttConnectOptions options = new MqttConnectOptions();
 			options.setUserName(deviceID);
-			options.setKeepAliveInterval(0);
+			options.setKeepAliveInterval(60);
 			options.setCleanSession(true);
 			
 			client = new MqttClient("tcp://" + serverIP + ":" + port, "mqtt_" + new Date().getTime(), null);
@@ -125,11 +125,11 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				subscribeToChannel(channel);
 			}
 			
-			System.out.println("SUCCESS!");
+			//System.out.println("SUCCESS!");
 		}
 		catch (Exception ex)
 		{
-			System.out.println("FAILED!");
+			System.out.println("MQTT CONNECT FAILED!");
 			ex.printStackTrace();
 		}
 	}
@@ -156,8 +156,8 @@ public class MqttCommThread extends CommThread implements MqttCallback
      */
 	public void send(CommMessage message)
     {
-		ArrayList<String> channelsToSend = new ArrayList<String>();
-		boolean 		  broadcast      = message.getDestination().length == 0;
+		ArrayList<String> channelsToSend = new ArrayList<String>();	
+		boolean broadcast = message.getDestination().length == 0;
 		
 		for (String deviceID : message.getDestination())
 		{
@@ -270,7 +270,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		}
 		catch (Exception ex)
 		{
-			ex.printStackTrace();
+			System.out.println("Problem while subscribing to channel " + channel + ": " + ex.getMessage());
 		}
 	}
 	
@@ -287,7 +287,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		}
 		catch (Exception ex)
 		{
-			ex.printStackTrace();
+			System.out.println("Problem while unsubscribing to channel " + channel + ": " + ex.getMessage());
 		}
 	}
 	

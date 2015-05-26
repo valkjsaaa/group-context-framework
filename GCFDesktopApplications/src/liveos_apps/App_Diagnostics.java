@@ -21,7 +21,7 @@ public class App_Diagnostics extends DesktopApplicationProvider
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://icons.iconarchive.com/icons/rafiqul-hassan/blogger/96/Settings-icon.png",				   // LOGO
+				"https://collegeready.epiconline.org/platform/assets/images/icons/icon_campusready.png",				   // LOGO
 				30,
 				commMode,
 				ipAddress,

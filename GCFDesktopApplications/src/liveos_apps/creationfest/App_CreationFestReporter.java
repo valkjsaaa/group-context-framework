@@ -1,0 +1,62 @@
+package liveos_apps.creationfest;
+
+import liveos_apps.DesktopApplicationProvider;
+import liveos_apps.ProblemContextProvider;
+
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
+import com.adefreitas.groupcontextframework.CommManager.CommMode;
+import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
+import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.messages.ComputeInstruction;
+
+public class App_CreationFestReporter extends DesktopApplicationProvider
+{
+	private ProblemContextProvider problemProvider;
+	
+	public App_CreationFestReporter(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	{
+		// Creates App with Default Settings
+		super(groupContextManager, 
+				"CF_REPORT",
+				"Problem Reporter",
+				"This app lets you report problems to the CreationFest Leadership.",
+				"CREATIONFEST 2015",
+				new String[] { },  // Contexts
+				new String[] { },  // Preferences
+				"https://cdn2.iconfinder.com/data/icons/oxygen/48x48/status/dialog-warning.png", // LOGO
+				300,
+				commMode,
+				ipAddress,
+				port);
+		
+		// Creates a Context Provider to Report Problems
+		problemProvider = new ProblemContextProvider(groupContextManager);
+		
+		// Loads a Context Provider for Problems!
+		groupContextManager.registerContextProvider(problemProvider);
+	}
+
+	@Override
+	public String[] getInterface(ContextSubscriptionInfo subscription)
+	{
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/test/sample_page.html"};
+	}
+
+	@Override
+	public void onComputeInstruction(ComputeInstruction instruction)
+	{
+		super.onComputeInstruction(instruction);
+	}
+
+	public int getLifetime()
+	{
+		return 300;
+	}
+	
+	@Override
+	public boolean sendAppData(String json)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
+		return hasEmailAddress(parser, "adrian.defreitas@gmail.com") && this.signedDisclaimer(parser);
+	}
+}

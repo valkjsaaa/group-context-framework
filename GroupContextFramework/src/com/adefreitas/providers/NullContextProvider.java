@@ -47,7 +47,7 @@ public class NullContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		// Do Nothing
 	}

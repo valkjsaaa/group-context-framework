@@ -39,8 +39,8 @@ public class SampleContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
-		this.getGroupContextManager().sendContext(this.getContextType(), "SAMPLE DESCRIPTION", new String[0], new String[] { "SAMPLE DATA" });
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { "SAMPLE DATA" });
 	}
 }

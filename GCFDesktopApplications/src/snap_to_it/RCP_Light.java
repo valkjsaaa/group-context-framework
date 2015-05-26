@@ -25,7 +25,7 @@ public class RCP_Light extends RemoteControlProvider
 		super.initializeUserInterfaces();
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
 		{
@@ -41,7 +41,6 @@ public class RCP_Light extends RemoteControlProvider
 			
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "UI=" + ui });
 		}
@@ -57,6 +56,6 @@ public class RCP_Light extends RemoteControlProvider
 			on = !on;
 		}
 		
-		this.sendMostRecentReading();
+		this.sendContext();
 	}
 }

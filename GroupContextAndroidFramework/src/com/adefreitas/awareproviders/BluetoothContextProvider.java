@@ -147,7 +147,7 @@ public class BluetoothContextProvider extends ContextProvider
 		return 1.0;
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{	
 		// Temp Array to Store all Bluetooth IDs
 		ArrayList<String> deviceIDs = new ArrayList<String>();
@@ -166,7 +166,7 @@ public class BluetoothContextProvider extends ContextProvider
 		}
 		
 		// Sends the List of IDs
-		this.getGroupContextManager().sendContext(getContextType(), "", new String[0], deviceIDs.toArray(new String[0]));
+		this.getGroupContextManager().sendContext(getContextType(), new String[0], deviceIDs.toArray(new String[0]));
 		
 		context.getContentResolver().delete(URI, null, null);
 	}
@@ -212,7 +212,7 @@ public class BluetoothContextProvider extends ContextProvider
 			context.getContentResolver().delete(URI, null, null);
 			
 			// TODO:  Sends Updated Bluetooth Readings			
-			sendMostRecentReading();
+			sendContext();
 		}
 	}
 

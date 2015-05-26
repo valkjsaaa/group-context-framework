@@ -3,8 +3,8 @@ package bluetoothcontext.template;
 import java.util.Date;
 
 import bluetoothcontext.toolkit.GCFDesktopApplication;
-import bluetoothcontext.toolkit.JSONContextParser;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.messages.ContextData;
 import com.google.gson.JsonObject;
 

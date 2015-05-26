@@ -149,11 +149,11 @@ public class LocationContextProvider extends ContextProvider
 	}
 	
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		if (!Double.isNaN(latitude) && !Double.isNaN(longitude) && !Double.isNaN(altitude) && !Double.isNaN(accuracy))
 		{
-			this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], new String[] { Double.toString(latitude), Double.toString(longitude), Double.toString(altitude), Double.toString(accuracy) });
+			this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { Double.toString(latitude), Double.toString(longitude), Double.toString(altitude), Double.toString(accuracy) });
 			
 			@SuppressWarnings("unused")
 			int deletedRows = context.getContentResolver().delete(URI, null, null);

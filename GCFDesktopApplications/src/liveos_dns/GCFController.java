@@ -24,7 +24,8 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	// GCF Variables
 	public DesktopBatteryMonitor      batteryMonitor;
 	public DesktopGroupContextManager gcm;
-
+	public String 					  connectionKey;
+	
 	/**
 	 * Constructor
 	 * @param appName
@@ -44,13 +45,13 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		gcm.registerOnMessageProcessor(this);
 		gcm.registerOnRequestProcessor(this);
 		
-		// Creates Context Providers
-		gcm.registerContextProvider(new DNSProvider(gcm));
-		
 		// Subscribes to a Communications Channel
-		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
+		connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
 		gcm.subscribe(connectionKey, ApplicationSettings.DNS_APP_CHANNEL);
 		gcm.subscribe(connectionKey, ApplicationSettings.DNS_CHANNEL);
+		
+		// Creates Context Providers
+		gcm.registerContextProvider(new DNSProvider(gcm, connectionKey));
 		
 		System.out.println("READY FOR ACTION!\n");
 	}

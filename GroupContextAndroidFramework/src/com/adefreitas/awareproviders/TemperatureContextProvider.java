@@ -124,11 +124,11 @@ public class TemperatureContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{	
 		maxTemperature = Math.max(maxTemperature, currentTemperature);
 		
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], new String[] { Double.toString(currentTemperature), Double.toString(maxTemperature) });		
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { Double.toString(currentTemperature), Double.toString(maxTemperature) });		
 		
 		maxTemperature = 0.0;
 		

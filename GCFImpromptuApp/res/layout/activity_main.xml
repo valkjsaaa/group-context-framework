@@ -1,0 +1,95 @@
+<RelativeLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:keepScreenOn="true"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+            
+        <android.support.v7.widget.Toolbar
+		    xmlns:app="http://schemas.android.com/apk/res-auto"
+		    android:id="@+id/toolbar"
+		    android:layout_height="wrap_content"
+		    android:layout_width="match_parent"
+		    app:theme="@style/Theme.MyTheme"
+		    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+		    android:background="#FFFFFF" />
+        
+        <View 
+			android:layout_width="fill_parent" 
+			android:layout_height="2dp" 
+			android:background="#333333" />
+        
+        <LinearLayout
+        	android:id="@+id/layoutApps"
+        	android:layout_width="fill_parent"
+        	android:layout_height="wrap_content"
+        	android:orientation="vertical">
+            
+        </LinearLayout>
+        
+        <ExpandableListView
+			android:id="@+id/lstApps"
+			android:layout_marginTop="2dp"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:visibility="gone"/>
+        
+        <!--  This Layout Displays the Instructions -->
+        <LinearLayout
+            android:id="@+id/layoutInstructions"
+            android:layout_marginTop="10dp"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_gravity="center"
+        	android:orientation="vertical">
+        	
+            <ImageView
+                android:id="@+id/imgCameraBig"
+		        android:layout_width="150dp"
+		        android:layout_height="150dp"
+		        android:layout_margin="15dp"
+		        android:layout_gravity="center"
+		        android:padding="20dp"
+		        android:elevation="5dp"
+		        android:background="@drawable/ic_launcher"/>
+            <TextView 
+                android:id="@+id/txtInstructionTitle"
+                android:layout_width="wrap_content"
+        		android:layout_height="wrap_content"
+        		android:textColor="#666666"
+        		android:layout_gravity="center"
+        		android:textSize="24sp"
+        		android:text="TITLE GOES HERE"/>
+            <TextView 
+                 android:id="@+id/txtInstructionDescription"
+                android:layout_width="wrap_content"
+        		android:layout_height="wrap_content"
+        		android:textColor="#666666"
+        		android:gravity="center"
+        		android:layout_gravity="center"
+        		android:textSize="14sp"
+        		android:padding="10dp"
+        		android:text="DESCRIPTION GOES HERE"/>
+        </LinearLayout>
+    </LinearLayout>
+                
+    <ImageView
+        android:id="@+id/imgCameraSmall"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="15dp"
+        android:padding="8dp"
+        android:elevation="5dp"
+        android:background="@drawable/camera_focused"
+        android:src="@drawable/ic_camera"/>
+
+</RelativeLayout>

@@ -7,9 +7,10 @@ import com.adefreitas.desktopframework.DesktopBatteryMonitor;
 import com.adefreitas.desktopframework.DesktopGroupContextManager;
 import com.adefreitas.desktopframework.MessageProcessor;
 import com.adefreitas.desktopframework.RequestProcessor;
-import com.adefreitas.desktoptoolkits.CloudStorageToolkit;
-import com.adefreitas.desktoptoolkits.HttpToolkit;
-import com.adefreitas.desktoptoolkits.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
+import com.adefreitas.desktopframework.toolkit.SftpToolkit;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.messages.CommMessage;
@@ -116,7 +117,7 @@ public abstract class GCFDesktopApplication implements MessageProcessor, Request
 		// DESKTOP BLUEWAVE PROTOTYPE CODE
 		if (data.getContextType().equals("BLU"))
 		{						
-			for (String bluetoothID : data.getValues())
+			for (String bluetoothID : data.getPayload())
 			{	
 				if (bluetoothID != null)
 				{

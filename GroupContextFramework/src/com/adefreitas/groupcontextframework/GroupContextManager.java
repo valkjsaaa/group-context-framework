@@ -15,24 +15,24 @@ import com.adefreitas.messages.ContextSubscription;
 
 public abstract class GroupContextManager
 {
-	public static final double FRAMEWORK_VERSION = 0.760;
+	public static final double FRAMEWORK_VERSION = 0.82;
 	public static enum DeviceType { Desktop, Laptop, Mobile, Sensor, Other };
 
-	// Log Types (Incomplete)
-	public static final String LOG_GENERAL 	       = "GCM";
-	public static final String LOG_CAPABILITY      = "GCM-Capability";
-	public static final String LOG_COMPUTE 	       = "GCF-Compute";
-	public static final String LOG_COMMUNICATIONS  = "GCF-Comm";
-	public static final String LOG_ERROR  	       = "GCM-Error";
-	public static final String LOG_REQUEST         = "GCM-Request";
-	public static final String LOG_TIMEOUT	       = "GCM-Timeout";
-	public static final String LOG_PERFORMANCE     = "GCF-Performance";
+	// Log Types
+	public static final String LOG_GENERAL 	       = "GCF";
+	public static final String LOG_CAPABILITY      = "GCF-Capability";
+	public static final String LOG_COMMUNICATIONS  = "GCF-Comm";	
 	public static final String LOG_COMPARISON      = "GCF-Comparison";
-	public static final String LOG_SUBSCRIPTION    = "GCM-Subscription";
-		
+	public static final String LOG_COMPUTE 	       = "GCF-Compute";
+	public static final String LOG_ERROR  	       = "GCF-Error";
+	public static final String LOG_PERFORMANCE     = "GCF-Performance";
+	public static final String LOG_REQUEST         = "GCF-Request";
+	public static final String LOG_SUBSCRIPTION    = "GCF-Subscription";
+	public static final String LOG_TIMEOUT	       = "GCF-Timeout";
+	
 	// Constants
-	public static final int    NO_SUBSCRIPTION_DELAY		 = 1500;
-	public static final int    ADVERTISEMENT_DELAY 			 = 5000;
+	public static final int    NO_SUBSCRIPTION_DELAY		 = 10000;
+	public static final int    ADVERTISEMENT_DELAY 			 = 15000;
 	public static final int    MIN_MESSAGE_VERSION 			 = 1;
 	public static final double DEFAULT_WEIGHT_BATTERY 	     = 0.4;
 	public static final double DEFAULT_WEIGHT_SENSOR_QUALITY = 0.2;
@@ -96,7 +96,6 @@ public abstract class GroupContextManager
 		arbiters.put(ContextRequest.SINGLE_SOURCE,   new SingleSourceArbiter(ContextRequest.SINGLE_SOURCE));
 		arbiters.put(ContextRequest.MULTIPLE_SOURCE, new MultiSourceArbiter(ContextRequest.MULTIPLE_SOURCE));
 		arbiters.put(ContextRequest.LOCAL_ONLY, 	 new LocalSourceArbiter(ContextRequest.LOCAL_ONLY));
-		arbiters.put(ContextRequest.SPECIFIC_SOURCE, new SpecificSourceArbiter(ContextRequest.SPECIFIC_SOURCE));
 		
 		// Creates the List of Requests
 		internalRequests = new ArrayList<ContextRequest>();
@@ -163,7 +162,7 @@ public abstract class GroupContextManager
 						r.getForeignWeight(), 
 						r.getProvidingWeight(), 
 						r.getReliabilityWeight(), 
-						r.getParameters(),
+						r.getPayload(),
 						r.getDestination());
 			}	
 		}
@@ -289,13 +288,14 @@ public abstract class GroupContextManager
 	 * @param destinations - a list of the GCF device IDs that this message is intended for
 	 * @param value - the context values
  	 */
- 	public void sendContext(String contextType, String description, String[] destinations, String[] value)
+ 	public void sendContext(String contextType, String[] destinations, String[] value)
  	{
- 		ContextData data = new ContextData(contextType, deviceID, description, destinations, value);
+ 		ContextData data = new ContextData(contextType, deviceID, destinations, value);
  		
  		// Throws an Event
  		this.onSendingData(data);
  		
+ 		// Actually Sends the Information
  		commManager.send(data);
  	}
  	
@@ -308,7 +308,7 @@ public abstract class GroupContextManager
 	 */
 	protected void sendCapability(ContextProvider provider, ContextRequest request)
 	{
-		double fitness = provider.getFitness(request.getParameters());
+		double fitness = provider.getFitness(request.getPayload());
 		
 		// Creates the Context Capability Message
 		ContextCapability capability = new ContextCapability(deviceID, deviceType.toString(), 
@@ -333,7 +333,6 @@ public abstract class GroupContextManager
 	{			
 		if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Subscribe))
 		{	
-			// Adds this Capability to the List of Subscribed Capabilities
 			// Creates the List if it does not already exist
 			if (!subscribedCapabilities.containsKey(request))
 			{
@@ -355,9 +354,9 @@ public abstract class GroupContextManager
 			if (subscribedCapabilities.containsKey(request))
 			{
 				// Removes this Capability to the List of Subscribed Capabilities
-				// Removes the List Entirely if it is Empty
 				subscribedCapabilities.get(request).remove(capability);
 					
+				// Removes the List Entirely if it is Empty
 				if (subscribedCapabilities.get(request).size() == 0)
 				{
 					subscribedCapabilities.remove(request);
@@ -369,7 +368,7 @@ public abstract class GroupContextManager
 		}
 		
 		// Creates and Sends the Subscription Message
-		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, new String[] { capability.getDeviceID() }, capability.getContextType(), request.getRefreshRate(), capability.getHeartbeatRate(), request.getParameters());
+		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, new String[] { capability.getDeviceID() }, capability.getContextType(), request.getRefreshRate(), capability.getHeartbeatRate(), request.getPayload());
 		commManager.send(subscriptionUpdate);
 	}
 		
@@ -400,16 +399,8 @@ public abstract class GroupContextManager
 	 * @param deviceID
 	 * @param refreshRate
 	 */
-	public void sendRequest(String contextType, String[] deviceIDs, int refreshRate, String[] parameters)
-	{
-//		SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
-//		
-//		// Adds the Device ID and Context to the Specific Source Arbiter
-//		for (String deviceID : deviceIDs)
-//		{
-//			ssa.addDevice(deviceID, contextType);
-//		}
-				
+	public void sendRequest(String contextType, int requestType, String[] deviceIDs, int refreshRate, String[] parameters)
+	{				
 		// Sends the Request using the Default Weights
 		sendRequest(contextType, 
 				ContextRequest.MULTIPLE_SOURCE, 
@@ -539,10 +530,10 @@ public abstract class GroupContextManager
 							break;
 						}
 					}
-					
-					// Adds the Device ID and Context to the Specific Source Arbiter
-					SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
-					ssa.removeDevice(deviceID, type);
+
+//					// Adds the Device ID and Context to the Specific Source Arbiter
+//					SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
+//					ssa.removeDevice(deviceID, type);
 				}
 				
 				break;
@@ -583,14 +574,14 @@ public abstract class GroupContextManager
 	 */
 	private void cancelRequest(ContextRequest request, ContextCapability capability, boolean dueToTimeout)
 	{
-		// Removes the Specific Source Request from the Arbiter
-		if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE)
-		{
-			SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
-			
-			// Adds the Specific Source to the Arbiter
-			ssa.removeDevice(deviceID, request.getContextType());
-		}
+//		// Removes the Specific Source Request from the Arbiter
+//		if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE)
+//		{
+//			SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
+//			
+//			// Adds the Specific Source to the Arbiter
+//			ssa.removeDevice(deviceID, request.getContextType());
+//		}
 		
 		// If Currently Subscribed, Unsubscribes from the Capability
 		if (subscribedCapabilities.containsKey(request) && subscribedCapabilities.get(request).contains(capability))
@@ -655,6 +646,25 @@ public abstract class GroupContextManager
 		}
 	}
 
+	/**
+	 * Returns the Context Provider with the Specified Context Type
+	 * @param type
+	 * @return
+	 */
+	public ContextProvider getContextProvider(String type)
+	{
+		return providers.get(type);
+	}
+	
+	/**
+	 * Retrieves All Context Providers Registered to this Object
+	 * @return
+	 */
+	public ContextProvider[] getRegisteredProviders()
+	{
+		return providers.values().toArray(new ContextProvider[0]);
+	}
+	
 	// ARBITER METHODS --------------------------------------------------------------------------------------------------------
 	/**
 	 * Registers an Arbiter Used to Pick Context Capability
@@ -691,16 +701,7 @@ public abstract class GroupContextManager
 		}
 	}
 	
-	/**
-	 * Retrieves All Context Providers Registered to this Object
-	 * @return
-	 */
-	public ContextProvider[] getRegisteredProviders()
-	{
-		return providers.values().toArray(new ContextProvider[0]);
-	}
-	
-	// ABSTRACT EVENTS -----------------------------------------------------------------------------------------------------
+	// (ABSTRACT) SYSTEM EVENTS -----------------------------------------------------------------------------------------------------
 	public abstract void log(String category, String message);
 	
 	protected abstract void deliverDataToApp(ContextData data, ContextRequest request);
@@ -710,6 +711,8 @@ public abstract class GroupContextManager
 	protected abstract void onCapabilitySubscribe(ContextCapability capability);
 	
 	protected abstract void onCapabilityUnsubscribe(ContextCapability capability);
+	
+	protected abstract void onRequestReceived(ContextRequest request);
 	
 	protected abstract void onRequestTimeout(ContextRequest request, ContextCapability capability);
 	
@@ -731,14 +734,14 @@ public abstract class GroupContextManager
 	 */
 	public String connect(CommMode communicationsMode, String ipAddress, int port)
 	{
+		String connectionKey = null;
+		
 		if (commManager != null)
 		{
-			return this.commManager.connect(communicationsMode, ipAddress, port);	
+			connectionKey = this.commManager.connect(communicationsMode, ipAddress, port);
 		}
-		else
-		{
-			return null;
-		}
+
+		return connectionKey;
 	}
 	
 	/**
@@ -956,6 +959,12 @@ public abstract class GroupContextManager
 	{
 		log(LOG_REQUEST, request.toString());
 			
+		// Allows the Application to See Context Requests from Other Devices
+		if (!request.getDeviceID().equals(deviceID))
+		{
+			this.onRequestReceived(request);	
+		}
+		
 		// Determines if this GCM has a Registered Context Provider of the Specified Type
 		if (providers.containsKey(request.getContextType()))
 		{			
@@ -963,7 +972,7 @@ public abstract class GroupContextManager
 			ContextProvider provider = providers.get(request.getContextType());
 			
 			// Only Processes the Request under the following conditions
-			// 1.  The provider is set to share context data with other devices
+			// 1.  The provider is set to share context data with other devices (ISSHARABLE = TRUE)
 			// 2.  The request is from the device hosting the context provider
 			// 3.  The requesting device is already subscribed
 			if (provider.isSharable() || (request.getDeviceID().equals(deviceID) || provider.isSubscribed(deviceID)))
@@ -1011,7 +1020,6 @@ public abstract class GroupContextManager
 		
 		// Adds the Capability to the List of Capabilities
 		receivedCapabilities.add(capability);
-		//log(LOG_CAPABILITY, "Adding Capability: " + capability + "; " + receivedCapabilities.size() + " total.");
 		
 		// Raises the Event
 		this.onCapabilityReceived(capability);
@@ -1044,7 +1052,7 @@ public abstract class GroupContextManager
 					{
 						log(LOG_SUBSCRIPTION, subscription.getDeviceID() + " subscribing to " + subscription.getContextType());
 						
-						provider.addSubscription(subscription.getDeviceID(), subscription.getRefreshRate(), subscription.getHeartbeatRate(), subscription.getParameters());	
+						provider.addSubscription(subscription.getDeviceID(), subscription.getRefreshRate(), subscription.getHeartbeatRate(), subscription.getPayload());	
 						
 						// Raises an Event
 						onProviderSubscribe(provider);
@@ -1054,7 +1062,7 @@ public abstract class GroupContextManager
 						log(LOG_SUBSCRIPTION, subscription.getDeviceID() + " sending duplicate subscription for " + subscription.getContextType());
 						
 						// Just Have the Provider Send Context Information Again
-						provider.sendMostRecentReading();
+						provider.sendContext();
 					}
 					
 					// Starts the Provider if No One is Currently Subscribed
@@ -1141,25 +1149,17 @@ public abstract class GroupContextManager
 		long subscriptionDelay          = manageSubscriptions();
 		long subscriptionProcessingTime = new Date().getTime() - startSubscriptionTime;
 		
-		// TODO:  DECIDE IF YOU NEED THIS
+		// Manages all Context Delivery (and determines how long it took to do so)
 		long startContextDeliveryTime = new Date().getTime();
 		long deliveryDelay 			  = deliverContext();
 		long deliveryProcessingTime   = new Date().getTime() - startContextDeliveryTime;
 		
-		// Provides Warning if Performance is Slower than Expected
-		if (requestProcessingTime + subscriptionProcessingTime > (100))
-		{
-			log(LOG_PERFORMANCE, "POSSIBLE SLOWDOWN:  (REQ = " + requestProcessingTime + " ms; SUB = " + subscriptionProcessingTime + " ms; CON = " + deliveryProcessingTime + " ms)");
-		}
-		else
-		{
-			log(LOG_PERFORMANCE, "SCHEDULED TASKS COMPLETE: (REQ = " + requestProcessingTime + " ms; SUB = " + subscriptionProcessingTime + " ms; CON = " + deliveryProcessingTime + " ms)");
-		}
-		
 		// Calculates How Long Until the Next Scheduled Task Should Occur
 		long delay = Math.min(requestDelay, Math.min(deliveryDelay, subscriptionDelay)) - (requestProcessingTime + subscriptionProcessingTime);
 		
-		log("GCM-Performance", "Recommending delay of " + delay + " ms");
+		// Provides Warning if Performance is Slower than Expected
+		log(LOG_PERFORMANCE, "SCHEDULED TASKS: (REQ = " + requestProcessingTime + " ms; SUB = " + subscriptionProcessingTime + " ms; CONTEXT = " + deliveryProcessingTime + " ms): " + delay + " ms until next action.");
+		
 		return delay;
 	}
 	
@@ -1252,7 +1252,7 @@ public abstract class GroupContextManager
 						request.getForeignWeight(), 
 						request.getProvidingWeight(), 
 						request.getReliabilityWeight(), 
-						request.getParameters(), 
+						request.getPayload(), 
 						request.getDestination());
 			}
 		}
@@ -1416,7 +1416,7 @@ public abstract class GroupContextManager
 				if (timeElapsed > provider.getRefreshRate())
 				{
 					// Sends the Most Recent Reading
-					provider.sendMostRecentReading();	
+					provider.sendContext();	
 					
 					// Sets the Transmission Date
 					provider.setLastTransmissionDate(currentDate);	

@@ -128,11 +128,11 @@ public class LightContextProvider extends ContextProvider
 		return accuracy;
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{		
 		maxLumens = Math.max(currentLumens, maxLumens);
 		
-		this.getGroupContextManager().sendContext(getContextType(), "", new String[0], new String[] { Double.toString(currentLumens), Double.toString(maxLumens) });
+		this.getGroupContextManager().sendContext(getContextType(), new String[0], new String[] { Double.toString(currentLumens), Double.toString(maxLumens) });
 		
 		// Resets maxLumens
 		maxLumens = 0;

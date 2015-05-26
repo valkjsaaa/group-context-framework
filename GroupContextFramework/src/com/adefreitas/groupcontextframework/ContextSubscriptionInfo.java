@@ -68,6 +68,25 @@ public class ContextSubscriptionInfo
 		return parameters;
 	}
 	
+	public String getParameter(String key)
+	{
+		for (String s : parameters)
+		{
+			String[] elements = s.split("=");
+			
+			if (elements.length >= 2)
+			{
+				if (elements[0].trim().equals(key.trim()))
+				{
+					return s.substring(s.indexOf("=") + 1);
+				}	
+			}
+		}
+		
+		// Returns NULL if Nothing Found
+		return null;
+	}
+	
 	public void setParameters(String[] parameters)
 	{
 		this.parameters = parameters;

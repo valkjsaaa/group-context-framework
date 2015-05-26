@@ -32,7 +32,7 @@ public class Sti_Paint extends SnapToItApplicationProvider
 		
 		this.enableScreenshots(5000, 3);
 		
-		this.debugMode = true;
+		setDebugMode(true);
 	}
 	
 	@Override
@@ -50,29 +50,29 @@ public class Sti_Paint extends SnapToItApplicationProvider
 		
 		if (instruction.getCommand().equals("COLOR"))
 		{
-			System.out.println("Changing Color to " + instruction.getParameters()[0]);
+			System.out.println("Changing Color to " + instruction.getPayload(0));
 			
-			if (instruction.getParameters()[0].equals("Red"))
+			if (instruction.getPayload(0).equals("Red"))
 			{
 				leftClickMouse(31, 616);
 			}
-			else if (instruction.getParameters()[0].equals("Green"))
+			else if (instruction.getPayload(0).equals("Green"))
 			{
 				leftClickMouse(31, 676);
 			}
-			else if (instruction.getParameters()[0].equals("Blue"))
+			else if (instruction.getPayload(0).equals("Blue"))
 			{
 				leftClickMouse(31, 737);
 			}
-			else if (instruction.getParameters()[0].equals("Yellow"))
+			else if (instruction.getPayload(0).equals("Yellow"))
 			{
 				leftClickMouse(31, 647);
 			}
-			else if (instruction.getParameters()[0].equals("Black"))
+			else if (instruction.getPayload(0).equals("Black"))
 			{
 				leftClickMouse(31, 587);
 			}
-			else if (instruction.getParameters()[0].equals("Pink"))
+			else if (instruction.getPayload(0).equals("Pink"))
 			{
 				leftClickMouse(31, 800);
 			}

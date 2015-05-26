@@ -58,7 +58,7 @@ public class RCP_Paint extends RemoteControlProvider
 	}
 	
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		int i=0;
 		
@@ -66,7 +66,6 @@ public class RCP_Paint extends RemoteControlProvider
 		{
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "UI=" + getInterface(i) });
 					//new String[] { "WEBSITE=" + WEBSITE_URL});
@@ -82,29 +81,29 @@ public class RCP_Paint extends RemoteControlProvider
 		
 		if (instruction.getCommand().equals("COLOR"))
 		{
-			System.out.println("Changing Color to " + instruction.getParameters()[0]);
+			System.out.println("Changing Color to " + instruction.getPayload(0));
 			
-			if (instruction.getParameters()[0].equals("Red"))
+			if (instruction.getPayload(0).equals("Red"))
 			{
 				leftClickMouse(31, 616);
 			}
-			else if (instruction.getParameters()[0].equals("Green"))
+			else if (instruction.getPayload(0).equals("Green"))
 			{
 				leftClickMouse(31, 676);
 			}
-			else if (instruction.getParameters()[0].equals("Blue"))
+			else if (instruction.getPayload(0).equals("Blue"))
 			{
 				leftClickMouse(31, 737);
 			}
-			else if (instruction.getParameters()[0].equals("Yellow"))
+			else if (instruction.getPayload(0).equals("Yellow"))
 			{
 				leftClickMouse(31, 647);
 			}
-			else if (instruction.getParameters()[0].equals("Black"))
+			else if (instruction.getPayload(0).equals("Black"))
 			{
 				leftClickMouse(31, 587);
 			}
-			else if (instruction.getParameters()[0].equals("Pink"))
+			else if (instruction.getPayload(0).equals("Pink"))
 			{
 				leftClickMouse(31, 800);
 			}

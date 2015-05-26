@@ -92,7 +92,7 @@ public abstract class ApplicationProvider extends ContextProvider
 		System.out.println("NEW SUB: " + newSubscription.toString());
 		
 		// Sends the UI Immediately
-		//sendMostRecentReading();
+		sendContext();
 		
 		// Stores Context
 		String context = CommMessage.getValue(newSubscription.getParameters(), "context");
@@ -111,12 +111,12 @@ public abstract class ApplicationProvider extends ContextProvider
 //		System.out.println(username + "\n");
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo info : this.getSubscriptions())
 		{
 			//System.out.println("Sending Interface to: " + info.getDeviceID());
-			this.getGroupContextManager().sendContext(CONTEXT_TYPE, "", new String[] { info.getDeviceID() }, getInterface(info));
+			this.getGroupContextManager().sendContext(CONTEXT_TYPE, new String[] { info.getDeviceID() }, getInterface(info));
 		}
 	}
 	
@@ -136,20 +136,20 @@ public abstract class ApplicationProvider extends ContextProvider
 	 * Returns a String Array Containing Information Needed by the Mobile App
 	 * @return
 	 */
-	public ArrayList<String> getInformation()
+	public ArrayList<String> getInformation(String userContextJSON)
 	{		
 		ArrayList<String> result = new ArrayList<String>();
 		
 		result.add("APP_ID=" + appID);
 		result.add("APP_CONTEXT_TYPE=" + CONTEXT_TYPE);
 		result.add("DEVICE_ID=" + this.getGroupContextManager().getDeviceID());
-		result.add("NAME=" + name);
-		result.add("DESCRIPTION=" + description);
+		result.add("NAME=" + getName(userContextJSON));
+		result.add("DESCRIPTION=" + getDescription(userContextJSON));
 		result.add("CATEGORY=" + category);
 		result.add("CONTEXTS=" + arrayToString(contextsRequired));
 		result.add("PREFERENCES=" + arrayToString(preferencesToRequest));
 		result.add("LOGO=" + logoPath);
-		result.add("LIFETIME=" + lifetime);
+		result.add("LIFETIME=" + getLifetime(userContextJSON));
 		result.add("FUNCTIONS="	+ getFunctions());
 		result.add("COMM_MODE="	+ commMode.toString());
 		result.add("APP_ADDRESS=" + ipAddress);
@@ -159,12 +159,37 @@ public abstract class ApplicationProvider extends ContextProvider
 		return result;
 	}
 	
-	protected void setDescription(String newDescription)
+	public String getName(String userContextJSON)
+	{
+		return name;
+	}
+	
+	public void setName(String newName)
+	{
+		this.name = newName;
+	}
+	
+	public String getCategory()
+	{
+		return category;
+	}
+	
+	public String getDescription(String userContextJSON)
+	{
+		return description;
+	}
+	
+	public void setDescription(String newDescription)
 	{
 		this.description = newDescription;
 	}
 	
-	protected void setLifetime(int newLifetime)
+	public int getLifetime(String userContextJSON)
+	{
+		return this.lifetime;
+	}
+	
+	public void setLifetime(int newLifetime)
 	{
 		this.lifetime = newLifetime;
 	}

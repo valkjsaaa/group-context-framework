@@ -27,11 +27,12 @@ public class BluewaveManager
 	public    static final String ACTION_USER_CONTEXT_UPDATED	 	   = "USER_CONTEXT_UPDATED";
 	public    static final String ACTION_OTHER_USER_CONTEXT_RECEIVED   = "OTHER_USER_CONTEXT_RECEIVED";
 	public    static final String OTHER_USER_CONTEXT		    	   = "OTHER_USER_CONTEXT";
+	public    static final String NEW_CONTEXT						   = "NEW_CONTEXT";
 	public 	  static final String ACTION_COMPUTE_INSTRUCTION_RECEIVED  = "PCP_COMPUTE_INSTRUCTION";
 	protected static final String OTHER_USER_ID		    			   = "OTHER_USER_ID";
 	protected static final String ACTION_BLUETOOTH_SCAN_UPDATE 		   = "BT_UPDATE";
-	protected static final String BLUETOOTH_SCAN_RESULTS       		   = "BT_RESULTS";
-	protected static final String BLUETOOTH_RSSI_RESULTS       		   = "RSSI_RESULTS";
+	protected static final String BLUETOOTH_SCAN_RESULT       		   = "BT_RESULT";
+	protected static final String BLUETOOTH_RSSI_RESULT       		   = "RSSI_RESULT";
 	
 	// Group Context Framework
 	private GroupContextManager gcm;
@@ -54,7 +55,7 @@ public class BluewaveManager
 	 * @param gcm
 	 * @param urlToContextFile
 	 */
-	public BluewaveManager(Context context, GroupContextManager gcm, String urlToContextFile)
+	public BluewaveManager(Context context, GroupContextManager gcm, String urlToContextFile, boolean discoverable)
 	{
 		this.context 		  = context;
 		this.gcm 	 		  = gcm;
@@ -66,6 +67,9 @@ public class BluewaveManager
 		// Creates the Bluetooth Scanner
 		this.bluetoothScanner = new BluetoothScanner(context);
 		
+		// Sets the Device's Discoverable State
+		this.setDiscoverable(discoverable);
+		
 		// Creates the Personal Context Provider
 		this.pcp = new PersonalContextProvider(context, this, gcm, httpToolkit, urlToContextFile);
 		this.gcm.registerContextProvider(this.pcp);
@@ -73,6 +77,7 @@ public class BluewaveManager
 		// Creates the Context Listener
 		this.contextListener = new ContextListener(context, httpToolkit);
 		
+		// Updates the Device's Bluetooth Name to Note that it has been Initialized
 		updateBluetoothName();
 	}
 	
@@ -88,11 +93,17 @@ public class BluewaveManager
 	/**
 	 * Begins Bluewave Scanning and Analyzing
 	 */
-	public void startScan()
+	public void startScan(int scanInterval)
 	{
-		this.bluetoothScanner.start();
-		
-		this.pcp.setContext("Debug", "Test");
+		this.bluetoothScanner.start(scanInterval);
+	}
+	
+	/**
+	 * Stops Bluewave Scanning
+	 */
+	public void stopScan()
+	{
+		bluetoothScanner.stop();
 	}
 	
 	/**
@@ -105,7 +116,17 @@ public class BluewaveManager
 		
 		// Updates the Bluetooth Name
 		bluetoothScanner.setBluetoothName(bluetoothName);
-		Log.d("BLUETOOTH", "Set Name to: " + bluetoothName);
+		Log.d(LOG_NAME, "Set Name to: " + bluetoothName);
+	}
+	
+	/**
+	 * Disables Specific Bluewave Functionality
+	 * @param keepScanning
+	 * @param isStillDiscoverable
+	 */
+	public void setDiscoverable(boolean value)
+	{
+		this.bluetoothScanner.setDiscoverable(value);
 	}
 	
 	/**
@@ -128,5 +149,42 @@ public class BluewaveManager
 	public short getRSSI(String deviceName)
 	{
 		return bluetoothScanner.getRSSI(deviceName);
+	}
+
+	/**
+	 * Determines if a Bluetooth Name is Bluewave Compatible
+	 * @param bluetoothName
+	 * @return
+	 */
+	public static boolean isBluewaveName(String bluetoothName)
+	{
+		if (bluetoothName != null)
+		{
+			String[] nameComponents = bluetoothName.split("::");
+			
+			return nameComponents.length >= 4 && nameComponents[0].equals("BLU");	
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	/**
+	 * Returns a Device's Name (compensates for Bluewave Formatting)
+	 * @param bluetoothName
+	 * @return
+	 */
+	public static String getDeviceName(String bluetoothName)
+	{
+		if (BluewaveManager.isBluewaveName(bluetoothName))
+		{
+			String[] nameComponents = bluetoothName.split("::");
+			return nameComponents[1];
+		}
+		else
+		{
+			return bluetoothName;
+		}
 	}
 }

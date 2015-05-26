@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import com.adefreitas.messages.CommMessage;
 
 public abstract class CommThread extends Thread
-{	
+{		
 	// Connection Settings
 	private CommManager commManager;
 	private String 		ipAddress;
@@ -34,10 +34,15 @@ public abstract class CommThread extends Thread
 	 */
 	public void connect(String ipAddress, int port)
 	{
+		// Saves Default Settings
 		this.ipAddress = ipAddress;
 		this.port      = port;
 		
+		// TODO:  Remove when we no longer care about how many times it reconnects
 		count++;
+		
+		// TODO:  FIX THIS!
+		this.subscribeToDefaultChannels(true);
 	}
 	
 	/**
@@ -68,6 +73,23 @@ public abstract class CommThread extends Thread
 	public boolean supportsChannels()
 	{
 		return false;
+	}
+	
+	/**
+	 * Subscribe to default comm channels.  Important:  Not all comm thread types support channels.  You need to check using the supportsChannels() method.
+	 */
+	public void subscribeToDefaultChannels(boolean isPrimaryChannel)
+	{
+		// Automatically Subscribes to Two Channels
+		if (supportsChannels())
+		{
+			this.subscribeToChannel(this.getDefaultPublicChannel());
+			
+			if (isPrimaryChannel)
+			{
+				this.subscribeToChannel(this.getDefaultDeviceChannel());
+			}
+		}
 	}
 	
 	/**
@@ -125,6 +147,24 @@ public abstract class CommThread extends Thread
 	public int getPort()
 	{
 		return port;
+	}
+	
+	/**
+	 * Returns the Default PUBLIC Channel
+	 * @return
+	 */
+	public String getDefaultPublicChannel()
+	{
+		return "cmu/gcf_framework";
+	}
+	
+	/**
+	 * Returns the Default PRIVATE Channel
+	 * @return
+	 */
+	public String getDefaultDeviceChannel()
+	{
+		return "dev/" + commManager.getGroupContextManager().getDeviceID();
 	}
 	
 	/**

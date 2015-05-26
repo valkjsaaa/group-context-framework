@@ -38,10 +38,10 @@ public class RCP_Diagnostics extends RemoteControlProvider
 		super.initializeUserInterfaces();
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		// Broadcasts the UI to Everyone
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], new String[] { "UI=" + this.getDiagnosticHTML() });
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { "UI=" + this.getDiagnosticHTML() });
 	}
 	
 	@Override

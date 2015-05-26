@@ -3,19 +3,25 @@ package com.adefreitas.messages;
 import java.util.Arrays;
 
 public class ComputeInstruction extends CommMessage
-{
-	private String   contextType;
-	private String   command;
-	private String[] parameters;
+{	
+	// Serialization Labels (Needed for Android Intents)
+	public static final String COMPUTE_CONTEXT_TYPE = "CONTEXT_TYPE";
+	public static final String COMPUTE_SENDER 	    = "SENDER";
+	public static final String COMPUTE_DESTINATION  = "DESTINATION";
+	public static final String COMPUTE_COMMAND 	    = "COMMAND";
+	public static final String COMPUTE_PARAMETERS   = "PARAMETERS";
 	
-	public ComputeInstruction(String contextType, String sourceDeviceID, String[] destination, String command, String[] parameters) 
+	private String contextType;
+	private String command;
+	
+	public ComputeInstruction(String contextType, String sourceDeviceID, String[] destination, String command, String[] payload) 
 	{
-		super("COMP");
+		super(CommMessage.MESSAGE_TYPE_INSTRUCTION);
 		this.contextType = contextType;
 		this.deviceID    = sourceDeviceID;
 		this.destination = destination;
 		this.command 	 = command;
-		this.parameters  = parameters;
+		this.putPayload(payload);
 	}
 	
 	public String getContextType()
@@ -28,18 +34,8 @@ public class ComputeInstruction extends CommMessage
 		return command;
 	}
 	
-	public String[] getParameters()
-	{
-		return parameters;
-	}
-	
-	public void setParameters(String[] newParameters)
-	{
-		this.parameters = newParameters;
-	}
-
 	public String toString()
 	{
-		return String.format("DEVICE: %s; CONTEXT: %s; COMMAND: %s; VALUES: %s", deviceID, contextType, command, Arrays.toString(parameters));
+		return String.format("DEVICE: %s; CONTEXT: %s; COMMAND: %s; PARAMETERS: %s", deviceID, contextType, command, Arrays.toString(this.getPayload()));
 	}
 }

@@ -4,12 +4,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import bluetoothcontext.toolkit.JSONContextParser;
+import liveos_apps.creationfest.App_CreationFestAlert;
+import liveos_apps.creationfest.App_CreationFestProfile;
+import liveos_apps.creationfest.App_CreationFestReporter;
+import liveos_apps.creationfest.TaskDispatcher;
+import liveos_apps.favors.FavorDispatcher;
+
 
 import com.adefreitas.desktopframework.DesktopBatteryMonitor;
 import com.adefreitas.desktopframework.DesktopGroupContextManager;
 import com.adefreitas.desktopframework.MessageProcessor;
 import com.adefreitas.desktopframework.RequestProcessor;
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
+import com.adefreitas.desktopframework.toolkit.SQLToolkit;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextType;
@@ -39,8 +46,13 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	public ArrayList<DesktopApplicationProvider> appProviders = new ArrayList<DesktopApplicationProvider>();
 	public QueryApplicationProvider			     queryProvider;
 	
-	private HashMap<String, Date> receivedJSON     = new HashMap<String, Date>();
-	private Date				  lastTransmission = new Date(0);
+	// Dispatcher
+	public UpdateThread    updateThread;
+	public TaskDispatcher  t;
+	public FavorDispatcher f;
+	
+	// SQL Toolkit
+	public SQLToolkit sqlToolkit;
 	
 	/**
 	 * Constructor
@@ -49,7 +61,6 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	 */
 	public GCFController(String appName, boolean useBluetooth)
 	{
-		System.out.println("Starting App: " + appName);
 		COMPUTER_NAME += "APP_" + appName + "_" + new Date().getTime();
 				
 		batteryMonitor = new DesktopBatteryMonitor();
@@ -67,84 +78,103 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		gcm.registerOnRequestProcessor(this);
 		
 		// Creates the Query Manager
-		queryProvider = new QueryApplicationProvider(gcm);
+		queryProvider = new QueryApplicationProvider(gcm, connectionKey);
 		gcm.registerContextProvider(queryProvider);
 
-		// Snap-To-It Apps
-		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		// Initializes SQL Connection
+		sqlToolkit = new SQLToolkit("citrus-acid.com", "citrusa_michael", "mysql1234", "citrusa_michael");
 		
-		// Impromptu Apps
-		appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Game_PiratePig(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Flickr(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Game_Simon(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayGmail(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		// Initializes Apps
+		initializeApps();
 		
+		// Initializes Communications Channel
 		for (DesktopApplicationProvider app : appProviders)
 		{
 			gcm.registerContextProvider(app);
 			gcm.subscribe(connectionKey, app.getContextType());
 			System.out.println("Application [" + app.toString() + "] Ready.");
 		}
+		
+		System.out.println(appProviders.size() + " App(s) Initialized!\n");
 	}
 
-	public void onPersonalContextData(final String deviceID, final JSONContextParser parser)
-	{			
-		// Attempts to Extract Connection Information
-		JsonObject context   = parser.getJSONObject("magic");
+	private void initializeApps()
+	{
+		// Context Recording
+		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
 		
-		if (context != null)
-		{
-			final CommMode commMode  = CommMode.valueOf(context.get("COMM_MODE").getAsString());
-			final String   ipAddress = context.get("IP_ADDRESS").getAsString();
-			final int      port      = context.get("PORT").getAsInt();
-			
-			// Checks to see if this is a new device
-			boolean newEntry = !receivedJSON.containsKey(deviceID);
-			
-			// Adds the Date to the Log
-			receivedJSON.put(deviceID, new Date());
-			
-			for (DesktopApplicationProvider app : appProviders)
-			{
-				if (ipAddress != null && app.sendAppData(parser.toString()))
-				{
-					System.out.println(COMPUTER_NAME + ": " + "Sending app advertisement data to " + deviceID);
-					gcm.sendComputeInstruction(ContextType.PERSONAL, new String[] { deviceID }, "APPLICATION", app.getInformation().toArray(new String[0]));
-				}	
-			}
-		}
-		else
-		{
-			System.out.println(COMPUTER_NAME + ": " + "ERROR:  JSON Did Not Contain Magic Data for " + deviceID);
-		}
+		// Snap-To-It Apps
+		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_PowerPointDemo(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+				
+		// Impromptu Apps
+		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Hershey(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_CHI2014(gcm, COMM_MODE, IP_ADDRESS, PORT));
+
+		//appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Game_PiratePig(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Flickr(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Game_Simon(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_PlayGmail(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_QuickTask(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_FileUploadDemo(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		// CreationFest
+		//appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		t = new TaskDispatcher(sqlToolkit, gcm);
+		
+		// Favors
+		f = new FavorDispatcher(sqlToolkit, gcm);
+		
+		updateThread = new UpdateThread();
+		updateThread.start();
 	}
-	
+		
 	@Override
 	public void onMessage(CommMessage message) 
 	{
 		if (message instanceof ContextData)
 		{
 			ContextData data = (ContextData)message;
-			
-			System.out.println(COMPUTER_NAME + ": " + "Received " + data.getContextType() + " from " + data.getDeviceID());
-			
-			if (data.getContextType().equals("PCP"))
+
+			if (data.getContextType().equals("BLUEWAVE"))
 			{
-				String json = CommMessage.getValue(data.getValues(), "context");
-				onPersonalContextData(data.getDeviceID(), new JSONContextParser(JSONContextParser.JSON_TEXT, json));
+				String context = data.getPayload("CONTEXT");
+				
+				if (context != null)
+				{
+					JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, data.getPayload("CONTEXT"));
+					JsonObject locationObject = parser.getJSONObject("location");
+					
+					if (locationObject != null)
+					{
+						parser.getJSONObject("location").addProperty("SENSOR", data.getDeviceID());
+					}
+					
+					this.queryProvider.processContext(parser.getJSONObject("device").get("deviceID").getAsString(), parser.toString(), "BLUEWAVE [" + data.getDeviceID() + "]");
+				}
 			}
 		}
 	}
@@ -153,5 +183,33 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	public void onSendingRequest(ContextRequest request) 
 	{
 		System.out.println(COMPUTER_NAME + ": " + "Sending Request: " + request.toString());
+	}
+
+	public class UpdateThread extends Thread
+	{
+		public void run()
+		{
+			while (true)
+			{
+				try
+				{
+					if (t != null)
+					{
+						t.run();
+					}
+					
+					if (f != null)
+					{
+						f.run();
+					}
+
+					sleep(60000);
+				}
+				catch (Exception ex)
+				{
+					System.out.println("Problem in Update Thread: " + ex.getMessage());
+				}
+			}
+		}
 	}
 }

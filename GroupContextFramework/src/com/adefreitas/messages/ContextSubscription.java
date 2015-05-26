@@ -11,19 +11,18 @@ public class ContextSubscription extends CommMessage
 	private String 				   contextType;
 	private int 				   refreshRate;
 	private int  				   heartbeatRate;
-	private String[] 			   parameters;
 	
 	public ContextSubscription(SubscriptionUpdateType updateType, String sourceDeviceID, String[] destinationDevices, 
-			String contextType, int refreshRate, int heartbeatRate, String[] parameters)
+			String contextType, int refreshRate, int heartbeatRate, String[] payload)
 	{
-		super("CSUB");
+		super(CommMessage.MESSAGE_TYPE_SUBSCRIPTION);
 		this.updateType 	= updateType;
 		this.deviceID		= sourceDeviceID;
 		this.destination 	= destinationDevices;
 		this.contextType 	= contextType;
 		this.refreshRate 	= refreshRate;
 		this.heartbeatRate 	= heartbeatRate;
-		this.parameters 	= parameters;
+		this.putPayload(payload);
 	}
 	
 	public SubscriptionUpdateType getUpdateType()
@@ -44,11 +43,6 @@ public class ContextSubscription extends CommMessage
 	public int getHeartbeatRate()
 	{
 		return heartbeatRate;
-	}
-	
-	public String[] getParameters()
-	{
-		return parameters;
 	}
 	
 	public String toString()

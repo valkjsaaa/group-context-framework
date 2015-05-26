@@ -127,7 +127,7 @@ public abstract class ContextProvider
 			// Updates the Contact History of the Device
 			ContextSubscriptionInfo csi = subscriptions.get(request.getDeviceID());
 			csi.setLastContact(new Date());
-			csi.setParameters(request.getParameters());
+			csi.setParameters(request.getPayload());
 		}
 	}
 	
@@ -158,17 +158,7 @@ public abstract class ContextProvider
 	
 	public ContextSubscriptionInfo[] getSubscriptions()
 	{
-		ContextSubscriptionInfo[] result = new ContextSubscriptionInfo[subscriptions.keySet().size()];
-		
-		int i=0;
-		
-		for (String deviceID : subscriptions.keySet())
-		{
-			result[i] = subscriptions.get(deviceID);
-			i++;
-		}
-		
-		return result;
+		return subscriptions.values().toArray(new ContextSubscriptionInfo[0]);
 	}
 	
 	public void reboot()
@@ -198,42 +188,38 @@ public abstract class ContextProvider
 	// OVERRIDABLE METHODS -------------------------------------------------------------------
 	public boolean sendCapability(ContextRequest request)
 	{
-		if (this.hasAccess(request.getDeviceID()))
-		{
-			// Checks to See if this Context Request is LOCAL_ONLY
-			//boolean isLocalRequest = (request.getRequestType() == ContextRequest.LOCAL_ONLY) && request.getDeviceID().equals(groupContextManager.getDeviceID());
-						
-			// Specifies the Conditions By Which this Provider Should NOT Send Context
-			if (request.getRequestType() == ContextRequest.MULTIPLE_SOURCE && isSubscribed(request.getDeviceID()))
-			{
-				// This code prevents capabilities from being sent if the device is already subscribed and is querying multiple devices
-				// Note:  This only works for multiple source requests!  Single source needs to be able to dynamically switch to the "best" ones
-				return false;
-			}
-			else if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE && !request.isDestination(this.getGroupContextManager().getDeviceID()))
-			{
-				return false;
-			}
-			
-			// Otherwise, Send Back a Capability Message
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return hasAccess(request.getDeviceID());
+		
+//		if (this.hasAccess(request.getDeviceID()))
+//		{
+//			// Checks to See if this Context Request is LOCAL_ONLY
+//			//boolean isLocalRequest = (request.getRequestType() == ContextRequest.LOCAL_ONLY) && request.getDeviceID().equals(groupContextManager.getDeviceID());
+//						
+//			// Specifies the Conditions By Which this Provider Should NOT Send Context
+////			if (request.getRequestType() == ContextRequest.MULTIPLE_SOURCE && isSubscribed(request.getDeviceID()))
+////			{
+////				// This code prevents capabilities from being sent if the device is already subscribed and is querying multiple devices
+////				// Note:  This only works for multiple source requests!  Single source needs to be able to dynamically switch to the "best" ones
+////				System.out.println("")
+////				return false;
+////			}
+////			else if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE && !request.isDestination(this.getGroupContextManager().getDeviceID()))
+////			{
+////				return false;
+////			}
+//			
+//			// Otherwise, Send Back a Capability Message
+//			return true;
+//		}
+//		else
+//		{
+//			return false;
+//		}
 	}
 	
 	public int getHeartbeatRate(ContextRequest request)
 	{
-		if (request.getRequestType() >= ContextRequest.MULTIPLE_SOURCE)
-		{
-			return 10000;
-		}
-		else
-		{
-			return 60000;
-		}
+		return 60000;
 	}
 	
 	/**
@@ -275,7 +261,7 @@ public abstract class ContextProvider
 
 	public void onSubscription(ContextSubscriptionInfo newSubscription)
 	{
-		this.sendMostRecentReading();
+		this.sendContext();
 	}
 	
 	public void onSubscriptionCancelation(ContextSubscriptionInfo subscription)
@@ -295,5 +281,5 @@ public abstract class ContextProvider
 	
 	public abstract double getFitness(String[] parameters);
 
-	public abstract void sendMostRecentReading();
+	public abstract void sendContext();
 }

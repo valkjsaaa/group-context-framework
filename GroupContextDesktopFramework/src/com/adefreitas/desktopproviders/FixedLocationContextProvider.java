@@ -42,8 +42,8 @@ public class FixedLocationContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
-		getGroupContextManager().sendContext(this.getContextType(), "", new String[0], new String[] { Double.toString(lat), Double.toString(lon), "250.0" });
+		getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { Double.toString(lat), Double.toString(lon), "250.0" });
 	}
 }

@@ -30,11 +30,10 @@ public class RCP_Sound extends RemoteControlProvider
 		this.addPhoto(APP_DATA_FOLDER + "speaker1.jpg");
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		this.getGroupContextManager().sendContext(
 				this.getContextType(), 
-				"Radio", 
 				new String[] { }, 
 				//new String[] { "WEBSITE=" + WEBSITE_URL });
 				new String[] { "UI=" + getUserInterface() });
@@ -47,7 +46,7 @@ public class RCP_Sound extends RemoteControlProvider
 		
 		if (instruction.getCommand().equals("PLAY"))
 		{
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			PLAYING_MUSIC = true;
@@ -63,7 +62,7 @@ public class RCP_Sound extends RemoteControlProvider
 			this.getGroupContextManager().sendComputeInstruction("MP3", "STOP", new String[] { });
 		}
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 
 	private String getUserInterface()

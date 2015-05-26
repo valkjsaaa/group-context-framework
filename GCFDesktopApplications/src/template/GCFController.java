@@ -32,37 +32,36 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		gcm = new DesktopGroupContextManager(COMPUTER_NAME, new DesktopBatteryMonitor(), false);
 		gcm.registerOnMessageProcessor(this);
 		gcm.registerOnRequestProcessor(this);
-		gcm.setDebug(true);
+		gcm.setDebug(false);
 		
 		// Connects to Channel
 		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
-		gcm.subscribe(connectionKey, CHANNEL);
 		
 		// Requests Context
-		//gcm.sendRequest("ACC", ContextRequest.MULTIPLE_SOURCE, 1000, new String[0]);
-		//gcm.sendRequest("LOC", ContextRequest.MULTIPLE_SOURCE, 5000, new String[0]);
-		gcm.sendRequest("BLU", ContextRequest.MULTIPLE_SOURCE, 15000, new String[] { "HITLIST=Madhur’s MacBook Pro" });
+		gcm.sendRequest("BLUEWAVE", ContextRequest.MULTIPLE_SOURCE, new String[0], 300000, new String[0]);
 	}
 
 	public void onBluetoothData(ContextData data)
 	{
-		String deviceName = CommMessage.getValue(data.getValues(), "FOUND");
-		String scanStartTime = CommMessage.getValue(data.getValues(), "SCAN_START");
+		String deviceName = data.getPayload("FOUND");
+		String scanStartTime = data.getPayload("SCAN_START");
 	}
 	
 	@Override
 	public void onMessage(CommMessage message) 
 	{
-		System.out.println("Received Message: " + message.toString());
-		
 		if (message instanceof ContextData)
-		{
+		{	
 			ContextData data = (ContextData)message;
+		
+			System.out.println(new Date().toString() + "\nReceived Data [" + data.getContextType() + "]: " + data.getDeviceID() + "\n" + data.toString());
 			
-			if (data.getDescription().equals("BLU"))
+			if (data.getContextType().equals("BLU"))
 			{
 				onBluetoothData(data);
 			}
+			
+			System.out.println();
 		}
 	}
 

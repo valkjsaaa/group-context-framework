@@ -1,16 +1,13 @@
 package com.adefreitas.androidframework;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.adefreitas.androidbluewave.BluewaveManager;
 import com.adefreitas.groupcontextframework.BatteryMonitor;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -34,11 +31,14 @@ public class AndroidGroupContextManager extends GroupContextManager
 	// Keeps a Link to the Context Wrapper (so we can send intent broadcasts)
 	private ContextWrapper cw;
 	
+	// Bluewave:  Context Sharing via Bluetooth Names
+	private BluewaveManager bluewaveManager;
+	
 	// Handlers (Android Specific)
-	private TimerHandler timerHandler; // Used by the GCM to Performed Scheduled Tasks
+	private ScheduledTaskHandler scheduledTaskHandler; // Used by the GCM to Performed Scheduled Tasks
 	
 	/**
-	 * Alternate Constructor (no active communications)
+	 * Constructor
 	 * @param cw
 	 * @param deviceID
 	 * @param batteryMonitor
@@ -55,25 +55,11 @@ public class AndroidGroupContextManager extends GroupContextManager
 		// Creates the Comm Manager
 		this.commManager = new AndroidCommManager(this, cw);
 		
+		// Creates the Bluewave Manager
+		bluewaveManager = new BluewaveManager(cw, this, "http://gcf.cmu-tbank.com/bluewave/" + getDeviceID() + ".txt", true);
+		
 		// Creates the Scheduled Event Timer	
-		timerHandler = new TimerHandler(this);
-	}
-	
-	/**
-	 * Constructor
-	 * @param cw
-	 * @param deviceID
-	 * @param communicationsMode
-	 * @param ipAddress
-	 * @param port
-	 * @param batteryMonitor
-	 * @param promiscuous
-	 */
-	public AndroidGroupContextManager(ContextWrapper cw, String deviceID, CommMode communicationsMode, String ipAddress, int port, BatteryMonitor batteryMonitor, boolean promiscuous) 
-	{
-		this(cw, deviceID, batteryMonitor, promiscuous);
-
-		connect(communicationsMode, ipAddress, port);
+		scheduledTaskHandler = new ScheduledTaskHandler(this);
 	}
 	
 	public void sendRequest(String type, int requestType, int refreshRate, String[] parameters)
@@ -81,20 +67,20 @@ public class AndroidGroupContextManager extends GroupContextManager
 		super.sendRequest(type, requestType, refreshRate, parameters);
 		
 		// Initiates the Timer Delay
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(REQUEST_DELAY);
+			scheduledTaskHandler.start(REQUEST_DELAY);
 		}
 	}
 	
-	public void sendRequest(String contextType, String[] deviceIDs, int refreshRate, String[] parameters)
+	public void sendRequest(String contextType, int requestType, String[] deviceIDs, int refreshRate, String[] parameters)
 	{
-		super.sendRequest(contextType, deviceIDs, refreshRate, parameters);
+		super.sendRequest(contextType, requestType, deviceIDs, refreshRate, parameters);
 		
 		// Initiates the Timer Delay
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(REQUEST_DELAY);
+			scheduledTaskHandler.start(REQUEST_DELAY);
 		}
 	}
 	
@@ -102,9 +88,9 @@ public class AndroidGroupContextManager extends GroupContextManager
 	{
 		super.sendRequest(type, requestType,  refreshRate,  w_battery, w_sensorFitness, w_foreign, w_providing, w_reliability, parameters, null);
 		
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(REQUEST_DELAY);
+			scheduledTaskHandler.start(REQUEST_DELAY);
 		}
 	}
 	
@@ -112,9 +98,9 @@ public class AndroidGroupContextManager extends GroupContextManager
 	{
 		super.cancelRequest(type);
 		
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(0);			
+			scheduledTaskHandler.start(0);			
 		}
 	}
 	
@@ -122,25 +108,11 @@ public class AndroidGroupContextManager extends GroupContextManager
 	{
 		super.cancelRequest(type, deviceID);
 		
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(0);			
+			scheduledTaskHandler.start(0);			
 		}
 	}
-
-//	public void sendComputeInstruction(CommMode mode, String ipAddress, int port, String contextType, String[] destination, String command, String[] instructions)
-//	{		
-//		try
-//		{
-//			ComputeInstruction instruction = new ComputeInstruction(contextType, getDeviceID(), destination, command, instructions);
-//			
-//			commManager.send(mode, ipAddress, port, instruction);
-//		}
-//		catch (Exception ex)
-//		{
-//			ex.printStackTrace();
-//		}
-//	}
 	
 	public void setDebug(boolean newDebug)
 	{
@@ -162,8 +134,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 		// Populates the Intent
 		dataDeliveryIntent.putExtra(ContextData.CONTEXT_TYPE, data.getContextType());
 		dataDeliveryIntent.putExtra(ContextData.DEVICE_ID, data.getDeviceID());
-		dataDeliveryIntent.putExtra(ContextData.DESCRIPTION, data.getDescription());
-		dataDeliveryIntent.putExtra(ContextData.VALUES, data.getValues());
+		dataDeliveryIntent.putExtra(ContextData.PAYLOAD, data.getPayload());
 		
 		// Sends the Intent
 		cw.sendBroadcast(dataDeliveryIntent);
@@ -181,7 +152,6 @@ public class AndroidGroupContextManager extends GroupContextManager
 			else if (category.equalsIgnoreCase(LOG_PERFORMANCE))
 			{
 				Log.i(category, message);
-				this.print(message);
 			}
 			else if (category.equalsIgnoreCase(LOG_COMPARISON))
 			{
@@ -194,58 +164,62 @@ public class AndroidGroupContextManager extends GroupContextManager
 		}
 	}
 
-	public void print(String s) 
+	// BLUEWAVE METHODS
+	public BluewaveManager getBluewaveManager()
 	{
-		// Creates the Intent
-		Intent printIntent = new Intent(ACTION_GCF_OUTPUT);
-		
-		// Populates the Intent
-		printIntent.putExtra(GCF_OUTPUT, s);
-		
-		// Sends the Intent
-		cw.sendBroadcast(printIntent);
+		return bluewaveManager;
 	}
-
+	
+	public void startBluewaveScan(int scanInterval)
+	{
+		bluewaveManager.startScan(scanInterval);
+	}
+	
+	public void stopBluewaveScan()
+	{
+		bluewaveManager.stopScan();
+	}
+	
 	// PRIVATE METHODS
 	private void createNotification(String title, String subtitle)
 	{
 		boolean success = false;
 		
 		// Tries to Create a Notification using the OS Tools
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
-		{
-			//Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-			
-			 Intent 			  intent 			  = new Intent(ACTION_PROVIDER_SUBSCRIPTION);
-			 PendingIntent 		  pendingIntent 	  = PendingIntent.getActivity(cw, 0, intent, 0);
-			 NotificationManager  notificationManager = (NotificationManager)cw.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
-			 Notification.Builder builder 			  = new Notification.Builder(cw)
-			 	.setSmallIcon(com.adefreitas.groupcontextandroidframework.R.drawable.gcf)
-			 	.setContentTitle(title)
-			 	.setContentText(subtitle)
-			 	.setAutoCancel(true)
-			 	//.setSound(soundUri)
-			 	.setContentIntent(pendingIntent);
-			 
-			 if (builder != null && notificationManager != null)
-			 {
-				 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-				 {
-					 notificationManager.notify(0, builder.getNotification());
-				 }
-				 else
-				 {
-					 notificationManager.notify(0, builder.build());
-				 }
-				 
-				 success = true;
-			 }
-		}
+//		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
+//		{
+//			//Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+//			
+//			 Intent 			  intent 			  = new Intent(ACTION_PROVIDER_SUBSCRIPTION);
+//			 PendingIntent 		  pendingIntent 	  = PendingIntent.getActivity(cw, 0, intent, 0);
+//			 NotificationManager  notificationManager = (NotificationManager)cw.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+//			 Notification.Builder builder 			  = new Notification.Builder(cw)
+//			 	.setSmallIcon(com.adefreitas.groupcontextandroidframework.R.drawable.gcf)
+//			 	.setContentTitle(title)
+//			 	.setContentText(subtitle)
+//			 	.setAutoCancel(true)
+//			 	//.setSound(soundUri)
+//			 	.setContentIntent(pendingIntent);
+//			 
+//			 if (builder != null && notificationManager != null)
+//			 {
+//				 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+//				 {
+//					 notificationManager.notify(0, builder.getNotification());
+//				 }
+//				 else
+//				 {
+//					 notificationManager.notify(0, builder.build());
+//				 }
+//				 
+//				 success = true;
+//			 }
+//		}
 		
 		// Creates a Generic Toast if No Notification Can Be Created
 		if (!success)
 		{
-			Toast.makeText(cw, title + ": " + subtitle, Toast.LENGTH_LONG).show();
+			Toast.makeText(cw, title + ": " + subtitle, Toast.LENGTH_SHORT).show();
 		}
 	}
 	
@@ -273,53 +247,63 @@ public class AndroidGroupContextManager extends GroupContextManager
 	}
 	
 	@Override
-	protected void onCapabilityReceived(ContextCapability capability) {
+	protected void onCapabilityReceived(ContextCapability capability) 
+	{
 		// TODO Auto-generated method stub	
 	}
 	
 	@Override
-	protected void onCapabilitySubscribe(ContextCapability capability) {
-		print("Subscribing to " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
+	protected void onCapabilitySubscribe(ContextCapability capability) 
+	{
+		//print("Subscribing to " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
 	}
 
 	@Override
-	protected void onCapabilityUnsubscribe(ContextCapability capability) {
-		print("Unsubscribing from " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
+	protected void onCapabilityUnsubscribe(ContextCapability capability) 
+	{
+		//print("Unsubscribing from " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
 	}
 
 	protected void onSendingData(ContextData data)
 	{
 		
 	}
+
+	protected void onRequestReceived(ContextRequest request) 
+	{
+	
+	}
 	
 	@Override
-	protected void onRequestTimeout(ContextRequest request, ContextCapability capability) {
-		print("REQ TIMEOUT: " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
+	protected void onRequestTimeout(ContextRequest request, ContextCapability capability) 
+	{
+		//print("REQ TIMEOUT: " + capability.getDeviceID() + " [" + capability.getContextType() + "]");
 	}
 
 	@Override
-	protected void onSubscriptionTimeout(ContextSubscriptionInfo subscription) {
-		print("SUB TIMEOUT: " + subscription.getDeviceID());
+	protected void onSubscriptionTimeout(ContextSubscriptionInfo subscription) 
+	{
+		//print("SUB TIMEOUT: " + subscription.getDeviceID());
 	}
 
 	@Override
-	protected void onProviderSubscribe(ContextProvider provider) {
+	protected void onProviderSubscribe(ContextProvider provider) 
+	{
 		String message = "SUB:  Context Provider " + provider.getContextType() + " has " + provider.getNumSubscriptions() + " subscriptions.";
-		print(message);
 		
 		// Creates a Notification to Say How Many Subscriptions are In Progress
 		createSubscriptionNotification();
 		
-		if (timerHandler != null)
+		if (scheduledTaskHandler != null)
 		{
-			timerHandler.start(0);
+			scheduledTaskHandler.start(100);
 		}
 	}
 
 	@Override
-	protected void onProviderUnsubscribe(ContextProvider provider) {
+	protected void onProviderUnsubscribe(ContextProvider provider) 
+	{
 		String message = "UNSUB:  Context Provider " + provider.getContextType() + " has " + provider.getNumSubscriptions() + " subscriptions.";
-		print(message);
 		
 		// Creates a Notification to Say How Many Subscriptions are In Progress
 		createSubscriptionNotification();
@@ -329,13 +313,12 @@ public class AndroidGroupContextManager extends GroupContextManager
 	 * This Class Allows the GCM to Run its Scheduled Tasks
 	 * @author adefreit
 	 */
-	static class TimerHandler extends Handler
+	static class ScheduledTaskHandler extends Handler
 	{
 		private Runnable 				   scheduledTask;
 		private AndroidGroupContextManager gcm;
-		//private boolean 				   running;
 		
-		public TimerHandler(AndroidGroupContextManager gcm)
+		public ScheduledTaskHandler(AndroidGroupContextManager gcm)
 		{
 			this.gcm 							  = gcm;
 			final AndroidGroupContextManager agcm = gcm;

@@ -3,8 +3,8 @@ package liveos_apps;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 
-import bluetoothcontext.toolkit.JSONContextParser;
 
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -25,7 +25,7 @@ public class App_Target extends DesktopApplicationProvider
 				"SHOPPING",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://icons.iconarchive.com/icons/iconshock/real-vista-business/96/shopping-cart-icon.png", // LOGO
+				"http://www.mcm.org/uploads/images/logos/TargetLogo.jpg", // LOGO
 				120,
 				commMode,
 				ipAddress,
@@ -35,7 +35,9 @@ public class App_Target extends DesktopApplicationProvider
 		// NOTE:  I am using X, Y for Longitude, Latitude (the reverse of what you normally think)
 		coordinates.put("Monroeville Target", new Point2D.Double(40.433955,-79.772115));
 		coordinates.put("Penn Ave. Target", new Point2D.Double(40.461107,-79.921803));
-		coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
+		coordinates.put("Waterfront Target", new Point2D.Double(40.410604, -79.910367));
+//		coordinates.put("Home", new Point2D.Double(40.434090, -79.853565));
+//		coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
 	}
 	
 	private boolean nearLocation(JSONContextParser parser, double km)

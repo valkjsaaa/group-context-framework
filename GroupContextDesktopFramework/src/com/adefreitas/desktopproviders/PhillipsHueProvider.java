@@ -2,7 +2,7 @@ package com.adefreitas.desktopproviders;
 
 import java.util.ArrayList;
 
-import com.adefreitas.desktoptoolkits.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.ComputeInstruction;
@@ -77,7 +77,7 @@ public class PhillipsHueProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{		
 		String strCapabilities = "";
 		String lgtIds          = "";
@@ -99,7 +99,7 @@ public class PhillipsHueProvider extends ContextProvider
 		lgtIds          = lgtIds.substring(0, lgtIds.length() - 1);
 		
 		// Sends the Capabilities of this Device
-		this.getGroupContextManager().sendContext(this.getContextType(), this.getGroupContextManager().getDeviceID(), 
+		this.getGroupContextManager().sendContext(this.getContextType(), 
 				new String[0],
 				new String[] { "capability=" + strCapabilities, "lightIDs=" + lgtIds } );	
 	}
@@ -172,17 +172,17 @@ public class PhillipsHueProvider extends ContextProvider
 				
 				try
 				{
-					if (instruction.getParameters().length == 4)
+					if (instruction.getPayload().length == 4)
 					{
-						int r = Integer.parseInt(instruction.getParameters()[1]);
-						int g = Integer.parseInt(instruction.getParameters()[2]);
-						int b = Integer.parseInt(instruction.getParameters()[3]);
+						int r = Integer.parseInt(instruction.getPayload()[1]);
+						int g = Integer.parseInt(instruction.getPayload()[2]);
+						int b = Integer.parseInt(instruction.getPayload()[3]);
 						
 						// Uses a Converstion Function to Translate XY into RGB
 						String[] xy = rgbToHueXY(r, g, b);
 						
 						//System.out.println("Issuing XY Light Command (Light " + lightID + ") [" + instruction.getParameters()[1] + ", " + instruction.getParameters()[2] + "]");						
-						String json = "{\"on\":" + instruction.getParameters()[0] + ",\"xy\":[" + xy[0] + ", " + xy[1] + "]}";
+						String json = "{\"on\":" + instruction.getPayload()[0] + ",\"xy\":[" + xy[0] + ", " + xy[1] + "]}";
 						//System.out.println("URL: " + lightURL);
 						//System.out.println("Sending Command: " + json);
 						

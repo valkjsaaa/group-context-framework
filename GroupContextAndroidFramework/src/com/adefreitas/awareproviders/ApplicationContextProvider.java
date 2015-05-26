@@ -126,9 +126,9 @@ public class ApplicationContextProvider extends ContextProvider
 		return (currentApplication.length() > 0) ? 1.0 : 0.0;
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{			
-		this.getGroupContextManager().sendContext(CONTEXT_TYPE, "", new String[0], new String[] { currentApplication });
+		this.getGroupContextManager().sendContext(CONTEXT_TYPE, new String[0], new String[] { currentApplication });
 			
 		context.getContentResolver().delete(URI, null, null);
 	}

@@ -142,9 +142,9 @@ public class WiFiContextProvider extends ContextProvider
 	}
 
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{			
-		this.getGroupContextManager().sendContext(this.getContextType(), "", new String[0], results.toArray(new String[0]));
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], results.toArray(new String[0]));
 		
 		context.getContentResolver().delete(URI, null, null);
 	}

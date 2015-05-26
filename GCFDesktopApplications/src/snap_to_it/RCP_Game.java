@@ -31,7 +31,7 @@ public class RCP_Game extends RemoteControlProvider
 		super.initializeUserInterfaces();
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
 		{
@@ -43,7 +43,6 @@ public class RCP_Game extends RemoteControlProvider
 			
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "WEBSITE=" + website });
 		}
@@ -56,7 +55,7 @@ public class RCP_Game extends RemoteControlProvider
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
 		{
-			String key = CommMessage.getValue(instruction.getParameters(), "keycode");
+			String key = instruction.getPayload("keycode");
 			int keycode = -1;
 			
 			if (key.equals("up"))

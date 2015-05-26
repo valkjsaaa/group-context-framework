@@ -8,9 +8,9 @@ import java.util.Date;
 
 import toolkits.ScreenshotToolkit;
 
-import com.adefreitas.desktoptoolkits.CloudStorageToolkit;
-import com.adefreitas.desktoptoolkits.HttpToolkit;
-import com.adefreitas.desktoptoolkits.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.SftpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -49,7 +49,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 		
 		this.enableScreenshots(5000, 1);
 		
-		this.debugMode = true;
+		setDebugMode(true);
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
 		{
-			String key = CommMessage.getValue(instruction.getParameters(), "keycode");
+			String key = instruction.getPayload("keycode");
 			this.pressKey(key);
 		}
 		else if (instruction.getCommand().equals("PP_UPLOADED"))
@@ -106,7 +106,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 			PRIMARY_DEVICE = instruction.getDeviceID();
 			System.out.println("PRIMARY_DEVICE: " + PRIMARY_DEVICE);
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			String folder      = filePath.substring(0, filePath.lastIndexOf("/") + 1);
@@ -130,7 +130,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 				// Uploads the Presentation to Dropbox
 				cloudToolkit.uploadFile(UPLOAD_FOLDER, new File(PRESENTATION_LOCATION));
 								
-				this.sendMostRecentReading();
+				this.sendContext();
 				
 				runPresentation(false);
 			}
@@ -154,7 +154,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 			robot.keyRelease(KeyEvent.VK_Q);
 			robot.delay(500);
 			
-			this.sendMostRecentReading();
+			this.sendContext();
 		}
 	}
 
@@ -192,7 +192,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 		
 		this.getGroupContextManager().cancelRequest("ACC", subscription.getDeviceID());
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 	
 	// HELPER METHODS ------------------------------------------------------------------------------------
@@ -272,6 +272,6 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 	    cloudToolkit.uploadFile(UPLOAD_FOLDER, screenshot);
 	    
 	    System.out.println("Uploaded New Screenshot");
-	    this.sendMostRecentReading();
+	    this.sendContext();
 	}
 }

@@ -68,7 +68,7 @@ public class RCP_Print extends RemoteControlProvider
 	}
 	
 	@Override
-	public void sendMostRecentReading() 
+	public void sendContext() 
 	{
 		// TODO:  Replace with a More Efficient Version
 		//        Send ONE UI Per UI Type
@@ -78,7 +78,6 @@ public class RCP_Print extends RemoteControlProvider
 			
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "UI=" + getInterface() });
 		}
@@ -93,9 +92,9 @@ public class RCP_Print extends RemoteControlProvider
 		{
 			busy = true;
 			
-			sendMostRecentReading();
+			sendContext();
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			String folder      = filePath.substring(0, filePath.lastIndexOf("/") + 1);
@@ -147,7 +146,7 @@ public class RCP_Print extends RemoteControlProvider
 			
 			busy = false;
 			
-			sendMostRecentReading();
+			sendContext();
 		}
 	}
 }

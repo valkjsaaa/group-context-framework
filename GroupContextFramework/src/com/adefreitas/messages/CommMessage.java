@@ -7,6 +7,12 @@ import com.google.gson.Gson;
 
 public class CommMessage 
 {
+	public static final String MESSAGE_TYPE_DATA 	     = "D";
+	public static final String MESSAGE_TYPE_REQUEST      = "R";
+	public static final String MESSAGE_TYPE_CAPABILITY   = "C";
+	public static final String MESSAGE_TYPE_SUBSCRIPTION = "S";
+	public static final String MESSAGE_TYPE_INSTRUCTION  = "I";
+	
 	// Used to Differentiate Each Type of Message
 	protected String messageType;
 	   
@@ -19,8 +25,8 @@ public class CommMessage
 	// Used to Allow the Device to Send a Message to Everyone
 	protected String[] destination;
 	
-	// Experimental:  Attaches a Payload to Each Message
-	protected HashMap<String, String> payload;
+	// Attaches a Payload to Each Message
+	protected ArrayList<String> payload;
 	
 	/**
 	 * Constructor
@@ -29,7 +35,7 @@ public class CommMessage
 	public CommMessage(String messageType)
 	{
 		this.messageType = messageType;
-		this.destination = null;
+		this.destination = new String[0];
 		this.payload     = null;
 	}
 
@@ -50,29 +56,29 @@ public class CommMessage
 			CommMessage result = null;
 			
 			// Converts the Message to the Lowest Possible Class Using Message Types
-			if (tmp.messageType.equalsIgnoreCase("CDAT"))
+			if (tmp.messageType.equalsIgnoreCase(MESSAGE_TYPE_DATA))
 			{
 				result = gson.fromJson(json.trim(), ContextData.class);
 			}
-			else if (tmp.messageType.equalsIgnoreCase("CREQ"))
+			else if (tmp.messageType.equalsIgnoreCase(MESSAGE_TYPE_REQUEST))
 			{
 				result = gson.fromJson(json.trim(), ContextRequest.class);
 			}
-			else if (tmp.messageType.equalsIgnoreCase("CCAP"))
+			else if (tmp.messageType.equalsIgnoreCase(MESSAGE_TYPE_CAPABILITY))
 			{
 				result = gson.fromJson(json.trim(), ContextCapability.class);
 			}
-			else if (tmp.messageType.equalsIgnoreCase("CSUB"))
+			else if (tmp.messageType.equalsIgnoreCase(MESSAGE_TYPE_SUBSCRIPTION))
 			{
 				result = gson.fromJson(json.trim(), ContextSubscription.class);
 			}
-			else if (tmp.messageType.equalsIgnoreCase("COMP"))
+			else if (tmp.messageType.equalsIgnoreCase(MESSAGE_TYPE_INSTRUCTION))
 			{
 				result = gson.fromJson(json.trim(),  ComputeInstruction.class);
 			}
 			else
 			{
-				System.out.println("Unknown message type.  Returning null.");
+				System.out.println("Invalid GCF Message:\n" + json);
 			}
 
 			return result;
@@ -84,7 +90,7 @@ public class CommMessage
 	}
 
 	/**
-	 * Retrieves a Value from a String Array of the form "parameterName=value"
+	 * DEPRECATED: Retrieves a Value from a String Array of the form "parameterName=value"
 	 * @param values
 	 * @param parameterName
 	 * @return
@@ -115,7 +121,7 @@ public class CommMessage
 	}
 	
 	/**
-	 * Retrieves a Series of Values from a String Array of the form "parameterName=value1,value2,value3 . . ."
+	 * DEPRECATED: Retrieves a Series of Values from a String Array of the form "parameterName=value1,value2,value3 . . ."
 	 * @param values
 	 * @param parameterName
 	 * @return
@@ -143,7 +149,7 @@ public class CommMessage
 	}
 	
 	/**
-	 * Retrieves a Comma Delineated String
+	 * DEPRECATED: Retrieves a Comma Delineated String
 	 * @param array
 	 * @return
 	 */
@@ -207,7 +213,12 @@ public class CommMessage
 	 */
 	public String[] getDestination()
 	{
-		return destination;
+		if (destination != null)
+		{
+			return destination;	
+		}
+				
+		return new String[0];
 	}
 	
 	/**
@@ -239,18 +250,49 @@ public class CommMessage
 	}
 	
 	/**
-	 * Inserts a Value to the Payload
+	 * Inserts a Value to the Payload WITH a Reference Key
 	 * @param key
 	 * @param value
 	 */
-	public void put(String key, String value)
+	public void putPayload(String key, String value)
 	{
 		if (payload == null)
 		{
-			payload = new HashMap<String, String>();
+			payload = new ArrayList<String>();
 		}
 		
-		payload.put(key, value);
+		payload.add(key + "=" + value);
+	}
+	
+	/**
+	 * Inserts a Value to the Payload WITHOUT a Reference Key
+	 * @param value
+	 */
+	public void putPayload(String value)
+	{
+		if (payload == null)
+		{
+			payload = new ArrayList<String>();
+		}
+		
+		payload.add(value);
+	}
+	
+	/**
+	 * Inserts an Array of Values to the Payload (Does Not Check for Keys)
+	 * @param values
+	 */
+	public void putPayload(String[] values)
+	{
+		if (payload == null)
+		{
+			payload = new ArrayList<String>();
+		}
+		
+		for (String value : values)
+		{
+			payload.add(value);
+		}
 	}
 	
 	/**
@@ -258,14 +300,86 @@ public class CommMessage
 	 * @param key
 	 * @return
 	 */
-	public String get(String key)
+	public String getPayload(String key)
 	{
-		if (payload != null && payload.containsKey(key))
+		for (String s : payload)
 		{
-			return payload.get(key);
+			String[] elements = s.split("=");
+			
+			if (elements.length >= 2)
+			{
+				if (elements[0].trim().equals(key.trim()))
+				{
+					return s.substring(s.indexOf("=") + 1);
+				}	
+			}
+		}
+		
+		// Returns NULL if Nothing Found
+		return null;
+	}
+	
+	/**
+	 * Retrieves a Specific Value from the Payload
+	 * @param index
+	 * @return
+	 */
+	public String getPayload(int index)
+	{
+		if (index >= 0 && index <= payload.size()-1)
+		{
+			return payload.get(index);
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Retrieves all Values
+	 * @return
+	 */
+	public String[] getPayload()
+	{
+		if (payload == null)
+		{
+			return new String[0];
+		}
+		else
+		{
+			return payload.toArray(new String[0]);
+		}
+	}
+	
+	/**
+	 * Determines if a Value Exists in the Payload with the Specified Key
+	 * @param key
+	 * @return
+	 */
+	public boolean hasPayload(String key)
+	{
+		for (String s : payload)
+		{
+			String[] elements = s.split("=");
+			
+			if (elements.length >= 2)
+			{
+				if (elements[0].equals(key))
+				{
+					return true; 
+				}	
+			}
+		}
+		
+		// Returns NULL if Nothing Found
+		return false;
+	}
+
+	/**
+	 * Removes All Values from the Payload
+	 */
+	public void clearPayload()
+	{
+		this.payload.clear();
 	}
 	
 	/**

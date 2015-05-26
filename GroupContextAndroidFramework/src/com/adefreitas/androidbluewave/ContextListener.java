@@ -14,7 +14,7 @@ import com.adefreitas.androidframework.toolkit.HttpToolkit;
 public class ContextListener
 {
 	// Log Constant
-	private static final String LOG_NAME = "BLUEWAVE_Listener";
+	private static final String LOG_NAME = "Bluewave_Listener";
 	
 	// Intent Filters
 	private IntentFilter    	   filter;
@@ -44,37 +44,6 @@ public class ContextListener
 		filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED);
 		filter.addAction(BluewaveManager.ACTION_BLUETOOTH_SCAN_UPDATE);
 		this.context.registerReceiver(receiver, filter);
-	}
-	
-	private void onBluetoothScanResults(String[] bluetoothIDs)
-	{				
-		for (String bluetoothID : bluetoothIDs)
-		{			
-			if (bluetoothID != null)
-			{
-				// Extracts the Components
-				// Should be in the form BLU::<NAME>::<FILE NAME>::<TIMESTAMP>
-											
-				// Processes Bluetooth Devices with the Above Naming Convention
-				if (BluetoothScanner.isBluewaveName(bluetoothID))
-				{
-					String[] components = bluetoothID.split("::");
-					String deviceID     = components[1];
-					String downloadPath = components[2];
-					long   lastUpdate   = Long.parseLong(components[3]);
-				   	
-					if (!archive.containsKey(deviceID) || archive.get(deviceID).getDateDownloaded().getTime() < lastUpdate)
-					{
-						// Formats URL
-						String url = downloadPath.replace(" ", "%20");
-						httpToolkit.get(url, BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED);
-						
-						// Creates an Entry (and replaces the previous entry)
-						archive.put(deviceID, new ContextInfo(deviceID, new Date(lastUpdate)));
-					}
-				}	
-			}
-		}
 	}
 	
 	/**
@@ -130,48 +99,90 @@ public class ContextListener
 		{	
 			if (intent.getAction().equals(BluewaveManager.ACTION_BLUETOOTH_SCAN_UPDATE))
 			{
-				// Grabs Bluetooth IDs
-				String[] deviceIDs = intent.getStringArrayExtra(BluewaveManager.BLUETOOTH_SCAN_RESULTS);
-				
-				// Forwards IDs for Processing
-				onBluetoothScanResults(deviceIDs);
+				onBluetoothScanUpdate(context, intent);
 			}
 			else if (intent.getAction().equals(BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED))
 			{
-				// This is the Raw JSON from the Device
-				String json = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
-				
-				// Makes Sure that the Uploaded JSON Actually Has JSON in it!
-				if (json != null)
-				{
-					JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-					
-			    	// Remembers this File to Prevent Redundant Downloading
-					String deviceID = parser.getDeviceID();
-					
-					if (deviceID != null)
-					{
-						archive.get(deviceID).setJson(json);
-						Intent i = new Intent(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
-						i.putExtra(BluewaveManager.OTHER_USER_CONTEXT, json);
-						context.sendBroadcast(i);
-						
-						// TODO:  Debug Toast
-						Log.d(LOG_NAME, "Bluewave Context from " + deviceID + " (" + json.length() + " bytes)");
-						//Toast.makeText(context, "Bluewave Context from " + deviceID + " (" + json.length() + " bytes)", Toast.LENGTH_SHORT).show();
-					}	
-					else
-					{
-						// TODO:  Debug Toast
-						Log.d(LOG_NAME, "Bluewave Context is null for " + deviceID);
-						//Toast.makeText(context, "Bluewave Context is null", Toast.LENGTH_SHORT).show();
-					}
-				}
+				onContextFileDownloaded(context, intent);
 			}
 			else
 			{
 				Log.e(LOG_NAME, "Unknown Intent: " + intent.getAction());
 			}
 		}
+		
+		private void onBluetoothScanUpdate(Context context, Intent intent)
+		{
+			// Grabs Bluetooth IDs
+			String bluetoothID = intent.getStringExtra(BluewaveManager.BLUETOOTH_SCAN_RESULT);
+			
+			if (bluetoothID != null)
+			{
+				// Extracts the Components
+				// Should be in the form BLU::<DEVICE_NAME>::<FILE NAME>::<TIMESTAMP>
+											
+				// Processes Bluetooth Devices with the Above Naming Convention
+				if (BluewaveManager.isBluewaveName(bluetoothID))
+				{
+					String[] components = bluetoothID.split("::");
+					String deviceID     = components[1];
+					String downloadPath = components[2];
+					long   lastUpdate   = Long.parseLong(components[3]);
+				   	
+					if (!archive.containsKey(deviceID) || archive.get(deviceID).getDateDownloaded().getTime() < lastUpdate)
+					{
+						// Downloads the New Context
+						String url = downloadPath.replace(" ", "%20");
+						httpToolkit.get(url, BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED);
+						
+						// Creates an Entry (and replaces the previous entry)
+						archive.put(deviceID, new ContextInfo(deviceID, new Date(lastUpdate)));
+					}
+					else if (archive.containsKey(deviceID))
+					{
+						// Retransmits the Old Context if No Update was Found
+						if (deviceID != null && archive.get(deviceID).getJson() != null)
+						{
+							String json = archive.get(deviceID).getJson();
+							Intent i = new Intent(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
+							i.putExtra(BluewaveManager.OTHER_USER_CONTEXT, json);
+							i.putExtra(BluewaveManager.NEW_CONTEXT, false);
+							context.sendBroadcast(i);
+							
+							// TODO:  Debug Toast
+							Log.d(LOG_NAME, "Bluewave Context (Old) from " + deviceID + " (" + json.length() + " bytes)");
+						}	
+					}
+				}	
+			}
+		}
+		
+		private void onContextFileDownloaded(Context context, Intent intent)
+		{
+			// This is the Raw JSON from the Device
+			String json = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+			
+			// Makes Sure that the Uploaded JSON Actually Has JSON in it!
+			if (json != null)
+			{
+				JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
+				
+		    	// Remembers this File to Prevent Redundant Downloading
+				String deviceID = parser.getDeviceID();
+				
+				if (deviceID != null)
+				{
+					archive.get(deviceID).setJson(json);
+					Intent i = new Intent(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
+					i.putExtra(BluewaveManager.OTHER_USER_CONTEXT, json);
+					i.putExtra(BluewaveManager.NEW_CONTEXT, true);
+					context.sendBroadcast(i);
+					
+					// TODO:  Debug Toast
+					Log.d(LOG_NAME, "Bluewave Context (New) from " + deviceID + " (" + json.length() + " bytes)");
+				}	
+			}
+		}
+	
 	}
 }

@@ -12,16 +12,16 @@ import com.adefreitas.messages.ContextCapability;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
 
-
 public class DesktopGroupContextManager extends GroupContextManager implements MessageProcessor
 {
 	private boolean DEBUG = false;
 	
-	private static final int DELAY_TIME = 2000;
-	
 	private MessageProcessor messageProcessor;
 	private RequestProcessor requestProcessor;
 	private ScheduledTask    scheduledTimerTask;
+	
+	// Request Delay
+	private static final int REQUEST_DELAY_TIME = 5000;
 	
 	public DesktopGroupContextManager(String deviceID, BatteryMonitor batteryMonitor, boolean promiscuous)
 	{
@@ -31,7 +31,7 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 		this.commManager = new DesktopCommManager(this);
 		
 		// Starts the Scheduled Events Thread
-		scheduledTimerTask = new ScheduledTask(DELAY_TIME);
+		scheduledTimerTask = new ScheduledTask();
 		scheduledTimerTask.start();
 	}
 	
@@ -91,11 +91,18 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 	public void sendRequest(String type, int requestType, int refreshRate, String[] parameters)
 	{
 		super.sendRequest(type, requestType, refreshRate, parameters);
+		scheduledTimerTask.interrupt();
 	}
 
-	public void sendRequest(String contextType, String[] deviceIDs, int refreshRate, String[] parameters)
+	public void sendRequest(String contextType, int requestType, String[] deviceIDs, int refreshRate, String[] parameters)
 	{
-		super.sendRequest(contextType, deviceIDs, refreshRate, parameters);
+		super.sendRequest(contextType, requestType, deviceIDs, refreshRate, parameters);
+		scheduledTimerTask.interrupt();
+	}
+	
+	@Override
+	protected void onRequestReceived(ContextRequest request) {
+		
 	}
 	
 	public void cancelRequest(String type)
@@ -107,25 +114,6 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 	{
 		super.cancelRequest(type, deviceID);
 	}
-	
-	// TODO:  Test Me Out!
-//	public void sendComputeInstruction(CommMode mode, String ipAddress, int port, String contextType, String[] destination, String command, String[] instructions)
-//	{
-//		try
-//		{
-//			ComputeInstruction instruction = new ComputeInstruction(contextType, getDeviceID(), destination, command, instructions);
-//			
-//			// Sends the Message
-//			String connectionKey = gcm.connect(commMode, ipAddress, port);
-//			groupContextManager.subscribe(connectionKey, "cmu/gcf_framework");
-//			groupContextManager.sendComputeInstruction(ContextType.PERSONAL, new String[] { deviceID }, "APPLICATION", appProvider.getInformation());
-//			groupContextManager.disconnect(connectionKey);
-//		}
-//		catch (Exception ex)
-//		{
-//			ex.printStackTrace();
-//		}
-//	}
 	
 	@Override
 	protected void onCapabilitySubscribe(ContextCapability capability) {
@@ -171,12 +159,12 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 		
 	class ScheduledTask extends Thread
 	{
-		private long 	delayTime;
 		private boolean run;
+		private long    scheduledTaskDelay;
 		
-		public ScheduledTask(long defaultDelayTime)
+		public ScheduledTask()
 		{
-			delayTime = defaultDelayTime;
+			run    = false;
 		}
 		
 		public void run() 
@@ -188,26 +176,17 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 				try
 				{
 					// Runs all Scheduled Tasks ONCE
-					long newDelayTime = Math.min(runScheduledTasks(), 5000);
+					scheduledTaskDelay = runScheduledTasks();
+					long newDelayTime  = Math.max(Math.min(scheduledTaskDelay, REQUEST_DELAY_TIME), 0);
 					
-					if (newDelayTime < 0)
-					{
-						newDelayTime = 0;
-					}
-					
+					// Lets the Thread Sleep
 					sleep(newDelayTime);
 				}
 				catch (Exception ex)
 				{
-					ex.printStackTrace();
+					System.out.println("Coming out of sleep . . . YAWN");
 				}
-			}
-			
-		}
-		
-		public long getDelayTime()
-		{
-			return delayTime;
+			}	
 		}
 	}
 
@@ -216,4 +195,6 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 		// TODO Auto-generated method stub
 		
 	}
+
+
 }

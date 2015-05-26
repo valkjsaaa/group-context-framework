@@ -213,11 +213,10 @@ public class MainActivity extends Activity
 				// Extracts the values from the intent
 				String   contextType = intent.getStringExtra(ContextData.CONTEXT_TYPE);
 				String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
-				String   description = intent.getStringExtra(ContextData.DESCRIPTION);
-				String[] values      = intent.getStringArrayExtra(ContextData.VALUES);
+				String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
 				
 				// Forwards Values to the Application for Processing
-				onContextData(new ContextData(contextType, deviceID, description, values));
+				onContextData(new ContextData(contextType, deviceID, values));
 			}
 			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_OUTPUT))
 			{

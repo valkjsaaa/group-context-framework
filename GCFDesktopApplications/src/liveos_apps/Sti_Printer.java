@@ -4,7 +4,7 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import com.adefreitas.desktoptoolkits.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -80,9 +80,9 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		{
 			busy = true;
 			
-			sendMostRecentReading();
+			sendContext();
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			print(filePath, instruction.getDeviceID());
@@ -91,9 +91,9 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		{
 			busy = true;
 			
-			sendMostRecentReading();
+			sendContext();
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "FILE");
+			String filePath = instruction.getPayload("FILE");
 			System.out.println("*** I got told to print: " + filePath + " ***");
 			
 			print(filePath, instruction.getDeviceID());
@@ -165,7 +165,7 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		
 		busy = false;
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 
 }

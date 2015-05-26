@@ -12,11 +12,12 @@ import toolkits.ScreenshotToolkit;
 
 import com.adefreitas.desktopframework.DesktopGroupContextManager;
 import com.adefreitas.desktopframework.MessageProcessor;
-import com.adefreitas.desktoptoolkits.DrawingPanel;
+import com.adefreitas.desktopframework.toolkit.DrawingPanel;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextData;
+import com.adefreitas.messages.ContextRequest;
 
 public class RCP_Experimental extends RemoteControlProvider implements MessageProcessor
 {
@@ -151,7 +152,7 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 		}
 		
 		// Subscribes to their light provider
-		this.getGroupContextManager().sendRequest("LGT", new String[] { newSubscription.getDeviceID() }, 250, new String[0]);
+		this.getGroupContextManager().sendRequest("LGT", ContextRequest.SINGLE_SOURCE, new String[] { newSubscription.getDeviceID() }, 250, new String[0]);
 	}
 	
 	@Override
@@ -187,10 +188,10 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 		
 		this.getGroupContextManager().cancelRequest("LGT", subscription.getDeviceID());
 		
-		sendMostRecentReading();
+		sendContext();
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
 		{
@@ -203,7 +204,6 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 			
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "UI=" + ui  });
 		}
@@ -218,7 +218,7 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 		
 		if (instruction.getCommand().equals("KEYPRESS"))
 		{
-			String key = CommMessage.getValue(instruction.getParameters(), "keycode");
+			String key = instruction.getPayload("keycode");
 			int keycode = -1;
 			
 			if (key.equals("left"))
@@ -242,14 +242,14 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 		    this.getCloudStorageToolkit().uploadFile(UPLOAD_FOLDER, screenshot);
 		    
 		    System.out.println("Uploaded New Screenshot");
-		    this.sendMostRecentReading();
+		    this.sendContext();
 		}
 		else if (instruction.getCommand().equals("PP_UPLOADED"))
 		{		
 			PRIMARY_DEVICE = instruction.getDeviceID();
 			System.out.println("PRIMARY_DEVICE: " + PRIMARY_DEVICE);
 			
-			String filePath = CommMessage.getValue(instruction.getParameters(), "uploadPath");
+			String filePath = instruction.getPayload("uploadPath");
 			System.out.println("I got notified of an upload at: " + filePath);
 			
 			// TODO:  Remove me:  I test preferences Code
@@ -276,7 +276,7 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 				// Uploads the Presentation to Dropbox
 				this.getCloudStorageToolkit().uploadFile(UPLOAD_FOLDER, new File(PRESENTATION_LOCATION));
 								
-				this.sendMostRecentReading();
+				this.sendContext();
 				
 				runPresentation(false);
 			}
@@ -300,7 +300,7 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 			robot.keyRelease(KeyEvent.VK_Q);
 			robot.delay(1000);
 			
-			this.sendMostRecentReading();
+			this.sendContext();
 		}
 	}
 
@@ -315,7 +315,7 @@ public class RCP_Experimental extends RemoteControlProvider implements MessagePr
 		
 		if (message instanceof ContextData)
 		{
-			intensity = ((ContextData) message).getValuesAsDoubles()[0];
+			//intensity = ((ContextData) message).getValuesAsDoubles()[0];
 			
 			//System.out.printf("LIGHT: %1.2f %s\n", intensity, pressed);
 			

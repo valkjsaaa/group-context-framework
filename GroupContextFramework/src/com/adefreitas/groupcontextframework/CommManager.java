@@ -57,7 +57,7 @@ public abstract class CommManager
 		
 		if (t != null)
 		{
-			if (t.supportsChannels() && !t.isSubscribedToChannel(channel))
+			if (t.supportsChannels())
 			{
 				t.subscribeToChannel(channel);
 				gcm.log(GroupContextManager.LOG_COMMUNICATIONS, "Comm thread " + connectionKey + " subscribed to " + channel);
@@ -65,7 +65,7 @@ public abstract class CommManager
 			}
 			else
 			{
-				gcm.log(GroupContextManager.LOG_COMMUNICATIONS, "Comm thread " + connectionKey + " does not support channels or is already subscribed.");
+				gcm.log(GroupContextManager.LOG_COMMUNICATIONS, "Comm thread " + connectionKey + " does not support channels.");
 			}
 		}
 		else
@@ -296,12 +296,31 @@ public abstract class CommManager
 	}
 
 	/**
+	 * Returns All Comm Thread Keys Managed by this Object
+	 * @return
+	 */
+	public String[] getCommThreadKeys()
+	{
+		return commThreads.keySet().toArray(new String[0]);
+	}
+	
+	/**
 	 * Retrieves a Single Comm Thread with the Specified Connection Key
 	 * @param connectionKey
 	 * @return
 	 */
-	protected CommThread getCommThread(String connectionKey)
+	public CommThread getCommThread(String connectionKey)
 	{
 		return commThreads.get(connectionKey);
 	}
+
+	/**
+	 * Returns all Comm Threads
+	 * @return
+	 */
+	public CommThread[] getCommThreads()
+	{
+		return commThreads.values().toArray(new CommThread[0]);
+	}
+	
 }

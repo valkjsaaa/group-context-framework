@@ -29,13 +29,12 @@ public class RCP_HueLight extends RemoteControlProvider
 		super.initializeUserInterfaces();
 	}
 	
-	public void sendMostRecentReading()
+	public void sendContext()
 	{
 		for (ContextSubscriptionInfo subscription : this.getSubscriptions())
 		{
 			this.getGroupContextManager().sendContext(
 					this.getContextType(), 
-					"", 
 					new String[] { subscription.getDeviceID() }, 
 					new String[] { "WEBSITE=" + WEBSITE_URL   });
 		}
