@@ -1,34 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:paddingTop="10dp"
+    android:paddingLeft="10dp"
     android:background="@drawable/corner"
-    android:orientation="vertical"
-    android:layout_marginBottom="10dp">
-    		                
+    android:paddingRight="10dp">
+
+    <ImageView
+        android:id="@+id/imgAppLogo"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="5dp"
+        android:background="#CCCCCC"
+        android:orientation="vertical" >
+    </ImageView>
+    
+    <LinearLayout    
+        android:layout_toRightOf="@id/imgAppLogo"
+		android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:orientation="vertical"
+    	android:padding="5dp">
+        
         <LinearLayout
             android:id="@+id/layoutAppDetails"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:padding="5dp">
+			android:orientation="vertical">
 		        
 		    <TextView
 		        android:id="@+id/txtTitle"
-		        android:text="App Title Goes Here for a really really really really really long title"
+		        android:text="App Title Goes Here"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:textColor="@color/custom_primary"
+		        android:textSize="18sp" />
+		    
+		    <TextView
+		        android:id="@+id/txtCategory"
+		        android:text="App Category Goes Here"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:layout_marginBottom="5dp"
 		        android:textColor="@color/custom_primary"
-		        android:textSize="16sp" />
+		        android:textSize="12sp" />
 		        
 			<TextView
 			    android:id="@+id/txtDescription"
 			    android:layout_width="match_parent"
 			    android:layout_height="wrap_content"
-			    android:text="Application Description Goes Here and its a really really really really really really long one don&apos;t you think?"
+			    android:text="Application Description Goes Here"
 			    android:textColor="#666666"
-			    android:textSize="12sp" />
+			    android:textSize="14sp" />
 
 		</LinearLayout>
 		        
@@ -63,12 +89,12 @@
 				    android:id="@+id/txtRunMessage"
 					android:text="Run App"
 					android:textSize="12sp"
-					android:layout_marginLeft="5dp"
-					android:textColor="@color/custom_green"
+					android:textColor="@color/custom_primary"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_gravity="center" />
 			</LinearLayout>
 		</LinearLayout>
-        
-</LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

@@ -1,4 +1,4 @@
-package com.adefreitas.gcfimpromptu;
+package com.adefreitas.androidproviders;
 
 import android.app.IntentService;
 import android.content.Intent;

@@ -20,7 +20,7 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 				"CREATIONFEST 2015",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"https://cdn4.iconfinder.com/data/icons/pretty_office_3/48/sign-up.png", // LOGO
+				"http://icons.iconarchive.com/icons/double-j-design/origami-colored-pencil/256/blue-user-icon.png", // LOGO
 				300,
 				commMode,
 				ipAddress,
@@ -44,6 +44,6 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
-		return hasEmailAddress(parser, "adrian.defreitas@gmail.com") && this.signedDisclaimer(parser);
+		return hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 }

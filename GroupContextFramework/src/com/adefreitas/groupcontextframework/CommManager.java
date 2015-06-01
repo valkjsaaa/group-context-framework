@@ -270,6 +270,34 @@ public abstract class CommManager
 	}
 	
 	/**
+	 * Sends a Message Along the Specified Channel
+	 * NOTE:  This may sends repeats to the same device if they are all on the same channels
+	 * @param message
+	 * @param channel
+	 */
+	public void sendUsingChannel(CommMessage message, String channel)
+	{
+		ArrayList<CommThread> threadsToUse = new ArrayList<CommThread>();
+		
+		for (String deviceID : message.getDestination())
+		{
+			for (CommThread commThread : commThreads.values())
+			{
+				if (commThread.receivesMessagesFrom(deviceID))
+				{
+					threadsToUse.add(commThread);
+					break;
+				}
+			}
+		}
+		
+		for(CommThread commThread : threadsToUse)
+		{
+			commThread.send(message, channel);
+		}
+	}
+	
+	/**
 	 * Checks to see if a comm thread is connected
 	 * @param commMode
 	 * @param ipAddress

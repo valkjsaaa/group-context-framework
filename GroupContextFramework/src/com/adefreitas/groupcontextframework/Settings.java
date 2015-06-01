@@ -76,11 +76,15 @@ public class Settings
 		}
 		else if (name.equals("1a1a41f"))
 		{
-			result = "ZTE-Office";
+			result = "ZTE-1";
 		}
 		else if (name.equals("1a10bdc"))
 		{
-			result = "ZTE-Home";
+			result = "ZTE-2";
+		}
+		else if (name.equals("ca19bb8"))
+		{
+			result = "ZTE-3";
 		}
 		
 		return result;

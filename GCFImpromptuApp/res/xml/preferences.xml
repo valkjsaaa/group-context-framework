@@ -47,7 +47,7 @@
 		<CheckBoxPreference
             android:title="Enabled"
             android:summary="Check this to get a button to be able to use Snap-To-It"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="sti_enabled"/>
         
         <CheckBoxPreference
@@ -61,11 +61,6 @@
             android:summary="If enabled, device will automatically connect if a device reports high # of matches"
             android:defaultValue="true"
             android:key="sti_auto"/>
-    </PreferenceCategory>
-    
-    <PreferenceCategory 
-        android:title="Bluewave Configuration"
-        android:key="category_bluewave_details">
     </PreferenceCategory>
         
 </PreferenceScreen>

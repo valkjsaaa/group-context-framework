@@ -1,5 +1,7 @@
 package liveos_apps.creationfest;
 
+import java.util.Calendar;
+
 import liveos_apps.DesktopApplicationProvider;
 import liveos_apps.ProblemContextProvider;
 
@@ -23,7 +25,7 @@ public class App_CreationFestReporter extends DesktopApplicationProvider
 				"CREATIONFEST 2015",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"https://cdn2.iconfinder.com/data/icons/oxygen/48x48/status/dialog-warning.png", // LOGO
+				"http://www.safeconcerts.com/images/bank/creation-fest-logo.jpg", // LOGO
 				300,
 				commMode,
 				ipAddress,
@@ -50,13 +52,16 @@ public class App_CreationFestReporter extends DesktopApplicationProvider
 
 	public int getLifetime()
 	{
-		return 300;
+		Calendar cal = Calendar.getInstance();
+		cal.set(2015, 6, 28, 8, 0);
+		
+		return (int)((cal.getTimeInMillis() - System.currentTimeMillis()) / 1000);
 	}
 	
 	@Override
 	public boolean sendAppData(String json)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-		return hasEmailAddress(parser, "adrian.defreitas@gmail.com") && this.signedDisclaimer(parser);
+		return hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 }

@@ -7,7 +7,9 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.content.SharedPreferences;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
@@ -24,8 +26,9 @@ import com.google.gson.reflect.TypeToken;
 public class UserIdentityContextProvider extends ContextProvider
 {
 	// Context Configuration
-	private static final String CONTEXT_TYPE = "USER_ID";
-	private static final String LOG_NAME     = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
+	private static final String CONTEXT_TYPE       = "USER_ID";
+	private static final String LOG_NAME           = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
+	private static final String PREFERENCE_USER_ID = "com.adefreitas.inoutboard.userids";
 	
 	// Provider Specific Variables
 	private Gson gson;
@@ -36,17 +39,24 @@ public class UserIdentityContextProvider extends ContextProvider
 	// Stores the Device Name to ID
 	private HashMap<String, UserData> entries;
 	
+	// App Storage
+	private SharedPreferences appSharedPreferences;
+	
 	/**
 	 * Constructor
 	 * @param groupContextManager
 	 */
-	public UserIdentityContextProvider(GroupContextManager groupContextManager) 
+	public UserIdentityContextProvider(GroupContextManager groupContextManager, SharedPreferences appSharedPreferences) 
 	{
 		super(CONTEXT_TYPE, groupContextManager);
 		
-		this.locationName = "UNKNOWN LOCATION [" + this.getGroupContextManager().getDeviceID() + "]";
-		this.gson    	  = new Gson();
-		this.entries 	  = new HashMap<String, UserData>();
+		this.locationName 		  = "UNKNOWN LOCATION [" + this.getGroupContextManager().getDeviceID() + "]";
+		this.gson    	  		  = new Gson();
+		this.entries 	  		  = new HashMap<String, UserData>();
+		this.appSharedPreferences = appSharedPreferences;
+		
+		// Restores Entries from Preferences
+		restoreEntries();
 	}
 
 	@Override
@@ -88,6 +98,8 @@ public class UserIdentityContextProvider extends ContextProvider
 		{
 			Log.e(LOG_NAME, "Could not add Entry: " + ex.getMessage());
 		}
+		
+		saveEntries();
 	}
 	
 	public void updateEntry(String deviceID)
@@ -96,6 +108,8 @@ public class UserIdentityContextProvider extends ContextProvider
 		{
 			entries.get(deviceID).updateLastEncountered(locationName);
 		}
+		
+		saveEntries();
 	}
 	
 	public void update(String json)
@@ -106,6 +120,43 @@ public class UserIdentityContextProvider extends ContextProvider
 		{
 			entries.put(userData.getDeviceID(), userData);
 		}
+		
+		saveEntries();
+	}
+	
+	private void saveEntries()
+	{
+		Log.d(LOG_NAME, "Saving IDs (" + entries.size() + " entries)");
+		SharedPreferences.Editor editor = appSharedPreferences.edit();
+		editor.putString(PREFERENCE_USER_ID, gson.toJson(entries));
+		editor.commit();
+	}
+	
+	private void restoreEntries()
+	{
+		// Loads App Preferences
+		if (appSharedPreferences.contains(PREFERENCE_USER_ID))
+		{
+			String json = appSharedPreferences.getString(PREFERENCE_USER_ID, "");
+			
+			if (json.length() > 0)
+			{
+				// Attempts to Extract the App Preferences from JSON
+				try
+				{
+					entries = (HashMap<String, UserData>) gson.fromJson(json, new TypeToken<HashMap<String, UserData>>(){}.getType());
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+				}
+				
+			}
+		}
+		else
+		{
+			Log.d(LOG_NAME, "Creating New App Preferences");
+		}
 	}
 	
 	public UserData getUserData(String deviceID)
@@ -113,14 +164,18 @@ public class UserIdentityContextProvider extends ContextProvider
 		return entries.get(deviceID);
 	}
 	
-	public ArrayList<UserData> getUserData()
+	public ArrayList<UserData> getCurrentUserData()
 	{
 		ArrayList<UserData> result = new ArrayList<UserData>();
 				
 		for (UserData u : entries.values())
 		{
 			long timeElapsed = new Date().getTime() - u.getLastEncounteredDate().getTime(); 
-			result.add(u);	
+			
+			if (timeElapsed < 300000)
+			{
+				result.add(u);	
+			}
 		}
 		
 		return result;
@@ -189,7 +244,7 @@ public class UserIdentityContextProvider extends ContextProvider
 			deviceIDs.add(subscription.getDeviceID());
 		}
 	
-		String json = gson.toJson(getUserData());
+		String json = gson.toJson(entries.values());
 		this.getGroupContextManager().sendContext(this.getContextType(), deviceIDs.toArray(new String[0]), new String[] { "LOCATION=" + this.locationName, "VALUES=" + json});
 		
 	}

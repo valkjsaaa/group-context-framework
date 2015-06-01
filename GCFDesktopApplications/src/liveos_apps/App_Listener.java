@@ -1,6 +1,7 @@
 package liveos_apps;
 
 import java.util.Date;
+import java.util.HashMap;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.desktopframework.toolkit.SQLToolkit;
@@ -17,17 +18,28 @@ public class App_Listener extends DesktopApplicationProvider
 		
 	private SQLToolkit sqlToolkit;
 	
+	// Tracks Devices Listened To
+	private HashMap<String, Integer> log = new HashMap<String, Integer>();
+	
+	/**
+	 * Constructor
+	 * @param groupContextManager
+	 * @param commMode
+	 * @param ipAddress
+	 * @param port
+	 * @param sqlToolkit
+	 */
 	public App_Listener(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port, SQLToolkit sqlToolkit)
 	{
 		super(groupContextManager, 
 				"LISTEN",
 				"Listener Application",
-				"This app is recording all IMPROMPTU context delivered.",
-				"DEBUG",
+				"This app records all context advertised by Impromptu.",
+				"DEV TOOLS",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"https://cdn1.iconfinder.com/data/icons/MetroStation-PNG/128/MB__listen.png", // LOGO
-				120,
+				600,
 				commMode,
 				ipAddress,
 				port);
@@ -46,6 +58,12 @@ public class App_Listener extends DesktopApplicationProvider
 		ui       += "<p><b>Started:</b> " + dateStarted + "</p>";
 		ui       += "<p><b>Current Time:</b> " + new Date() + "</p>";
 		ui		 += "<p><b># Records:</b> " + entriesRecorded + "</p>";
+		
+		for (String deviceID : log.keySet())
+		{
+			ui += "<p>" + deviceID + ": " + log.get(deviceID) + "</p>";
+		}
+				
 		ui		 += "<p><b>Last Entry:</b><br/>" + lastOutput + "</p>";
 		ui       += "</html>";
 		
@@ -62,8 +80,22 @@ public class App_Listener extends DesktopApplicationProvider
 	{	
 		try
 		{
-			String updateQuery = String.format("INSERT INTO usercontext (deviceID, timestamp, latitude, longitude, activity) VALUES ('%s','%s',%f,%f,'%s');",
-					this.getDeviceName(parser), new java.sql.Timestamp(System.currentTimeMillis()).toString(), this.getLatitude(parser), this.getLongitude(parser), this.getActivity(parser));
+			String deviceID   = this.getDeviceID(parser);
+			String time       = new java.sql.Timestamp(System.currentTimeMillis()).toString();			
+			double latitude   = this.getLatitude(parser);
+			double longitude  = this.getLongitude(parser);
+			String activity   = this.getActivity(parser);
+			int    confidence = this.getConfidence(parser);
+			int    numEntries = (log.containsKey(deviceID)) ? log.get(deviceID) : 0;
+			
+			// Increments the Counter
+			log.put(deviceID, numEntries + 1);
+			
+			// Generates the Query
+			String updateQuery = String.format("INSERT INTO usercontext (deviceID, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
+					deviceID, time, latitude, longitude, activity, confidence);
+			
+			//System.out.println(updateQuery);
 			
 			// Runs the SQL Query
 			sqlToolkit.runUpdateQuery(updateQuery);
@@ -76,7 +108,9 @@ public class App_Listener extends DesktopApplicationProvider
 		}
 		catch (Exception ex)
 		{
-			System.out.println(" *** Problem Encountered while Recording Context: " + ex.getMessage() + " ***");
+			ex.printStackTrace();
+			
+			System.out.println(" *** Problem Recording Context: " + parser.toString() + " ***");
 		}
 	}
 	
@@ -85,9 +119,15 @@ public class App_Listener extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
-		// Records Context
+		// Records Context in DB
 		recordContext(parser);
 		
 		return this.hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
+
+	public String getDescription(String json)
+	{
+		return entriesRecorded + " entries obtained from " + log.keySet().size() + " devices.  Click for more details.";
+	}
+	
 }

@@ -1,4 +1,4 @@
-package com.adefreitas.androidproviders;
+package com.adefreitas.androidproviders.legacy;
 import com.adefreitas.groupcontextframework.*;
 
 import android.hardware.Sensor;

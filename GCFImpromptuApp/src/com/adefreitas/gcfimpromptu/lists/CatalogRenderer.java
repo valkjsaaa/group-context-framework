@@ -1,5 +1,6 @@
 package com.adefreitas.gcfimpromptu.lists;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -8,11 +9,15 @@ import com.adefreitas.gcfmagicapp.R;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -20,8 +25,12 @@ import android.widget.Toast;
 
 public class CatalogRenderer 
 {	
+	// Defines the number of apps to switch to a "minimalist" view
+	private static final int APP_THRESHHOLD = 3;
+	
+	private static HashMap<String, Bitmap>		  logoDirectory     = new HashMap<String, Bitmap>();
 	private static HashMap<View, AppCategoryInfo> categoryDirectory = new HashMap<View, AppCategoryInfo>(); 
-	private static HashMap<View, AppInfo> 		  appDirectory 	    = new HashMap<View, AppInfo>(); 
+	private static HashMap<View, AppInfo> 		  appDirectory 	    = new HashMap<View, AppInfo>();
 	
 	/**
 	 * Generates the Views for the Application Catalog
@@ -31,9 +40,11 @@ public class CatalogRenderer
 	 */
 	public static View renderCatalog(Context context, ArrayList<AppCategoryInfo> categories)
 	{
+		// Creates a Scrollable Container
 		ScrollView container = new ScrollView(context);
 		container.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 			
+		// Creates a Container that Holds all of the Categories/Apps
 		LinearLayout layout = new LinearLayout(context);
 		layout.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 		layout.setOrientation(LinearLayout.VERTICAL);
@@ -42,17 +53,44 @@ public class CatalogRenderer
 		categoryDirectory.clear();
 		appDirectory.clear();
 		
+		// Counts the Total Number of Available Apps
+		int totalAvailableApps = 0;
+		
 		for (AppCategoryInfo category : categories)
 		{
-			View categoryView = renderCategory(context, category);
-						
-			if (categoryView != null)
+			totalAvailableApps += category.getAvailableApps().size();
+		}
+		
+		// Renders the Categories and/or Apps (depending on the total number)
+		if (totalAvailableApps > APP_THRESHHOLD)
+		{
+			// Case 1:  LOTS of Apps.  Render Category Headings
+			for (AppCategoryInfo category : categories)
 			{
-				// Stores the View with the Category for Later Reference
-				categoryDirectory.put(categoryView, category);
-				categoryView.setOnClickListener(onCategoryClickListener);
-				
-				layout.addView(categoryView);
+				View categoryView = renderCategory(context, category);
+							
+				if (categoryView != null)
+				{
+					// Stores the View with the Category for Later Reference
+					categoryDirectory.put(categoryView, category);
+					categoryView.setOnClickListener(onCategoryClickListener);
+					
+					layout.addView(categoryView);
+				}
+			}
+		}
+		else
+		{
+			// Case 2:  Few Apps.  Render Apps Directly
+			for (AppCategoryInfo category : categories)
+			{				
+				// Adds the App to the Main View
+				for (AppInfo app : category.getAvailableApps())
+				{
+					View appView = renderApplication(context, app, true);
+					appDirectory.put(appView, app);
+					layout.addView(appView);
+				}
 			}
 		}
 		
@@ -115,7 +153,7 @@ public class CatalogRenderer
 		// Renders Apps
 		for (int i=0; i<numAppsToRender; i++)
 		{
-			View appView = renderApplication(context, availableApps.get(i));
+			View appView = renderApplication(context, availableApps.get(i), false);
 			appDirectory.put(appView, availableApps.get(i));
 			appsView.addView(appView);
 		}
@@ -130,23 +168,51 @@ public class CatalogRenderer
 	 * @param app
 	 * @return
 	 */
-	public static View renderApplication(Context context, AppInfo app)
+	public static View renderApplication(Context context, AppInfo app, boolean showAll)
 	{
 		LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View 		   appView  = inflater.inflate(R.layout.app_info_single, null);
 		
 		// Gets Controls
-		TextView txtTitle 		= (TextView)appView.findViewById(R.id.txtTitle);
-		TextView txtDescription = (TextView)appView.findViewById(R.id.txtDescription);
-		TextView txtRunMessage  = (TextView)appView.findViewById(R.id.txtRunMessage);
+		TextView  txtTitle 	 	 = (TextView)appView.findViewById(R.id.txtTitle);
+		TextView  txtCategory    = (TextView)appView.findViewById(R.id.txtCategory);
+		TextView  txtDescription = (TextView)appView.findViewById(R.id.txtDescription);
+		TextView  txtRunMessage  = (TextView)appView.findViewById(R.id.txtRunMessage);
+		ImageView imgAppLogo     = (ImageView)appView.findViewById(R.id.imgAppLogo); 
 					
 		// Sets Contents
-		txtTitle.setText(app.getAppName());
+		txtTitle.setText(app.getName());
+		txtCategory.setText(app.getCategory());
 		txtDescription.setText(app.getDescription());
 		txtRunMessage.setText(Theme.getRunMessage(app.getCategory()));
 					
 		// Sets Colors
 		txtTitle.setTextColor(Theme.getColor(app.getCategory()));
+		txtCategory.setTextColor(Theme.getColor(app.getCategory()));
+		
+		// Hides Elements if Not in Detailed View
+		if (!showAll)
+		{
+			txtCategory.setVisibility(View.GONE);
+		}
+		
+		// Sets Logo
+		String filename = app.getLogo().substring(app.getLogo().lastIndexOf("/")+1);
+		String filepath = Environment.getExternalStorageDirectory() + GCFApplication.LOGO_DOWNLOAD_FOLDER + filename;
+		File   logo     = new File(filepath);
+		
+		if (logo.exists())
+		{
+			Bitmap bmLogo = logoDirectory.containsKey(filepath) ?
+					logoDirectory.get(filepath) : BitmapFactory.decodeFile(filepath);
+			
+			if (bmLogo != null)
+			{
+				imgAppLogo.setImageBitmap(bmLogo);
+				imgAppLogo.setBackgroundColor(0x00FFFFFF);
+				logoDirectory.put(filepath, bmLogo);
+			}	
+		}
 		
 		// Sets Event Handler
 		appView.setOnClickListener(onAppClickListener);
@@ -169,7 +235,7 @@ public class CatalogRenderer
 			{
 				// Generates an intent with the selected app
 				Intent appSelectedIntent = new Intent(GCFApplication.ACTION_APP_SELECTED);
-				appSelectedIntent.putExtra(GCFApplication.EXTRA_APP_ID, app.getAppID());
+				appSelectedIntent.putExtra(GCFApplication.EXTRA_APP_ID, app.getID());
 				v.getContext().sendBroadcast(appSelectedIntent);
 			}
 		}	

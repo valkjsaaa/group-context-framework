@@ -32,6 +32,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 	private ContextWrapper cw;
 	
 	// Bluewave:  Context Sharing via Bluetooth Names
+	private boolean			bluewaveRunning;
 	private BluewaveManager bluewaveManager;
 	
 	// Handlers (Android Specific)
@@ -56,6 +57,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 		this.commManager = new AndroidCommManager(this, cw);
 		
 		// Creates the Bluewave Manager
+		bluewaveRunning = false;
 		bluewaveManager = new BluewaveManager(cw, this, "http://gcf.cmu-tbank.com/bluewave/" + getDeviceID() + ".txt", true);
 		
 		// Creates the Scheduled Event Timer	
@@ -179,7 +181,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 	{
 		bluewaveManager.stopScan();
 	}
-	
+			
 	// PRIVATE METHODS
 	private void createNotification(String title, String subtitle)
 	{

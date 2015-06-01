@@ -36,7 +36,7 @@ public class AppCategoryInfo
 	{
 		for (AppInfo app : apps)
 		{
-			if (app.getAppID().equalsIgnoreCase(newApp.getAppID()))
+			if (app.getID().equalsIgnoreCase(newApp.getID()))
 			{
 				app.update(newApp);
 			}
@@ -60,7 +60,7 @@ public class AppCategoryInfo
 	{
 		for (AppInfo app : apps)
 		{
-			if (app.getAppID().equalsIgnoreCase(appID))
+			if (app.getID().equalsIgnoreCase(appID))
 			{
 				return true;
 			}

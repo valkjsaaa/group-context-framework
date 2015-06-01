@@ -1,4 +1,4 @@
-package com.adefreitas.gcfimpromptu;
+package com.adefreitas.androidproviders;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -25,8 +25,9 @@ import com.google.android.gms.location.ActivityRecognition;
 public class ActivityContextProvider extends ContextProvider implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 {
 	// Context Configuration	
-	private static final String CONTEXT_TYPE  = "ACT";
-	private static final String LOG_NAME      = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
+	private static final String CONTEXT_TYPE = "ACT";
+	private static final String LOG_NAME     = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
+	private static final String DESCRIPTION  = "Shares information about your current activity (e.g., walking, in vehicle)";
 	
 	// Variables
 	private Context context;
@@ -46,20 +47,22 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 	private int	   confidence;
 	
 	// Activity Recognition
+	private Boolean			playServicesEnabled;
 	private GoogleApiClient googleApiClient;
 	
 	public ActivityContextProvider(Context context, GroupContextManager groupContextManager) 
 	{
-		super(CONTEXT_TYPE, groupContextManager);
+		super(CONTEXT_TYPE, DESCRIPTION, groupContextManager);
 		this.context = context;
 		
 		// Default Values
-		runForever = false;
-		activity   = "unknown";
-		confidence = 0;
+		runForever 			= false;
+		activity   			= "unknown";
+		confidence 			= 0;
+		playServicesEnabled = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS;
 		
 		// Sets Up the Google API Client
-		if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS)
+		if (playServicesEnabled)
 		{
 			googleApiClient = new GoogleApiClient.Builder(context)
 			.addApi(ActivityRecognition.API)
@@ -73,23 +76,27 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 			this.filter 		= new IntentFilter();
 			this.filter.addAction(ActivityRecognitionIntentService.ACTION_ACTIVITY_UPDATE);	
 		}
-		else
-		{
-			Toast.makeText(context, "Google Play Services Not Found.", Toast.LENGTH_SHORT).show();
-		}
 	}
 
 	public void start(boolean runForever)
 	{
-		this.runForever = runForever;
-		context.registerReceiver(intentReceiver, filter);
-		
-		if (!googleApiClient.isConnecting() && googleApiClient.isConnected())
+		if (playServicesEnabled)
 		{
-			googleApiClient.connect();	
+			this.runForever = runForever;
+			
+			context.registerReceiver(intentReceiver, filter);
+			
+			if (!googleApiClient.isConnecting() && googleApiClient.isConnected())
+			{
+				googleApiClient.connect();	
+			}
+			
+			this.getGroupContextManager().log(LOG_NAME, this.getContextType() + " Provider Started [runForever=" + runForever + "]");	
 		}
-		
-		this.getGroupContextManager().log(LOG_NAME, this.getContextType() + " Provider Started [runForever=" + runForever + "]");
+		else
+		{
+			Toast.makeText(context, "Cannot Start:  Google Play Services Not Found.", Toast.LENGTH_SHORT).show();
+		}
 	}
 	
 	@Override
@@ -101,13 +108,20 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 	@Override
 	public void stop() 
 	{
-		this.getGroupContextManager().log(LOG_NAME, this.getContextType() + " Provider Stopped");
-		
-		if (!runForever)
+		if (playServicesEnabled)
 		{
-			ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient, p);
-			googleApiClient.disconnect();
-			context.unregisterReceiver(intentReceiver);
+			this.getGroupContextManager().log(LOG_NAME, this.getContextType() + " Provider Stopped");
+			
+			if (!runForever)
+			{
+				ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient, p);
+				googleApiClient.disconnect();
+				context.unregisterReceiver(intentReceiver);
+			}
+		}
+		else
+		{
+			Toast.makeText(context, "Cannot Stop:  Google Play Services Not Found.", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -127,9 +141,8 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 	@Override
 	public void sendContext() 
 	{
-		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { "TYPE=" + activity, "CONFIDENCE=" + confidence});
+		this.sendContext(this.getSubscriptionDeviceIDs(), new String[] { "TYPE=" + activity, "CONFIDENCE=" + confidence});
 	}
-
 
 	// Getters
 	public String getActivity()

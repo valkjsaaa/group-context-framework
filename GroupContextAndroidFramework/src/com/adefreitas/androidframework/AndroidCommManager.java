@@ -19,13 +19,15 @@ public class AndroidCommManager extends CommManager
 	public static final boolean DEBUG_MODE = true;
 	
 	// Static Intents
-	public static final String ACTION_COMMTHREAD_CONNECTED = "comm_connected";
-	public static final String ACTION_CHANNEL_SUBSCRIBED   = "comm_subscribed";
+	public static final String ACTION_COMMTHREAD_CONNECTED = "androidcommmanager.comm_connected";
+	public static final String ACTION_CHANNEL_SUBSCRIBED   = "androidcommmanager.comm_subscribed";
+	public static final String ACTION_CONNECTION_ERROR     = "androidcommmanager.comm_error";
 	
 	// Static Extras
 	public static final String EXTRA_IP_ADDRESS = "IP_ADDRESS";
 	public static final String EXTRA_PORT		= "PORT";
 	public static final String EXTRA_CHANNEL	= "CHANNEL";
+	public static final String EXTRA_ERROR      = "ERROR";
 	
 	private CommHandler    commHandler;  // Used by the Communications Thread to Deliver Messages Received
 	private ContextWrapper cw;

@@ -235,18 +235,18 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	 * @param parser
 	 * @return
 	 */
-	protected String getDeviceName(JSONContextParser parser)
+	protected String getDeviceID(JSONContextParser parser)
 	{
 		return parser.getJSONObject("device").get("deviceID").getAsString();
 	}
 
 	protected double getLatitude(JSONContextParser parser)
 	{
-		if (parser.getJSONObject("location") != null)
+		try
 		{
 			return parser.getJSONObject("location").get("LATITUDE").getAsDouble();	
 		}
-		else
+		catch (Exception ex)
 		{
 			return 0.0;
 		}
@@ -254,11 +254,11 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 
 	protected double getLongitude(JSONContextParser parser)
 	{
-		if (parser.getJSONObject("location") != null)
+		try
 		{
 			return parser.getJSONObject("location").get("LONGITUDE").getAsDouble();	
 		}
-		else
+		catch (Exception ex)
 		{
 			return 0.0;
 		}
@@ -266,22 +266,41 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 
 	protected String getActivity(JSONContextParser parser)
 	{
-		return parser.getJSONObject("activity").get("type").getAsString();
+		String activity = "unspecified";
+		
+		try
+		{
+			activity = parser.getJSONObject("activity").get("type").getAsString();
+		}
+		catch (Exception ex)
+		{
+			// Do Nothing!
+		}
+		
+		return activity;
+	}
+	
+	protected int getConfidence(JSONContextParser parser)
+	{
+		int confidence = 0;
+		
+		try
+		{
+			confidence = parser.getJSONObject("activity").get("confidence").getAsInt();
+		}
+		catch (Exception ex)
+		{
+			// Do Nothing!
+		}
+		
+		return confidence;
 	}
 	
 	protected boolean signedDisclaimer(JSONContextParser parser)
 	{
 		JsonObject preferences = parser.getJSONObject("preferences");
 		
-		if (preferences != null)
-		{
-			if (preferences.get("disclaimer") == null)
-			{
-				return false;
-			}
-		}
-		
-		return true;
+		return preferences != null && preferences.get("disclaimer") != null;
 	}
 	
 	/**

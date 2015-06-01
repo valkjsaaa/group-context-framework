@@ -1,4 +1,4 @@
-package com.adefreitas.androidproviders;
+package com.adefreitas.androidproviders.legacy;
 
 import android.content.Context;
 import android.location.Location;

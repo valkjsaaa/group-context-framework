@@ -1,5 +1,6 @@
 package com.adefreitas.inoutboard;
 
+import java.util.Date;
 import java.util.List;
 
 import com.adefreitas.magicappserver.R;
@@ -40,6 +41,21 @@ public class UserDataListAdapter extends ArrayAdapter<UserData>
 			TextView  txtDescription = (TextView)view.findViewById(R.id.txtDescription);
 //			ImageView imgBanner      = (ImageView)view.findViewById(R.id.imgBanner);
 		
+			long timeElapsed = (new Date().getTime() - data.getLastEncounteredDate().getTime());
+			
+			if (timeElapsed < 60000)
+			{
+				txtName.setTextColor(0xFF339966);
+			}
+			else if (timeElapsed < 120000)
+			{
+				txtName.setTextColor(0xFF666633);
+			}
+			else
+			{
+				txtName.setTextColor(0xFF666666);
+			}
+			
 			txtName.setText(data.getName());
 			txtDescription.setText("Last Seen: " + data.getLastEncounteredDate() + " by " + data.getSensingDevice());
 		}

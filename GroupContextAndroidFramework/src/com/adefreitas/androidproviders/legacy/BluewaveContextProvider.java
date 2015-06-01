@@ -1,4 +1,4 @@
-package com.adefreitas.magicappserver;
+package com.adefreitas.androidproviders.legacy;
 
 import java.util.ArrayList;
 
@@ -15,14 +15,14 @@ import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.messages.ContextData;
 
 /**
- * This is a template for a context provider.
- * COPY AND PASTE; NEVER USE
+ * Bluetooth Context Provider (v1.0)
+ * Delivers Bluewave Information From Other Devices
  * @author adefreit
  */
 public class BluewaveContextProvider extends ContextProvider
 {
 	// Context Configuration
-	private static final String CONTEXT_TYPE = "BLUEWAVE";
+	private static final String CONTEXT_TYPE = "BLU";
 	private static final String LOG_NAME     = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
 	
 	// Link to the Application

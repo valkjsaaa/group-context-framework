@@ -51,6 +51,8 @@ public class QueryApplicationProvider extends ContextProvider
 		
 		// Prints a Debug Line
 		System.out.println("QUERY [" + deviceID + "]: "+ new Date() + " (from " + source + ")");
+		
+		ArrayList<ApplicationProvider> relevantApps = new ArrayList<ApplicationProvider>();
 				
 		if (context != null && deviceID != null)
 		{
@@ -64,12 +66,15 @@ public class QueryApplicationProvider extends ContextProvider
 					System.out.print("  " + application.getAppID() + ": ");
 					
 					// Determines if Sending an App Advertisement would be Redundant
-					boolean redundant = isRedundant(application, context);
+					boolean redundant       = isRedundant(deviceID, application, context);
+					boolean appDecision     = application.sendAppData(context);
+					boolean signed          = application.signedDisclaimer(new JSONContextParser(JSONContextParser.JSON_TEXT, context));
+					boolean isDisclaimerApp = application.getAppID().equals("APP_DISCLAIMER");
 					
-					if (!redundant && application.sendAppData(context) && 
-							(application.signedDisclaimer(new JSONContextParser(JSONContextParser.JSON_TEXT, context)) || application.getAppID().equals("DISCLAIMER")))
+					if (!redundant && appDecision && (signed || isDisclaimerApp))
 					{
 						System.out.print("YES ");
+						relevantApps.add(application);
 						sendAdvertisement(deviceID, context, application);
 					}	
 					else
@@ -88,6 +93,8 @@ public class QueryApplicationProvider extends ContextProvider
 					System.out.println("(" + (new Date().getTime() - startTime.getTime()) + " ms)");
 				}
 			}
+			
+			//sendAdvertisement(deviceID, context, relevantApps);
 		}
 		else
 		{
@@ -128,6 +135,12 @@ public class QueryApplicationProvider extends ContextProvider
 		
 	}
 
+	/**
+	 * Sends an Advertisement for ONE App
+	 * @param deviceID
+	 * @param userContext
+	 * @param application
+	 */
 	private void sendAdvertisement(String deviceID, String userContext, ApplicationProvider application)
 	{
 		// Creates a List of Parameters
@@ -159,8 +172,45 @@ public class QueryApplicationProvider extends ContextProvider
 				parameters.toArray(new String[0]));
 	}
 	
+	/**
+	 * Sends an Advertisement for MULTIPLE Apps
+	 * @param deviceID
+	 * @param userContext
+	 * @param application
+	 */
+	private void sendAdvertisement(String deviceID, String userContext, ArrayList<ApplicationProvider> applications)
+	{
+//		// Creates a List of Parameters
+//		ArrayList<String> parameters = new ArrayList<String>();
+//		
+//		for (String s : application.getInformation(userContext))
+//		{
+//			parameters.add(s);
+//		}
+//		
+//		// Adds a Custom Parameter Needed by the DNS to Know Which Device this Advertisement is For
+//		parameters.add("DESTINATION=" + deviceID);
+//		
+//		// Adds the Number of Matches for a Snap To It Capable Device
+//		if (application instanceof SnapToItApplicationProvider)
+//		{
+//			SnapToItApplicationProvider stiApp = (SnapToItApplicationProvider)application;
+//			
+//			// Adds the Number of Matches!
+//			parameters.add("PHOTO_MATCHES=" + stiApp.getFitness(userContext));
+//		}
+//		
+//		// Directs the DNS to Send the Advertisement to the Device
+//		getGroupContextManager().sendComputeInstruction(connectionKey, 
+//				ApplicationSettings.DNS_CHANNEL, 
+//				"LOS_DNS", 
+//				new String[] { "LOS_DNS" }, 
+//				"SEND_ADVERTISEMENT", 
+//				parameters.toArray(new String[0]));
+	}
+	
 	// Private Methods --------------------------------------------------------------------------
-	private boolean isRedundant(ApplicationProvider appProvider, String context)
+	private boolean isRedundant(String deviceID, ApplicationProvider appProvider, String context)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, context);
 		
@@ -174,15 +224,22 @@ public class QueryApplicationProvider extends ContextProvider
 				{			
 					JsonObject appObject = apps.get(i).getAsJsonObject();
 					
-					if (appObject.get("name").getAsString().equals(appProvider.getContextType()) &&
-						appObject.get("expires").getAsInt() >= 60)
+					if (appObject.get("name").getAsString().equals(appProvider.getContextType()))
 					{
-						return true;
+						if (appObject.has("expiring"))
+						{
+							return !appObject.get("expiring").getAsBoolean();
+						}
+						else
+						{
+							return false;
+						}
 					}
 				}
 			}
 			catch (Exception ex)
 			{
+				System.out.println("Problem analyzing context from " + deviceID + ": " + ex.getMessage());
 				ex.printStackTrace();
 			}
 		}

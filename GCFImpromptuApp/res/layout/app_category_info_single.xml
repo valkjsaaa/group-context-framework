@@ -4,12 +4,14 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
-                  
+                     
     <RelativeLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:background="#EEEEEE"
-		android:layout_margin="5dp"
+		android:layout_marginLeft="5dp"
+		android:layout_marginRight="5dp"
+		android:layout_marginTop="10dp"
 		android:padding="10dp">        
 		<TextView
 		    android:id="@+id/txtTitle"
@@ -19,7 +21,7 @@
 		    android:layout_alignParentLeft="true"
 		    android:layout_centerVertical="true"
 		    android:textColor="#000000"
-		    android:textSize="18sp" />
+		    android:textSize="20sp" />
 
 		<TextView
 		    android:id="@+id/btnExpand"
@@ -33,8 +35,6 @@
         android:id="@+id/layoutApps"
         android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-	    android:layout_marginLeft="15dp"
-    	android:layout_marginRight="15dp"
 		android:orientation="vertical"/>
             
 </LinearLayout>

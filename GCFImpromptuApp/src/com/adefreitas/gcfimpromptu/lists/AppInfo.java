@@ -79,7 +79,7 @@ public class AppInfo
 	 * Gets the Application Identifier (Unique PER App)
 	 * @return
 	 */
-	public String getAppID()
+	public String getID()
 	{
 		return appID;
 	}
@@ -106,7 +106,7 @@ public class AppInfo
 	 * Gets the Application Name
 	 * @return
 	 */
-	public String getAppName()
+	public String getName()
 	{
 		return name;
 	}
@@ -242,7 +242,7 @@ public class AppInfo
 	{
 		this.appContextType = otherApp.getAppContextType();
 		this.deviceID 		= otherApp.getDeviceID();
-		this.name 			= otherApp.getAppName();
+		this.name 			= otherApp.getName();
 		this.description 	= otherApp.getDescription();
 		this.logo 			= otherApp.getLogo();
 		this.contexts 	 	= otherApp.getContextsRequired();

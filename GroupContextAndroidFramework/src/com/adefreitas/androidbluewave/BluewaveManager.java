@@ -42,8 +42,9 @@ public class BluewaveManager
 	
 	// HTTP Toolkit
 	private HttpToolkit httpToolkit;
-	
+		
 	// Bluewave Components
+	private boolean					keepScanning;
 	private String					urlToContextFile;
 	private BluetoothScanner		bluetoothScanner;
 	private PersonalContextProvider pcp;
@@ -65,7 +66,7 @@ public class BluewaveManager
 		this.httpToolkit = new HttpToolkit((Application)context.getApplicationContext());
 		
 		// Creates the Bluetooth Scanner
-		this.bluetoothScanner = new BluetoothScanner(context);
+		this.bluetoothScanner = new BluetoothScanner(this, context);
 		
 		// Sets the Device's Discoverable State
 		this.setDiscoverable(discoverable);
@@ -96,6 +97,8 @@ public class BluewaveManager
 	public void startScan(int scanInterval)
 	{
 		this.bluetoothScanner.start(scanInterval);
+		
+		keepScanning = true;
 	}
 	
 	/**
@@ -104,6 +107,26 @@ public class BluewaveManager
 	public void stopScan()
 	{
 		bluetoothScanner.stop();
+		
+		keepScanning = false;
+	}
+	
+	/**
+	 * Returns TRUE if Bluewave is Scanning, FALSE otherwise
+	 * @return
+	 */
+	public boolean isScanning()
+	{
+		return bluetoothScanner.isScanning();
+	}
+	
+	/**
+	 * Returns TRUE if Bluewave Scan Should Continue, FALSE otherwise
+	 * @return
+	 */
+	public boolean keepScanning()
+	{
+		return keepScanning;
 	}
 	
 	/**

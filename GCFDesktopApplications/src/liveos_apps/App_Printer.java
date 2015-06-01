@@ -5,6 +5,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 
 import com.adefreitas.desktopframework.toolkit.HttpToolkit;
+import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -133,9 +134,8 @@ public class App_Printer extends DesktopApplicationProvider
 	@Override
 	public boolean sendAppData(String contextJSON)
 	{
-		//JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, contextJSON);
-		//return getDevices(parser).contains("ZTE-Office");
-		return true;
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, contextJSON);
+		return this.hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 
 	private void print(String filePath, String deviceID)

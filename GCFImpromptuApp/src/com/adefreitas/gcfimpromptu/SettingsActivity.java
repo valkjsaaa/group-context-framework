@@ -56,7 +56,7 @@ public class SettingsActivity extends PreferenceActivity
 			EditTextPreference idPref = (EditTextPreference)gcfCategory.findPreference("gcf_id");
 			idPref.setSummary("GCF: " + application.getGroupContextManager().getDeviceID() + "\n" + "Android: " + android.os.Build.SERIAL);
 			
-			createBluewavePreferences();
+			//createBluewavePreferences();
 		}
 		catch (Exception ex)
 		{

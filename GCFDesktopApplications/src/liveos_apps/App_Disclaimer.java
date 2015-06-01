@@ -1,30 +1,31 @@
 package liveos_apps;
 
-import java.util.Date;
-
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.JsonObject;
 
 public class App_Disclaimer extends DesktopApplicationProvider
 {
-
+	/**
+	 * Constructor
+	 * @param groupContextManager
+	 * @param commMode
+	 * @param ipAddress
+	 * @param port
+	 */
 	public App_Disclaimer(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"DISCLAIMER",
-				"Impromptu Disclaimer",
-				"You must agree to the system before you can use its apps.",
-				"ADMINISTRATIVE",
+				"Disclaimer",
+				"View Impromptu's terms of use.  You must agree to these conditions before your device will receive apps.",
+				"ADMIN",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"",				   // LOGO
-				30,
+				"http://www.andrew.cmu.edu/course/98-233/images/cmu_seal.png",				   // LOGO
+				120,
 				commMode,
 				ipAddress,
 				port);
@@ -34,12 +35,13 @@ public class App_Disclaimer extends DesktopApplicationProvider
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
 		String ui  = "<html><title>Disclaimer</title>";
-		ui 		  += "<h4>Please Read and Agree to the Following:</h4>";
-		ui 		  += "<p>This app is a research tool, NOT a commercial product.  By using this app, you give Carnegie Mellon University permission to " +
-				  " access the sensors on your phone in order at any time.  In addition, the services provided by this app may change at any time and without warning.</p>";
-		ui	      += "<p><input value=\"I AGREE\" type=\"button\" height=\"100\" " +
+		ui 		  += "<h3>Please Read the Following:</h3>";
+		ui 		  += "<p>Impromptu is a research tool, <b>NOT</b> a commercial product.  By using this app, you give Carnegie Mellon University permission to " +
+				  " access your phone's sensors and/or data at any time.  In addition, the services provided by this app will change at any time and without warning, so please do not rely on this app for important tasks.</p>";
+		ui        += "<p>THANK YOU for using Impromptu!  Click on the 'Agree' button to start receiving apps!</p>";
+		ui	      += "<p><input value=\"AGREE\" type=\"button\" height=\"150\" width=\"300\"" +
 				      "onclick=\"device.toast('Welcome to Impromptu.'); device.setPreference('disclaimer','true'); device.removeApplicationFromCatalog(); device.finish()\"/></p>";
-		ui	      += "<p><input value=\"I DISAGREE\" type=\"button\" height=\"100\" onclick=\"device.finish();\"/></p>";
+		ui	      += "<p><input value=\"DISAGREE\" type=\"button\" height=\"150\" width=\"300\" onclick=\"device.finish();\"/></p>";
 								
 		// Delivers the UI Code, as Well as the Objects
 		return new String[] { "UI=" + ui };

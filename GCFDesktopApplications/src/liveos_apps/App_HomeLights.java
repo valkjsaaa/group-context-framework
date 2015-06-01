@@ -13,10 +13,7 @@ import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.ComputeInstruction;
 
 public class App_HomeLights extends DesktopApplicationProvider
-{	
-	private boolean porchLightsOn    = false;
-	private boolean basementLightsOn = false;
-	
+{		
 	// Stores Coordinates
 	private HashMap<String, Point2D.Double> coordinates = new HashMap<String, Point2D.Double>();
 	
@@ -37,20 +34,17 @@ public class App_HomeLights extends DesktopApplicationProvider
 	public App_HomeLights(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super( groupContextManager, 
-				"HOME_LIGHT", 
-				"Home Lighting System", 
-				"Controls the Porch and Basement Lighting System (Thank You Phillips Hue!).",
+				"HOME_NEST", 
+				"Thermostat Controls", 
+				"Controls the thermostat controls in this house.",
 				"AUTOMATION",
 				new String[] { }, 
 				new String[] { }, 
-				"http://icons.iconarchive.com/icons/cornmanthe3rd/plex-android/96/lightbulb-icon.png",
+				"https://d3rnbxvnd0hlox.cloudfront.net/images/channels/811416297/icons/on_color_large.png",
 				300,
 				commMode, 
 				ipAddress, 
 				port);
-		
-		// Enables Light Automation (with specified evening/morning times)
-		enableLightAutomation(21, 5);
 		
 		coordinates.put("Home", new Point2D.Double(40.434090, -79.853565));
 	}
@@ -78,29 +72,8 @@ public class App_HomeLights extends DesktopApplicationProvider
 	 */
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
-	{
-		String ui  = "<html>";
-		ui		  += "<title>Home Lighting System</title>";
-						
-		ui += "<h4>Porch Lights";
-		ui += "(Status: " + porchLightsOn + ")"; 
-		ui += "</h4>";
-		ui += "<div><input value=\"Toggle\" type=\"button\" style=\"height:50px; font-size:20px\"";
-		ui += "  onclick=\"";
-		ui += "    device.sendComputeInstruction('PORCH', []);";
-		ui += "    device.toast('Toggling Porch Lights');";
-		ui += "\"/></div>";	
-		
-		ui += "<h4>Living Room Light";
-		ui += "(Status: " + basementLightsOn + ")"; 
-		ui += "</h4>";
-		ui += "<div><input value=\"Toggle\" type=\"button\" style=\"height:50px; font-size:20px\"";
-		ui += "  onclick=\"";
-		ui += "    device.sendComputeInstruction('BASEMENT', []);";
-		ui += "    device.toast('Toggling Living Room Lights');";
-		ui += "\"/></div>";		
-		
-		return new String[] { "UI=" + ui };
+	{		
+		return new String[] { "PACKAGE=com.nestlabs.android" };
 	}
 
 	@Override
@@ -122,7 +95,7 @@ public class App_HomeLights extends DesktopApplicationProvider
 	public boolean sendAppData(String json)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-		return nearLocation(parser, 0.25);
+		return nearLocation(parser, 0.25) && this.hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 	
 	/**
@@ -131,123 +104,6 @@ public class App_HomeLights extends DesktopApplicationProvider
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
-		System.out.println("Received Instruction: " + instruction.toString());
 		
-		String json = "";
-		
-		if (instruction.getCommand().equalsIgnoreCase("porch"))
-		{
-			if (instruction.getPayload().length > 0)
-			{
-				if (instruction.getPayload(0).equalsIgnoreCase("on"))
-				{
-					setLight(1, true);
-					setLight(2, true);
-				}
-				else
-				{
-					setLight(1, false);
-					setLight(2, false);
-				}
-			}
-			else
-			{
-				if (porchLightsOn)
-				{
-					setLight(1, true);
-					setLight(2, true);
-				}
-				else
-				{
-					setLight(1, false);
-					setLight(2, false);
-				}
-				
-				porchLightsOn = !porchLightsOn;
-			}
-		}
-		else if (instruction.getCommand().equalsIgnoreCase("basement"))
-		{
-			if (instruction.getPayload().length > 0)
-			{
-				if (instruction.getPayload(0).equalsIgnoreCase("on"))
-				{
-					setLight(3, true);
-				}
-				else
-				{
-					setLight(3, false);
-				}
-			}
-			else
-			{
-				if (basementLightsOn)
-				{
-					setLight(3, true);
-				}
-				else
-				{
-					setLight(3, false);
-				}	
-				
-				basementLightsOn = !basementLightsOn;
-			}
-		}
-		
-		this.sendContext();
-	}
-
-	/**
-	 * Sets a Light Status
-	 * @param lightID
-	 * @param on
-	 */
-	private void setLight(int lightID, boolean on)
-	{
-		String url      = String.format("http://192.168.1.25/api/gcfdeveloper/lights/%d/state", lightID);
-		String json     = String.format("{\"on\":%s, \"sat\":0, \"bri\":255,\"hue\":0}", on);
-		String callback = String.format("APP_LIGHTS_CHANGED_%d", lightID);
-		
-		HttpToolkit.put(url, json);
-	}
-	
-	private void enableLightAutomation(final int EVENING, final int MORNING)
-	{
-		Thread t = new Thread()
-		{
-			public void run()
-			{
-				try
-				{
-					while (true)
-					{
-						Calendar calendar = Calendar.getInstance();
-						
-						if (calendar.get(Calendar.HOUR_OF_DAY) >= EVENING || calendar.get(Calendar.HOUR_OF_DAY) <= MORNING)
-						{
-							
-							porchLightsOn = true;
-							setLight(1, true);
-							setLight(2, true);
-						}
-						else
-						{
-							porchLightsOn = false;
-							setLight(1, false);
-							setLight(2, false);
-						}
-					
-						sleep(60000);	
-					}
-					
-				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-				}
-			}
-		};
-		
-		t.start();
 	}
 }

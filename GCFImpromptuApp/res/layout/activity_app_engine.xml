@@ -31,7 +31,7 @@
             android:id="@+id/scrollViewFunctions"
 	        android:layout_width="fill_parent"
 	        android:layout_height="wrap_content"
-	        android:background="@color/custom_green" >
+	        android:background="#CCCCCC" >
 
 	        <LinearLayout
 	            android:id="@+id/layoutFunctions"

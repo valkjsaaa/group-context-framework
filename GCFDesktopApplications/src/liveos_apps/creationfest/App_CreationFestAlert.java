@@ -133,7 +133,7 @@ public class App_CreationFestAlert extends DesktopApplicationProvider
 		update();
 		
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
-		userContext.put(this.getDeviceName(parser), parser);
+		userContext.put(this.getDeviceID(parser), parser);
 		
 		int count = 0;
 		
@@ -149,7 +149,7 @@ public class App_CreationFestAlert extends DesktopApplicationProvider
         }
 		
         description = "Found " + count + " reported problems nearby:\n" + description;
-        userDescription.put(this.getDeviceName(parser), description);
+        userDescription.put(this.getDeviceID(parser), description);
         
 		return (count > 0);
 	}
@@ -171,7 +171,7 @@ public class App_CreationFestAlert extends DesktopApplicationProvider
 	public String getDescription(String userContextJSON)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
-		String description = userDescription.get(this.getDeviceName(parser));
+		String description = userDescription.get(this.getDeviceID(parser));
 		
 		if (description != null)
 		{

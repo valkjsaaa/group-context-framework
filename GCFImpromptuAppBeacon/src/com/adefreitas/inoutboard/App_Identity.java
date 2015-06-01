@@ -151,4 +151,8 @@ public class App_Identity extends AndroidApplicationProvider
 		}
 	}
 
+	public String getDescription(String userContextJSON)
+	{
+		return "The lab beacon [" + this.getGroupContextManager().getDeviceID() + "] would like to know who you are.";
+	}
 }

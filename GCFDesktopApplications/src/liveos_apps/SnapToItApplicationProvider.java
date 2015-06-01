@@ -115,7 +115,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	public double getFitness(String json)
 	{
 		JSONContextParser parser   = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-		String 			  deviceID = this.getDeviceName(parser);
+		String 			  deviceID = this.getDeviceID(parser);
 		
 		JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
 		
@@ -142,7 +142,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		{
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 			
-			String deviceID = this.getDeviceName(parser);
+			String deviceID = this.getDeviceID(parser);
 			
 			JsonObject snapToItObject = parser.getJSONObject("snap-to-it");
 			

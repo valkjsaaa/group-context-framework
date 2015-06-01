@@ -6,12 +6,21 @@
     tools:context="${relativePackage}.${activityClass}" >
 
     <ImageView
-        android:layout_width="wrap_content"
+        android:id="@+id/imgSplash"
+        android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:padding="100dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:textColor="@color/custom_primary"
         android:src="@drawable/splash"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleSmall"
+        android:visibility="gone"
+        android:layout_below="@id/imgSplash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"/>
     
 </RelativeLayout>

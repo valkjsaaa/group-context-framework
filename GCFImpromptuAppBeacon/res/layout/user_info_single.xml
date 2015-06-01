@@ -28,15 +28,15 @@
 		        android:layout_height="wrap_content"
 		        android:layout_marginBottom="5dp"
 		        android:textColor="#336699"
-		        android:textSize="22sp" />
+		        android:textSize="32sp" />
 		        
 			<TextView
 			    android:id="@+id/txtDescription"
 			    android:layout_width="match_parent"
 			    android:layout_height="wrap_content"
 			    android:text="User Description Goes Here"
-			    android:textColor="#666666"
-			    android:textSize="18sp" />
+			    android:textColor="#333333"
+			    android:textSize="22sp" />
 
 		</LinearLayout>
 		        

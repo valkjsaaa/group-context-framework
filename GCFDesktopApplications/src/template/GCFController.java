@@ -36,9 +36,11 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		
 		// Connects to Channel
 		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
+		gcm.subscribe(connectionKey, "TEST_CHANNEL");
 		
 		// Requests Context
-		gcm.sendRequest("BLUEWAVE", ContextRequest.MULTIPLE_SOURCE, new String[0], 300000, new String[0]);
+		//gcm.sendRequest("AUD", ContextRequest.SINGLE_SOURCE, new String[] { "Nexus 5-A" }, 60000, new String[] { "THRESHOLD=10000000", "CHANNEL=TEST_CHANNEL" });
+		gcm.sendRequest("BLU", ContextRequest.SINGLE_SOURCE, new String[] { "Nexus 5-A" }, 60000, new String[] { "CHANNEL=TEST_CHANNEL" });
 	}
 
 	public void onBluetoothData(ContextData data)

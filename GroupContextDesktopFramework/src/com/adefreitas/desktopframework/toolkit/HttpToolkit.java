@@ -11,9 +11,7 @@ public class HttpToolkit
 	 * @param body
 	 */
 	public static void put(String urlString, String body)
-	{
-		//System.out.println("PUT [URL=" + urlString + ", BODY=" + body + "]");
-		
+	{		
 		try
 		{
 			URL url 			  = new URL(urlString);
@@ -31,7 +29,8 @@ public class HttpToolkit
 		}
 		catch (Exception ex)
 		{
-			System.out.println("Problem Occurred Sending HTTP Request: " + ex.getMessage());
+			System.out.println("Problem Occurred During HTTP PUT: [URL=" + urlString + ", BODY=" + body + "]");
+			System.out.println("Error: " + ex.getMessage());
 		}
 	}
 	
@@ -64,7 +63,8 @@ public class HttpToolkit
 	      } 
 	      catch (Exception ex)
 	      {
-	    	  System.out.println("Problem Occurred Sending HTTP GET: " + ex.getMessage());
+				System.out.println("Problem Occurred During HTTP GET: [URL=" + urlString + "]");
+				System.out.println("Error: " + ex.getMessage());
 	      }
 	      
 	      return result;
@@ -84,7 +84,7 @@ public class HttpToolkit
 	    File 				f    = new File(filename);
 	    File				dir  = new File(filename.substring(0, filename.lastIndexOf("/") + 1));
 	    
-	    System.out.println("Downloading . . .\nURL: " + urlString + "\nFile: " + filename);
+	    //System.out.println("Downloading . . .\nURL: " + urlString + "\nFile: " + filename);
 	    
 		try
 	    {
@@ -124,8 +124,8 @@ public class HttpToolkit
 	    }
 	    catch (Exception ex)
 	    {
-	    	ex.printStackTrace();
-	    	f.delete();
+		    System.out.println("Problem Occurred while Downloading . . .\nURL: " + urlString + "\nFile: " + filename);
+		    System.out.println("Error: " + ex.getMessage());
 	    }
 	}
 }

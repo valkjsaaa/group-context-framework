@@ -6,13 +6,18 @@ import java.util.HashMap;
 
 import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextCapability;
+import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
 
 public abstract class ContextProvider 
 {	
+	// Constants
+	public static final String SPECIFY_CHANNEL = "CHANNEL";
+	
 	// Internal Context Variables
 	private GroupContextManager 					 groupContextManager;
 	private String 									 contextType;
+	private String									 description;
 	private boolean 								 sharable;
 	private boolean									 subscriptionDependentForCompute;
 	private HashMap<String, ContextSubscriptionInfo> subscriptions;
@@ -21,9 +26,15 @@ public abstract class ContextProvider
 	private ArrayList<String>						 accessList;
 	private ArrayList<String>						 subscriptionParameters;
 	
+	/**
+	 * Constructor
+	 * @param contextType
+	 * @param groupContextManager
+	 */
 	public ContextProvider(String contextType, GroupContextManager groupContextManager)
 	{
 		this.contextType 		    		 = contextType;
+		this.description					 = "Undefined Context Provider";
 		this.groupContextManager    		 = groupContextManager;
 		this.sharable 		        		 = true;
 		this.subscriptionDependentForCompute = true;
@@ -34,9 +45,38 @@ public abstract class ContextProvider
 		this.subscriptionParameters 		 = new ArrayList<String>();
 	}
 	
+	public ContextProvider(String contextType, String description, GroupContextManager groupContextManager)
+	{
+		this(contextType, groupContextManager);
+		this.description = description;
+	}
+	
+	public void sendContext(String[] destination, String[] context)
+	{
+		String channel = this.getSubscriptionParameter(SPECIFY_CHANNEL);
+		
+		if (channel != null)
+		{
+			// Allows the Framework to Send the Message to the Desired Channel
+			// WARNING:  This can be problematic if two devices are connected to two different MQTT servers
+			this.getGroupContextManager().sendContext(channel, this.getContextType(), destination, context);
+		}
+		else
+		{
+			// Allows the Framework to Automatically Deliver the Message to the Device
+			// WARNING:  This can result in repeated messages and/or network broadcasts!
+			this.getGroupContextManager().sendContext(this.getContextType(), destination, context);
+		}
+	}
+	
 	public String getContextType()
 	{
 		return contextType;
+	}
+	
+	public String getDescription()
+	{
+		return description;
 	}
 	
 	public boolean isInUse() 
@@ -119,18 +159,7 @@ public abstract class ContextProvider
 			onSubscriptionCancelation(subscription);
 		}
 	}
-	
-	public void onHeartbeat(ContextRequest request)
-	{
-		if (subscriptions.containsKey(request.getDeviceID()))
-		{
-			// Updates the Contact History of the Device
-			ContextSubscriptionInfo csi = subscriptions.get(request.getDeviceID());
-			csi.setLastContact(new Date());
-			csi.setParameters(request.getPayload());
-		}
-	}
-	
+		
 	public boolean isSubscribed(String deviceID)
 	{
 		return subscriptions.containsKey(deviceID);
@@ -140,7 +169,7 @@ public abstract class ContextProvider
 	{
 		return subscriptions.size();
 	}
-	
+		
 	public int getRefreshRate()
 	{
 		return refreshRate;
@@ -151,6 +180,25 @@ public abstract class ContextProvider
 		return subscriptionParameters.toArray(new String[0]);
 	}
 			
+	public String getSubscriptionParameter(String parameterName)
+	{
+		for (String s : subscriptionParameters)
+		{
+			String[] elements = s.split("=");
+			
+			if (elements.length >= 2)
+			{
+				if (elements[0].trim().equals(parameterName.trim()))
+				{
+					return s.substring(s.indexOf("=") + 1);
+				}	
+			}
+		}
+		
+		// Returns NULL if Nothing Found
+		return null;
+	}
+	
 	public ContextSubscriptionInfo getSubscription(String deviceID)
 	{
 		return subscriptions.get(deviceID);
@@ -161,14 +209,11 @@ public abstract class ContextProvider
 		return subscriptions.values().toArray(new ContextSubscriptionInfo[0]);
 	}
 	
-	public void reboot()
+	public String[] getSubscriptionDeviceIDs()
 	{
-		subscriptions.clear();
-		subscriptionParameters.clear();
-		stop();
-		updateConfiguration();
+		return subscriptions.keySet().toArray(new String[0]);
 	}
-	
+			
 	// PROTECTED METHODS ---------------------------------------------------------------------
 	protected GroupContextManager getGroupContextManager()
 	{
@@ -272,6 +317,25 @@ public abstract class ContextProvider
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
 		// Does Nothing for Most Context Providers
+	}
+		
+	public void onHeartbeat(ContextRequest request)
+	{
+		if (subscriptions.containsKey(request.getDeviceID()))
+		{
+			// Updates the Contact History of the Device
+			ContextSubscriptionInfo csi = subscriptions.get(request.getDeviceID());
+			csi.setLastContact(new Date());
+			csi.setParameters(request.getPayload());
+		}
+	}
+	
+	public void reboot()
+	{
+		subscriptions.clear();
+		subscriptionParameters.clear();
+		stop();
+		updateConfiguration();
 	}
 	
 	// ABSTRACT METHODS ----------------------------------------------------------------------

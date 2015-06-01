@@ -29,6 +29,7 @@ import android.net.http.AndroidHttpClient;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * Class Used to Perform HTTP Operations in the Background
@@ -46,9 +47,11 @@ public class HttpToolkit
 	private static final String  DOWNLOAD_COMMAND  = "DOWNLOAD";
 	
 	// Intent Extra Values
-	public static final String HTTP_REQUEST_COMPLETE = "HTTP_REQUEST_COMPLETE";
-	public static final String HTTP_RESPONSE 		 = "HTTP_RESPONSE";
-	public static final String HTTP_RESPONSE_BYTES   = "HTTP_RESPONSE_BYTES";
+	public static final String HTTP_REQUEST_COMPLETE 	 = "HTTP_REQUEST_COMPLETE";
+	public static final String HTTP_URL 		 	 	 = "HTTP_URL";
+	public static final String HTTP_DOWNLOAD_DESTINATION = "HTTP_DOWNLOAD_DESTINATION";
+	public static final String HTTP_RESPONSE 		 	 = "HTTP_RESPONSE";
+	public static final String HTTP_RESPONSE_BYTES   	 = "HTTP_RESPONSE_BYTES";
 	
 	// A Broadcaster for Intents
 	private ContextWrapper cw;
@@ -163,6 +166,7 @@ public class HttpToolkit
 	        	 	log(LOG_NAME, "PREPARING CALLBACK: " + job.getCallback());
 	        	 	
 	        	 	// Includes the HTTP Response
+	        	 	dataDeliveryIntent.putExtra(HTTP_URL, job.getURL());
 	        	 	dataDeliveryIntent.putExtra(HTTP_RESPONSE, job.getResponse());
 	        	 	
 	        	 	// Includes the Bytes (if Available)
@@ -452,7 +456,6 @@ public class HttpToolkit
 	        catch (Exception e) 
 	        {
 	            Log.d(LOG_NAME, "HTTP Post Failed");
-	            e.printStackTrace();
 	        }
 			
 			try
@@ -571,11 +574,11 @@ public class HttpToolkit
 			    File				dir  	 = new File(job.getArgument().substring(0, job.getArgument().lastIndexOf("/") + 1));
 			    String 				filename = (job.getURL().substring(job.getURL().lastIndexOf("/")+1));
 			    File 				f    	 = new File(dir + "/" + filename);
-		
-			    log(LOG_NAME, "Downloading . . .\nURL: " + job.getURL() + "\nDestination: " + f.getAbsolutePath());
 			    
 		    	try 
 			    {	
+				    log(LOG_NAME, "Downloading . . .\nURL: " + job.getURL() + "\nDestination: " + f.getAbsolutePath());
+		    		
 		    		if (!dir.exists())
 		    		{
 		    			dir.mkdirs();
@@ -612,7 +615,7 @@ public class HttpToolkit
 		    }
 		    catch (Exception ex)
 		    {
-		    	ex.printStackTrace();
+		    	Log.e(LOG_NAME, "Problem While Downloading File: " + ex.getMessage());
 		    }
 			
 			return "FAILURE";

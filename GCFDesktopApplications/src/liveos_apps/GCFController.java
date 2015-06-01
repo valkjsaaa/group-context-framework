@@ -61,7 +61,7 @@ public class GCFController implements MessageProcessor, RequestProcessor
 	 */
 	public GCFController(String appName, boolean useBluetooth)
 	{
-		COMPUTER_NAME += "APP_" + appName + "_" + new Date().getTime();
+		COMPUTER_NAME  = (appName.length() > 0) ? appName : "APP_" + new Date().getTime();
 				
 		batteryMonitor = new DesktopBatteryMonitor();
 		gcm 		   = new DesktopGroupContextManager(COMPUTER_NAME, batteryMonitor, false);
@@ -82,7 +82,8 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		gcm.registerContextProvider(queryProvider);
 
 		// Initializes SQL Connection
-		sqlToolkit = new SQLToolkit("citrus-acid.com", "citrusa_michael", "mysql1234", "citrusa_michael");
+		//sqlToolkit = new SQLToolkit("citrus-acid.com", "citrusa_michael", "mysql1234", "citrusa_michael");
+		sqlToolkit = new SQLToolkit("epiwork.hcii.cs.cmu.edu", "adrian", "@dr1@n1234", "GCF");
 		
 		// Initializes Apps
 		initializeApps();
@@ -100,9 +101,18 @@ public class GCFController implements MessageProcessor, RequestProcessor
 
 	private void initializeApps()
 	{
-		// Context Recording
+		// Standard Apps
 		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		//appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Snap-To-It Apps
 		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -118,8 +128,6 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		// Impromptu Apps
 		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Hershey(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_CHI2014(gcm, COMM_MODE, IP_ADDRESS, PORT));
 
 		//appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -132,21 +140,15 @@ public class GCFController implements MessageProcessor, RequestProcessor
 		//appProviders.add(new App_PlayGmail(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_QuickTask(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_FileUploadDemo(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// CreationFest
 		//appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		t = new TaskDispatcher(sqlToolkit, gcm);
+		//t = new TaskDispatcher(sqlToolkit, gcm);
 		
 		// Favors
-		f = new FavorDispatcher(sqlToolkit, gcm);
+		//f = new FavorDispatcher(sqlToolkit, gcm);
 		
 		updateThread = new UpdateThread();
 		updateThread.start();

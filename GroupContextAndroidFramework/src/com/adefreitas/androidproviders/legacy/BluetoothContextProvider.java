@@ -1,4 +1,4 @@
-package com.adefreitas.androidproviders;
+package com.adefreitas.androidproviders.legacy;
 
 import java.util.ArrayList;
 import java.util.Date;

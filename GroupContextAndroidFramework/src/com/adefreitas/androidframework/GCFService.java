@@ -111,13 +111,16 @@ public class GCFService extends Service
 	{
 		Log.d(LOG_NAME, "OnTaskRemoved");
 				
-		for (ContextProvider p : gcm.getRegisteredProviders())
+		if (gcm != null)
 		{
-			p.reboot();
+			for (ContextProvider p : gcm.getRegisteredProviders())
+			{
+				p.reboot();
+			}	
 		}
 		
 		// Releases the Wakelock
-		if (wakeLock.isHeld())
+		if (wakeLock != null && wakeLock.isHeld())
 		{
 			wakeLock.release();
 		}

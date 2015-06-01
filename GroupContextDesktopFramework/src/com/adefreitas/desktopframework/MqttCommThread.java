@@ -18,10 +18,10 @@ import com.google.gson.Gson;
 
 public class MqttCommThread extends CommThread implements MqttCallback
 {
-	private static final boolean DEBUG = false;
-	private static final int 	 QOS	  = 0;
+	private static final boolean DEBUG = true;
+	private static final int 	 QOS   = 0;
 	
-	private String 			 serverIP;
+	private String 			 brokerIP;
 	private int 			 port;
     private Gson 		     gson;
 	private MessageProcessor processor;
@@ -31,6 +31,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	private String 	   		  deviceID;
     
 	// Keeps Track of what Channel
+	private ArrayList<MqttMessage> sendBuffer;
     private HashMap<String, String> channelARP;
 	
     private boolean run;
@@ -38,10 +39,10 @@ public class MqttCommThread extends CommThread implements MqttCallback
     /**
      * Constructor
      * @param port		- the port
-     * @param serverIP	- the IP address of the destination machine (the TCP relay)
+     * @param brokerIP	- the IP address of the destination machine (the TCP relay)
      * @param processor - where fully formed messages should be delivered once assembled
      */
-	public MqttCommThread(CommManager commManager, String deviceID, String serverIP, int port, MessageProcessor processor)  
+	public MqttCommThread(CommManager commManager, String deviceID, String brokerIP, int port, MessageProcessor processor)  
 	{
 		super(commManager);
 		
@@ -50,10 +51,12 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	    this.processor  = processor;
 	    this.channels   = new ArrayList<String>();
 	    this.run	    = false;
+	    this.sendBuffer = new ArrayList<MqttMessage>();
 	    this.channelARP = new HashMap<String, String>();
 	    
 	    // Repeatedly Tries to Connect
-		connect(serverIP, port);
+		this.brokerIP = brokerIP;
+		this.port     = port;
     }
     
 	/**
@@ -67,25 +70,25 @@ public class MqttCommThread extends CommThread implements MqttCallback
     	{
     		while (run)
     		{
-    			if (client != null && !client.isConnected())
+    			if (client == null || !client.isConnected())
     			{
-    				sleep(2000);
-    				connect(serverIP, port);
+    				connect(brokerIP, port);
     			}
     			else
-    			{
-    				sleep(30000);
-    				
+    			{   				
     				if (DEBUG)
     				{
-        				System.out.println("MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])));
+        				System.out.println("MQTT Comm Online: " + brokerIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])));
     				}
     			}
+    			
+    			sleep(30000);
     		}
     	}
     	catch (Exception ex)
     	{
     		ex.printStackTrace();
+    		close();
     	}
     }
 	
@@ -102,7 +105,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		
 		// Tracking the Port and IP Address
 		this.port      = port;
-		this.serverIP  = serverIP;
+		this.brokerIP  = serverIP;
 		
 		try
 		{
@@ -138,16 +141,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	 * Closes the Socket Connection
 	 */
     public void close() 
-    {
-    	try
-    	{
-    		client.disconnect();
-    	}
-    	catch (Exception ex)
-    	{
-    		ex.printStackTrace();
-    	}
-    	
+    {    	
     	run = false;
     }
 	
@@ -175,7 +169,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		// Determines Whether to Broadcast the Message or to Only Send it to Select Channels
 		if (broadcast)
 		{
-			for (String channel : channels)
+			for (String channel : new ArrayList<String>(channels))
 			{
 				send(channel, gson.toJson(message));	
 			}
@@ -205,11 +199,31 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			msg.setPayload(message.getBytes());
 			msg.setQos(QOS);
 			msg.setRetained(false);
-			client.getTopic(channel).publish(msg);
+			sendBuffer.add(msg);
+			
+			if (sendBuffer.size() > 1)
+			{
+				System.out.println("Buffer exceeding max size.  Removing the oldest message.");
+				sendBuffer.remove(0);
+			}
+			
+			if (client != null && client.isConnected())
+			{
+				for (MqttMessage m : sendBuffer)
+				{
+					client.getTopic(channel).publish(m);
+				}
+				
+				sendBuffer.clear();
+			}
+			else
+			{
+				close();
+				connect(this.getIPAddress(), this.getPort());
+			}
 		}
 		catch (Exception e)
 		{
-			connect(serverIP, port);
 			e.printStackTrace();
 		}
     }
@@ -219,9 +233,10 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	public void connectionLost(Throwable arg0)
 	{
 		arg0.printStackTrace();
+		close();
 		
 		System.out.println("MQTT Connection Lost.  Reconnecting.");
-		connect(serverIP, port);
+		connect(brokerIP, port);
 	}
 
 	@Override
@@ -244,7 +259,10 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				this.addToArp(msg.getDeviceID());	
 				
 				// Allows this Thread to Track WHICH CHANNEL a Device is On
-				channelARP.put(msg.getDeviceID(), topic);	
+				if (!channelARP.containsKey(msg.getDeviceID()))
+				{
+					channelARP.put(msg.getDeviceID(), topic);	
+				}					
 			}
 			
 			processor.onMessage(msg);
@@ -261,11 +279,18 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		try
 		{
-			if (!channels.contains(channel))
+			if (client != null && client.isConnected())
 			{
 				System.out.println("MQTT Subscribing to " + channel);
 				channels.add(channel);
 				client.subscribe(channel);
+			}
+			else
+			{
+				if (!channels.contains(channel))
+				{
+					this.channels.add(channel);
+				}
 			}
 		}
 		catch (Exception ex)
@@ -278,7 +303,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		try
 		{
-			if (channels.contains(channel))
+			if (client != null && channels.contains(channel))
 			{
 				System.out.println("MQTT Unsubscribing to " + channel);
 				channels.remove(channel);

@@ -122,21 +122,21 @@ public class App_Favor extends DesktopApplicationProvider
 		double			  distance    = this.getDistance(parser, latitude, longitude);
 				
 		// This will make the text output pretty.  Trust me.
-		System.out.println(parser);
+		//System.out.println(parser);
 		
 		// HINT:  ALWAYS CHECK TO SEE IF A DEVICE HAS THE JSON TAG
 		// There are older GCF devices in the environment that have not received the new code
 		if (locationObj != null)
 		{
 			String source = locationObj.has("SENSOR") ? locationObj.get("SENSOR").getAsString() : "IMPROMPTU_APP_DIRECTORY";
-			System.out.println("Sensed By:  " + source);
-			System.out.println("In Sensors: " + sensors.contains(source));
+			//System.out.println("Sensed By:  " + source);
+			//System.out.println("In Sensors: " + sensors.contains(source));
 		}
 		
 		// Debug Text
-		System.out.println("Distance: " + distance + " ");
+		//System.out.println("Distance: " + distance + " ");
 				
-		return this.signedDisclaimer(parser) && !completed;
+		return !completed;
 	}
 
 	/**
@@ -154,6 +154,10 @@ public class App_Favor extends DesktopApplicationProvider
 		}
 	}
 	
+	/**
+	 * This method returns the name of the application
+	 * You can return a flat string, or have a dynamic name based on the user
+	 */
 	public String getName(String userContextJSON)
 	{
 		String name = "REQUEST: " + description.substring(0, Math.min(description.length()-1, 100));
@@ -166,6 +170,10 @@ public class App_Favor extends DesktopApplicationProvider
 		return name;
 	}
 	
+	/**
+	 * This method returns the description of the application
+	 * You can return a 
+	 */
 	public String getDescription(String userContextJSON)
 	{
 		String result = "Requested on " + dateCreated + "\n\n";

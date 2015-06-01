@@ -46,7 +46,7 @@ public class UserData
 	public String toString()
 	{
 		return "Bluetooth Device: " + deviceID + "\n" +
-			   "User Name:        " + name + 
-			   "Sensing Device:   " + sensingDevice;
+			   "User Name: " + name + "\n" +
+			   "Sensing Device: " + sensingDevice + "\n";
 	}
 }

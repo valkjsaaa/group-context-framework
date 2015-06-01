@@ -37,6 +37,9 @@ public class BluetoothScanner
 	// Android Application Context
 	private Context 		 context;
 	
+	// Bluewave Manager
+	private BluewaveManager bluewaveManager;
+	
 	// Android Bluetooth Hardware Adapter
 	private BluetoothAdapter bluetooth;
 	
@@ -52,13 +55,14 @@ public class BluetoothScanner
 	 * Constructor
 	 * @param context
 	 */
-	public BluetoothScanner(Context context)
+	public BluetoothScanner(BluewaveManager bluewaveManager, Context context)
 	{		
 		// Initializes Variables
-		this.context   	   = context;
-		this.bluetooth 	   = BluetoothAdapter.getDefaultAdapter();
-		this.scanStartDate = new Date();
-		this.scanInterval  = 60000;
+		this.bluewaveManager = bluewaveManager;
+		this.context   	     = context;
+		this.bluetooth 	     = BluetoothAdapter.getDefaultAdapter();
+		this.scanStartDate   = new Date();
+		this.scanInterval    = 60000;
 				
 		// Sets Filter for When Bluetooth Devices are Found
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -300,7 +304,7 @@ public class BluetoothScanner
 		{	
 			try
 			{
-				Log.i(LOG_NAME, "Bluetooth Sleeping for " + timeToRest + "ms");
+				
 				Thread.sleep(timeToRest);
 				
 				// Keeps Sleeping Until Bluetooth Isn't Scanning Anymore
@@ -319,7 +323,7 @@ public class BluetoothScanner
 			}
 			
 			Log.i(LOG_NAME, "Bluetooth Restart Thread Terminated");
-			this.finished = true;
+			this.finished = true;	
 		}
 	
 		public void kill()

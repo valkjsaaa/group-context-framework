@@ -15,7 +15,7 @@ import com.adefreitas.messages.ContextSubscription;
 
 public abstract class GroupContextManager
 {
-	public static final double FRAMEWORK_VERSION = 0.82;
+	public static final double FRAMEWORK_VERSION = 0.83;
 	public static enum DeviceType { Desktop, Laptop, Mobile, Sensor, Other };
 
 	// Log Types
@@ -280,7 +280,7 @@ public abstract class GroupContextManager
 		commManager.send(instruction, connectionKey, channel);
 	}
 	
-	// CONTEXT -----------------------------------------------------------------------------------------------------------------
+	// CONTEXT DATA ------------------------------------------------------------------------------------------------------------
  	/**
  	 * Broadcasts Context Information to Specific Devices
 	 * @param contextType - the kind of context information being transmitted (i.e. GPS, Accelerometer, etc)
@@ -297,6 +297,28 @@ public abstract class GroupContextManager
  		
  		// Actually Sends the Information
  		commManager.send(data);
+ 	}
+ 	
+ 	public void sendContext(String connectionKey, String channel, String contextType, String[] destinations, String[] value)
+ 	{
+ 		ContextData data = new ContextData(contextType, deviceID, destinations, value);
+ 		
+ 		// Throws an Event
+ 		this.onSendingData(data);
+ 		
+ 		// Actually Sends the Information
+ 		commManager.send(data, connectionKey, channel);
+ 	}
+ 	
+ 	public void sendContext(String channel, String contextType, String[] destinations, String[] value)
+ 	{
+ 		ContextData data = new ContextData(contextType, deviceID, destinations, value);
+ 		
+ 		// Throws an Event
+ 	 	this.onSendingData(data);
+ 	 	
+ 	 	// Actually Sends the Information
+ 	 	commManager.sendUsingChannel(data, channel);
  	}
  	
  	// CAPABILITY --------------------------------------------------------------------------------------------------------------
@@ -519,7 +541,6 @@ public abstract class GroupContextManager
 		{
 			if (r.getContextType().equals(type))
 			{
-				// S
 				if (subscribedCapabilities.containsKey(r))
 				{
 					for (ContextCapability capability : new ArrayList<ContextCapability>(subscribedCapabilities.get(r)))
@@ -530,10 +551,6 @@ public abstract class GroupContextManager
 							break;
 						}
 					}
-
-//					// Adds the Device ID and Context to the Specific Source Arbiter
-//					SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
-//					ssa.removeDevice(deviceID, type);
 				}
 				
 				break;
@@ -573,16 +590,7 @@ public abstract class GroupContextManager
 	 * @param dueToTimeout
 	 */
 	private void cancelRequest(ContextRequest request, ContextCapability capability, boolean dueToTimeout)
-	{
-//		// Removes the Specific Source Request from the Arbiter
-//		if (request.getRequestType() == ContextRequest.SPECIFIC_SOURCE)
-//		{
-//			SpecificSourceArbiter ssa = (SpecificSourceArbiter)arbiters.get(ContextRequest.SPECIFIC_SOURCE);
-//			
-//			// Adds the Specific Source to the Arbiter
-//			ssa.removeDevice(deviceID, request.getContextType());
-//		}
-		
+	{	
 		// If Currently Subscribed, Unsubscribes from the Capability
 		if (subscribedCapabilities.containsKey(request) && subscribedCapabilities.get(request).contains(capability))
 		{

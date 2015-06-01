@@ -1,4 +1,4 @@
-package com.adefreitas.androidproviders;
+package com.adefreitas.androidproviders.legacy;
 
 import java.io.File;
 import java.io.IOException;

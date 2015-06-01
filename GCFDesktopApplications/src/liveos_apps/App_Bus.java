@@ -26,7 +26,7 @@ public class App_Bus extends DesktopApplicationProvider
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://files.softicons.com/download/web-icons/awt-travel-blue-icons-by-awt-media/png/200x200/AWT-Bus.png",				   // LOGO
-				60,
+				120,
 				commMode,
 				ipAddress,
 				port);

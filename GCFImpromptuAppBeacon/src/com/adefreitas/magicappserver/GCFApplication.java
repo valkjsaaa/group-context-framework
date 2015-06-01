@@ -1,6 +1,7 @@
 package com.adefreitas.magicappserver;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,6 +15,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -28,6 +30,7 @@ import com.adefreitas.androidframework.AndroidGroupContextManager;
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.androidliveos.AndroidApplicationProvider;
+import com.adefreitas.androidproviders.BluewaveContextProvider;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextType;
@@ -44,6 +47,7 @@ public class GCFApplication extends Application
 	public static final String  APP_TICK 			   = "TICK";
 	public static final String  LOG_NAME 			   = "GCF_APP"; 
 	public static final int     SCAN_PERIOD_IN_SECONDS = 60;
+	public static final String  PREFERENCES_NAME       = "com.adefreit.impromptu.appbeaconpreferences";
 	
 	// GCF Communication Settings (BROADCAST_MODE Assumes a Functional TCP Relay Running)
 	public static final CommMode COMM_MODE  = CommMode.MQTT;
@@ -87,7 +91,7 @@ public class GCFApplication extends Application
 		groupContextManager.startBluewaveScan(SCAN_PERIOD_IN_SECONDS * 1000);
 		
 		// Creates a Custom Context Provider for Bluewave Data
-		groupContextManager.registerContextProvider(new BluewaveContextProvider(this, groupContextManager));
+		groupContextManager.registerContextProvider(new BluewaveContextProvider(this, groupContextManager, 60000));
 		
 		// Connects to the Server
 		connectionKey = groupContextManager.connect(COMM_MODE, IP_ADDRESS, PORT);
@@ -165,8 +169,11 @@ public class GCFApplication extends Application
 	// Application Specific Methods -------------------------------------------------------------	
 	private void configureContextProviders()
 	{
+		// Application Preferences
+		SharedPreferences appSharedPreferences = this.getApplicationContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+		
 		// Creates the Provider
-		identityProvider = new UserIdentityContextProvider(groupContextManager);
+		identityProvider = new UserIdentityContextProvider(groupContextManager, appSharedPreferences);
 		
 		// Registers the Provider
 		groupContextManager.registerContextProvider(identityProvider);
@@ -296,10 +303,16 @@ public class GCFApplication extends Application
 				{			
 					JSONObject appObject = apps.getJSONObject(i);
 					
-					if (appObject.getString("name").equals(appProvider.getContextType()) &&
-						appObject.getInt("expires") >= SCAN_PERIOD_IN_SECONDS)
+					if (appObject.getString("name").equals(appProvider.getContextType()))
 					{
-						return true;
+						if (appObject.has("expiring"))
+						{
+							return !appObject.getBoolean("expiring");
+						}
+						else
+						{
+							return false;
+						}
 					}
 				}
 			}

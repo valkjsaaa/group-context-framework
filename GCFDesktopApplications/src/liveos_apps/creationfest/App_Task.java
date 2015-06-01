@@ -1,17 +1,13 @@
 package liveos_apps.creationfest;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import liveos_apps.DesktopApplicationProvider;
-
-import cern.colt.Arrays;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.JsonObject;
 
@@ -79,7 +75,7 @@ public class App_Task extends DesktopApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		return new String[] { "WEBSITE=" + "http://gcf.cmu-tbank.com/apps/polymertest/starter/description.php?timestamp=" + timestamp };
+		return new String[] { "WEBSITE=" + "http://gcf.cmu-tbank.com/apps/creationfest/viewProblem.php?timestamp=" + timestamp };
 	}
 
 	/**

@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -158,7 +159,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 	{   
 		toolbar.setTitle(this.getString(R.string.title_activity_in_out_board) + " [" + p.getLocationName() + "]");
 		
-        UserDataListAdapter adapter = new UserDataListAdapter(this, R.layout.user_info_single, p.getUserData());
+        UserDataListAdapter adapter = new UserDataListAdapter(this, R.layout.user_info_single, p.getCurrentUserData());
         
         lstUsers.setAdapter(adapter);
 	}
@@ -251,13 +252,14 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 
 	private void promptForDetails(UserData data)
 	{
-		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		AlertDialog.Builder alert = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT);
 
 		alert.setTitle("User Details");
 		alert.setMessage("User: " + data.getName());
 
 		// Set an EditText view to get user input 
 		final TextView details = new TextView(this);
+		details.setTextColor(Color.BLACK);
 		alert.setView(details);
 		
 		details.setText(data.toString());

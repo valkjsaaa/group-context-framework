@@ -2,6 +2,7 @@ package com.adefreitas.androidframework;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -12,12 +13,12 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import android.content.ContextWrapper;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.MqttCommThread_Old.ConnectionThread;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.messages.CommMessage;
@@ -26,17 +27,18 @@ import com.google.gson.Gson;
 
 public class MqttCommThread extends CommThread implements MqttCallback
 {
-	private static final String  LOG_NAME = "MqttCommThread";
-	private static final boolean DEBUG    = true; 
+	private static final String  LOG_NAME      = "GCF-MQTT [" + Calendar.getInstance().getTimeInMillis() + "]";
+	private static final boolean DEBUG         = true; 
+	private static final int     RETRY_TIMEOUT = 5000;
 	
 	// No MQTT Messages are Ever Expected to be Guaranteed to Arrive
 	private static final int QOS = 0;
 	
-	private String  serverIP;
-	private int     port;
     private Gson    gson;
     private Handler commHandler;
     
+    private String			  brokerIP;
+    private int				  port;
     private MqttClient     	  client;
     private ArrayList<String> channels;
     private String         	  deviceID;
@@ -56,7 +58,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
      * @param commHandler
      * @param cw
      */
-    public MqttCommThread(CommManager commManager, String deviceID, String serverIP, int port, Handler commHandler, ContextWrapper cw)  
+    public MqttCommThread(CommManager commManager, String deviceID, String brokerIP, int port, Handler commHandler, ContextWrapper cw)  
 	{
     	super(commManager);
     	
@@ -65,41 +67,34 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	    this.commHandler = commHandler;
 	    this.cw 		 = cw;
 	    this.channels	 = new ArrayList<String>();
-	    this.run         = false;
-	    
-	    // Repeatedly Tries to Connect
-		connect(serverIP, port);
+	    this.run         = true; 
+
+	    this.brokerIP = brokerIP;
+	    this.port     = port;
     }
         
+    /**
+     * This is the Maintenance Thread.  It continually checks to make sure that we are still connected
+     */
     public void run()
-    {    	    	
+    {    	
+    	Log.d(LOG_NAME, "MQTT Comm Thread Running Maintenance Check");
+    	
     	try
     	{
     		while (run)
     		{
-    			if (run && client != null && !client.isConnected())
+    			if (client == null || !client.isConnected())
     			{
-    				sleep(5000);
-    				connect(serverIP, port);
+    				connect(brokerIP, port);
     			}
     			else
     			{
-    				sleep(60000);
-    				
-    				if (DEBUG)
-    				{
-        				Log.d(LOG_NAME, "MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])) + " " + this.count + " attempt(s); " + this.disconnectCount + " disconnect(s).");	
-    				}
+    				Log.d(LOG_NAME, "MQTT Comm Online: " + this.getIPAddress() + ":" + this.getPort() + ":" + Arrays.toString(channels.toArray(new String[0])) + " " + this.count + " attempt(s); " + this.disconnectCount + " disconnect(s).");	
     			}
+    			
+    			sleep(30000);
     		}
-    		
-    		// Experimental:  Kills the MQTT Thread
-			if (client != null)
-			{
-				disconnect();
-			}
-    		
-    		Log.d(LOG_NAME, "MQTT Channels: " + serverIP + ":" + port + ":" + Arrays.toString(channels.toArray(new String[0])) + " TERMINATED.");
     	}
     	catch (Exception ex)
     	{
@@ -112,19 +107,9 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	public void connect(final String serverIP, final int port)
 	{			
 		super.connect(serverIP, port);
-		
-		close();
-		
-    	run = true;
-		
-		// Tracking the Port and IP Address
-		this.port      = port;
-		this.serverIP  = serverIP;
-
-		Log.d(LOG_NAME, "Attempting to connect to " + serverIP + ":" + port + " . . . ");
-		
+						
 		// Creates a Networking Thread to Establish the Connection
-		Thread connectThread = new ConnectionThread();
+		Thread connectThread = new ConnectionThread(serverIP, port);
 		connectThread.start();
 	}
 	
@@ -132,7 +117,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{	
 		try
 		{
-			if (client != null)
+			if (client != null && client.isConnected())
 			{
 				client.disconnect();
 				client.close();
@@ -238,7 +223,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			{
 				Log.d(LOG_NAME,  "Buffering " + message.length() + " bytes.");
 				close();
-				connect(serverIP, port);
+				connect(this.getIPAddress(), this.getPort());
 			}
 		}
 		catch (Exception e)
@@ -251,11 +236,11 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	@Override
 	public void connectionLost(Throwable arg0)
 	{
-		Toast.makeText(cw, "MQTT Connection Lost: " + serverIP + ":" + port, Toast.LENGTH_SHORT).show();
+		Toast.makeText(cw, "MQTT Connection Lost: " + this.getIPAddress() + ":" + this.getPort(), Toast.LENGTH_SHORT).show();
 		close();
 		
 		disconnectCount++;
-		connect(serverIP, port);
+		connect(this.getIPAddress(), this.getPort());
 	}
 
 	@Override
@@ -299,110 +284,83 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	
 	public void subscribeToChannel(final String channel)
 	{	
-		Thread subscribeThread = new Thread()
+		if (client != null && client.isConnected())
 		{
-			boolean success = false;
-			int 	i		= 1;
-			
-			public void run()
+			Thread subscribeThread = new SubscribeThread(channel);
+			subscribeThread.start();	
+		}
+		else
+		{
+			if (!channels.contains(channel))
 			{
-				try
-				{
-					if (channel != null && !channels.contains(channel))
-					{
-						while (!success)
-						{
-							// Makes Sure the Client it Good to Go Before Officially Subscribing
-							if (client != null && client.isConnected())
-							{
-								Log.d(LOG_NAME, "ATTEMPT " + i + ":  MQTT subscribing to: " + channel);
-								channels.add(channel);
-								client.subscribe(channel);
-								
-								success = true;
-								break;
-							}
-							else
-							{
-								Log.d(LOG_NAME, "ATTEMPT " + i + ":  Could Not Subscribe to " + channel + "; Client=" + client);
-								sleep(1000);
-								//connect(serverIP, port);
-							}	
-							
-							i++;
-						}
-						
-						// Reports that the Subscription was Successful
-						((AndroidCommManager)(getCommManager())).notifySubscribed(MqttCommThread.this, channel);
-					}
-				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-				}	
+				this.channels.add(channel);
 			}
-		};
-		
-		subscribeThread.start();
+		}
 	}
 	
 	public void unsubscribeToChannel(final String channel)
 	{
-		Thread unsubscribeThread = new Thread()
+		if (client != null && client.isConnected() && isSubscribedToChannel(channel))
 		{
-			boolean success = false;
-			int     count	= 1;
-			
-			public void run()
+			Thread unsubscribeThread = new Thread()
 			{
-				try
+				boolean success = false;
+				int     count	= 1;
+				
+				public void run()
 				{
-					if (channel != null && channels.contains(channel))
+					try
 					{
-						while (!success)
+						if (channel != null && channels.contains(channel))
 						{
-							// Makes Sure the Client it Good to Go Before Officially Subscribing
-							if (client != null && client.isConnected())
+							while (!success)
 							{
-								Log.d(LOG_NAME, "ATTEMPT " + count + ":  MQTT unsubscribing from channel: " + channel);
-								client.unsubscribe(channel);	
-								channels.remove(channel);
-								
-								// Cleaning the channelARP
-								HashMap<String, String> newARP = new HashMap<String, String>(channelARP);
-								
-								for (String devID : channelARP.keySet())
+								// Makes Sure the Client it Good to Go Before Officially Subscribing
+								if (client != null && client.isConnected())
 								{
-									if (newARP.get(devID).equals(channel))
+									Log.d(LOG_NAME, "ATTEMPT " + count + ":  MQTT unsubscribing from channel: " + channel);
+									client.unsubscribe(channel);	
+									channels.remove(channel);
+									
+									// Cleaning the channelARP
+									HashMap<String, String> newARP = new HashMap<String, String>(channelARP);
+									
+									for (String devID : channelARP.keySet())
 									{
-										newARP.remove(devID);
-										Log.d(LOG_NAME, "Disassociating " + devID + " with channel " + channel);
+										if (newARP.get(devID).equals(channel))
+										{
+											newARP.remove(devID);
+											Log.d(LOG_NAME, "Disassociating " + devID + " with channel " + channel);
+										}
 									}
+									
+									// Replaces the Old ChannelARP with a New Version
+									channelARP = newARP;
+									
+									success = true;
+								}
+								else
+								{
+									Log.d(LOG_NAME, "ATTEMPT " + count + ":  Could Not Unsubscribe from " + channel);
+									sleep(100);
 								}
 								
-								// Replaces the Old ChannelARP with a New Version
-								channelARP = newARP;
-								
-								success = true;
+								count++;
 							}
-							else
-							{
-								Log.d(LOG_NAME, "ATTEMPT " + count + ":  Could Not Unsubscribe from " + channel);
-								sleep(100);
-							}
-							
-							count++;
 						}
 					}
+					catch (Exception ex)
+					{
+						ex.printStackTrace();
+					}				
 				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-				}				
-			}
-		};
-		
-		unsubscribeThread.start();
+			};
+			unsubscribeThread.start();	
+		}
+		else
+		{
+			channels.remove(channel);
+		}
 	}
 	
 	public boolean isSubscribedToChannel(String channel)
@@ -413,6 +371,17 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	// Threads
 	public class ConnectionThread extends Thread
 	{
+		Date   dateCreated;
+		String serverIP;
+		int    port;
+		
+		public ConnectionThread(String serverIP, int port)
+		{
+			this.dateCreated = new Date();
+			this.serverIP    = serverIP;
+			this.port        = port;
+		}
+		
 		public void run()
 		{
 			try
@@ -447,17 +416,84 @@ public class MqttCommThread extends CommThread implements MqttCallback
 					// Reports that the Connection was Successful
 					((AndroidCommManager)(getCommManager())).notifyConnected(MqttCommThread.this);	
 				}
+				else
+				{
+					// Reports Success
+					Log.e(LOG_NAME, "MQTT Connection Failure: " + serverIP);
+				}
+			}
+			catch (Exception ex)
+			{
+				Intent intent = new Intent(AndroidCommManager.ACTION_CONNECTION_ERROR);
+				intent.putExtra(AndroidCommManager.EXTRA_IP_ADDRESS, serverIP);
+				intent.putExtra(AndroidCommManager.EXTRA_PORT, port);
+				intent.putExtra(AndroidCommManager.EXTRA_ERROR, "Cannot connect to MQTT Broker: " + serverIP);
+				cw.sendBroadcast(intent);
+				
+				Log.e(LOG_NAME, "MQTT Connection Failure: " + serverIP);
+				
+//				if (client != null)
+//				{
+//					close();
+//				}
+			}		
+		}
+	}
+	
+	public class SubscribeThread extends Thread
+	{
+		String  channel;
+		boolean success;
+		int 	i;
+		
+		public SubscribeThread(String channel)
+		{
+			this.channel = channel;
+			this.success = false;
+			this.i       = 1;
+		}
+		
+		public void run()
+		{
+			try
+			{
+				if (channel != null && !channels.contains(channel))
+				{
+					while (!success)
+					{
+						// Makes Sure the Client it Good to Go Before Officially Subscribing
+						if (client != null && client.isConnected())
+						{
+							Log.d(LOG_NAME, "ATTEMPT " + i + ":  MQTT subscribing to: " + channel);
+							channels.add(channel);
+							client.subscribe(channel);
+							
+							success = true;
+							break;
+						}
+						else
+						{
+							Intent intent = new Intent(AndroidCommManager.ACTION_CONNECTION_ERROR);
+							intent.putExtra(AndroidCommManager.EXTRA_IP_ADDRESS, getIPAddress());
+							intent.putExtra(AndroidCommManager.EXTRA_PORT, getPort());
+							intent.putExtra(AndroidCommManager.EXTRA_ERROR, "Cannot subscribe to channel " + channel);
+							cw.sendBroadcast(intent);
+							
+							Log.d(LOG_NAME, "ATTEMPT " + i + ":  Could Not Subscribe to " + channel);
+							sleep(RETRY_TIMEOUT);
+						}	
+						
+						i++;
+					}
+					
+					// Reports that the Subscription was Successful
+					((AndroidCommManager)(getCommManager())).notifySubscribed(MqttCommThread.this, channel);
+				}
 			}
 			catch (Exception ex)
 			{
 				ex.printStackTrace();
-				Log.d(LOG_NAME, "MQTT Connection Failure: " + serverIP);
-				
-				if (client != null)
-				{
-					close();
-				}
-			}		
+			}	
 		}
 	}
 }

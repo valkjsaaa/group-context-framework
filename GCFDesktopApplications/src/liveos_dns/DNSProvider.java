@@ -14,7 +14,7 @@ public class DNSProvider extends ContextProvider
 {	
 	// Constants
 	private static String CONTEXT_TYPE 	  = "LOS_DNS";
-	private static int    MIN_REPEAT_TIME = 10000;
+	private static int    MIN_REPEAT_TIME = 5000;
 	
 	// Parameters
 	private String connectionKey;
@@ -36,6 +36,9 @@ public class DNSProvider extends ContextProvider
 		this.setSubscriptionDependentForCompute(false);
 	}
 
+	/**
+	 * This Method 
+	 */
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
@@ -56,7 +59,6 @@ public class DNSProvider extends ContextProvider
 			System.out.println("" + appID + " -> " + deviceID);
 			
 			this.getGroupContextManager().sendComputeInstruction(connectionKey, "dev/" + deviceID, "PCP", new String[] { deviceID }, "APPLICATION", instruction.getPayload());
-			//this.getGroupContextManager().sendComputeInstruction("PCP", new String[] { deviceID }, "APPLICATION", instruction.getParameters());
 		}
 		else
 		{

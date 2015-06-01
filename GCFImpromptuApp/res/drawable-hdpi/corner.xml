@@ -21,7 +21,7 @@
         android:bottom="0dp"/>
 
     <corners
-        android:radius="0dp"   >
+        android:radius="2dp"   >
     </corners>
 
 </shape>

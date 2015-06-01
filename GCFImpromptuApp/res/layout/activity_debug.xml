@@ -1,0 +1,96 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context="com.adefreitas.gcfimpromptu.DebugActivity" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+            
+        <android.support.v7.widget.Toolbar
+		    xmlns:app="http://schemas.android.com/apk/res-auto"
+		    android:id="@+id/toolbar"
+		    android:layout_height="wrap_content"
+		    android:layout_width="match_parent"
+		    app:theme="@style/Theme.MyTheme"
+		    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+		    android:background="#FFFFFF">
+        </android.support.v7.widget.Toolbar>
+	
+        <View 
+			android:layout_width="fill_parent" 
+			android:layout_height="2dp" 
+			android:background="#333333" />
+        
+        <ScrollView         
+            android:layout_width="fill_parent"
+        	android:layout_height="wrap_content"
+        	android:padding="5dp">
+            
+            <LinearLayout 
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:orientation="vertical">
+                
+                <!-- Application Catalog -->
+                <TextView
+                	android:layout_width="fill_parent"
+        			android:layout_height="wrap_content"
+        			android:text="Application Catalog"
+        			android:textColor="@color/custom_primary"/>
+            
+	            <TextView
+					android:id="@+id/txtAppCatalog"
+	                android:layout_width="fill_parent"
+	        		android:layout_height="wrap_content"
+	        		android:padding="5dp"
+	        		android:textColor="#000000"/>
+	            
+	            <Button
+	                android:id="@+id/btnClearCache"
+	                android:layout_width="fill_parent"
+	        		android:layout_height="wrap_content"
+	        		android:theme="@style/ThemeOverlay.AppCompat.Light"
+	        		android:text="Clear Cache"
+	        		android:textColor="#000000"/>
+	            
+	            <!-- GCF Debug Information -->
+	            <TextView
+                	android:layout_width="fill_parent"
+        			android:layout_height="wrap_content"
+        			android:text="Group Context Framework"
+        			android:layout_marginTop="15dp"
+        			android:textColor="@color/custom_primary"/>
+            
+	            <TextView
+					android:id="@+id/txtContextProviders"
+	                android:layout_width="fill_parent"
+	        		android:layout_height="wrap_content"
+	        		android:padding="5dp"
+	        		android:textColor="#000000"/>
+	            
+	            <!-- Bluewave -->
+	            <TextView
+	                android:layout_width="fill_parent"
+	        		android:layout_height="wrap_content"
+	        		android:text="Shared with Impromptu"
+	        		android:layout_marginTop="15dp"
+	        		android:textColor="@color/custom_primary"/>
+	                         
+	            <TextView
+	                android:id="@+id/txtBluewave"
+	                android:layout_width="fill_parent"
+	        		android:layout_height="wrap_content"
+	        		android:padding="5dp"
+	        		android:textColor="#000000"/>
+                
+            </LinearLayout>
+            
+        </ScrollView>
+        
+	</LinearLayout>
+
+</RelativeLayout>

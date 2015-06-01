@@ -335,7 +335,7 @@ public class CommMessage
 	}
 	
 	/**
-	 * Retrieves all Values
+	 * Retrieves all Values from the Payload
 	 * @return
 	 */
 	public String[] getPayload()
