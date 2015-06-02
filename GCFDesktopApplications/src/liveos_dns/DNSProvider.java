@@ -52,11 +52,11 @@ public class DNSProvider extends ContextProvider
 		}
 		else if (instruction.getCommand().equalsIgnoreCase("SEND_ADVERTISEMENT"))
 		{
-			String appID    = instruction.getPayload("APP_ID");
+//			String appID    = instruction.getPayload("APP_ID");
 			String deviceID = instruction.getPayload("DESTINATION");
 						
 			// Sends a Message about an Incoming Application
-			System.out.println("" + appID + " -> " + deviceID);
+			System.out.println(instruction.getDeviceID() + " -> " + deviceID);
 			
 			this.getGroupContextManager().sendComputeInstruction(connectionKey, "dev/" + deviceID, "PCP", new String[] { deviceID }, "APPLICATION", instruction.getPayload());
 		}

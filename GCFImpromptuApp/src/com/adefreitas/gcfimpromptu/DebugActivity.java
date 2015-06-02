@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
@@ -32,9 +33,8 @@ public class DebugActivity extends Activity
 	private Button   btnClearCache;
 	
 	// Intent Filters
-	private ContextReceiver contextReceiver;
-	private IntentFilter    filter;
-	private IntentReceiver  intentReceiver;
+	private IntentFilter   filter;
+	private IntentReceiver intentReceiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 

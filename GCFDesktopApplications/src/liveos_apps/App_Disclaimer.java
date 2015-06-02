@@ -8,6 +8,15 @@ import com.adefreitas.messages.ComputeInstruction;
 
 public class App_Disclaimer extends DesktopApplicationProvider
 {
+	public static final String   CONTEXT_TYPE  	      = "DISCLAIMER";
+	public static final String   DEFAULT_TITLE 	      = "Disclaimer";
+	public static final String   DEFAULT_DESCRIPTION  = "View Impromptu's terms of use.  You must agree to these conditions before your device will receive apps.";
+	public static final String   DEFAULT_CATEGORY     = "ADMIN";
+	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
+	public static final String[] PREFERENCES_REQUIRED = new String[] { };
+	public static final String   LOGO_PATH			  = "http://www.andrew.cmu.edu/course/98-233/images/cmu_seal.png";
+	public static final int      DEFAULT_LIFETIME	  = 120;
+	
 	/**
 	 * Constructor
 	 * @param groupContextManager
@@ -17,18 +26,8 @@ public class App_Disclaimer extends DesktopApplicationProvider
 	 */
 	public App_Disclaimer(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
-		super(groupContextManager, 
-				"DISCLAIMER",
-				"Disclaimer",
-				"View Impromptu's terms of use.  You must agree to these conditions before your device will receive apps.",
-				"ADMIN",
-				new String[] { },  // Contexts
-				new String[] { },  // Preferences
-				"http://www.andrew.cmu.edu/course/98-233/images/cmu_seal.png",				   // LOGO
-				120,
-				commMode,
-				ipAddress,
-				port);
+		super(groupContextManager, CONTEXT_TYPE, DEFAULT_TITLE, DEFAULT_DESCRIPTION, DEFAULT_CATEGORY, CONTEXTS_REQUIRED, PREFERENCES_REQUIRED, LOGO_PATH, DEFAULT_LIFETIME,				
+				commMode, ipAddress, port);
 	}
 
 	@Override

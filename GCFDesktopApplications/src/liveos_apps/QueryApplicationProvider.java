@@ -9,12 +9,15 @@ import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.liveos.ApplicationProvider;
 import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ComputeInstruction;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class QueryApplicationProvider extends ContextProvider
 {	
 	private String connectionKey;
+	
+	private Gson gson = new Gson();
 	
 	/**
 	 * Constructor
@@ -75,7 +78,7 @@ public class QueryApplicationProvider extends ContextProvider
 					{
 						System.out.print("YES ");
 						relevantApps.add(application);
-						sendAdvertisement(deviceID, context, application);
+						//sendAdvertisement(deviceID, context, application);
 					}	
 					else
 					{
@@ -94,7 +97,11 @@ public class QueryApplicationProvider extends ContextProvider
 				}
 			}
 			
-			//sendAdvertisement(deviceID, context, relevantApps);
+			// Transmits All Relevant Apps in ONE Burst
+			if (relevantApps.size() > 0)
+			{
+				sendAdvertisement(deviceID, context, relevantApps);
+			}
 		}
 		else
 		{
@@ -179,34 +186,42 @@ public class QueryApplicationProvider extends ContextProvider
 	 * @param application
 	 */
 	private void sendAdvertisement(String deviceID, String userContext, ArrayList<ApplicationProvider> applications)
-	{
-//		// Creates a List of Parameters
-//		ArrayList<String> parameters = new ArrayList<String>();
-//		
-//		for (String s : application.getInformation(userContext))
-//		{
-//			parameters.add(s);
-//		}
-//		
-//		// Adds a Custom Parameter Needed by the DNS to Know Which Device this Advertisement is For
-//		parameters.add("DESTINATION=" + deviceID);
-//		
-//		// Adds the Number of Matches for a Snap To It Capable Device
-//		if (application instanceof SnapToItApplicationProvider)
-//		{
-//			SnapToItApplicationProvider stiApp = (SnapToItApplicationProvider)application;
-//			
-//			// Adds the Number of Matches!
-//			parameters.add("PHOTO_MATCHES=" + stiApp.getFitness(userContext));
-//		}
-//		
-//		// Directs the DNS to Send the Advertisement to the Device
-//		getGroupContextManager().sendComputeInstruction(connectionKey, 
-//				ApplicationSettings.DNS_CHANNEL, 
-//				"LOS_DNS", 
-//				new String[] { "LOS_DNS" }, 
-//				"SEND_ADVERTISEMENT", 
-//				parameters.toArray(new String[0]));
+	{	
+		// Creates a List of Parameters
+		ArrayList<String> parameters = new ArrayList<String>();
+		
+		// Generates Parameters for Each Application
+		for (ApplicationProvider application : applications)
+		{
+			ArrayList<String> appParameters = new ArrayList<String>();
+			
+			// Adds the Number of Matches for a Snap To It Capable Device
+			if (application instanceof SnapToItApplicationProvider)
+			{
+				SnapToItApplicationProvider stiApp = (SnapToItApplicationProvider)application;
+				
+				// Adds the Number of Matches!
+				appParameters.add("PHOTO_MATCHES=" + stiApp.getFitness(userContext));
+			}
+			
+			for (String s : application.getInformation(userContext))
+			{
+				appParameters.add(s);
+			}
+			
+			parameters.add(gson.toJson(appParameters.toArray(new String[0])));
+		}
+		
+		//System.out.println("DESTINATION=" + deviceID);
+		//System.out.println("APPS=" + gson.toJson(parameters.toArray(new String[0])));
+		System.out.println("  Delivering " + applications.size() + " apps total.");
+		
+		getGroupContextManager().sendComputeInstruction(connectionKey, 
+				ApplicationSettings.DNS_CHANNEL, 
+				"LOS_DNS", 
+				new String[] { "LOS_DNS" }, 
+				"SEND_ADVERTISEMENT", 
+				new String[] { "DESTINATION=" + deviceID, "APPS=" + gson.toJson(parameters.toArray(new String[0])) } );
 	}
 	
 	// Private Methods --------------------------------------------------------------------------

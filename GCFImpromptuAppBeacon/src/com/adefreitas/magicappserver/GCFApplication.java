@@ -40,6 +40,7 @@ import com.adefreitas.inoutboard.UserIdentityContextProvider;
 import com.adefreitas.liveos.ApplicationProvider;
 import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ContextData;
+import com.google.gson.Gson;
 
 public class GCFApplication extends Application
 {
@@ -62,6 +63,9 @@ public class GCFApplication extends Application
 	
 	// GCF Context Providers
 	public UserIdentityContextProvider identityProvider;
+	
+	// GSON Serializer
+	private Gson gson = new Gson();
 	
 	// Cloud Storage Settings
 	private CloudStorageToolkit cloudToolkit;
@@ -219,9 +223,11 @@ public class GCFApplication extends Application
 				String result = "";
 				
 				if (ipAddress != null)
-				{
+				{	
+					ArrayList<String> appPayload = new ArrayList<String>();
+					
 					for (ContextProvider p : groupContextManager.getRegisteredProviders())
-					{
+					{	
 						if (p instanceof AndroidApplicationProvider)
 						{
 							AndroidApplicationProvider appProvider = (AndroidApplicationProvider)p;
@@ -230,42 +236,40 @@ public class GCFApplication extends Application
 							boolean redundant = isRedundant(appProvider, context);
 							boolean sendData  = appProvider.sendAppData(parser.toString());
 							
-							Toast.makeText(this, appProvider.getContextType() + ": [" + deviceID + "] redundant: " + redundant + "; sendData: " + sendData, Toast.LENGTH_LONG).show();
+							//Toast.makeText(this, appProvider.getContextType() + ": [" + deviceID + "] redundant: " + redundant + "; sendData: " + sendData, Toast.LENGTH_LONG).show();
 							
 							if (!redundant && sendData)
 							{
 								result += appProvider.getContextType() + " ";
 								
-								// Either Connects, or 
-								if (!groupContextManager.isConnected(commMode, ipAddress, port))
-								{
-									groupContextManager.connect(commMode, ipAddress, port);
-								}
-								else
-								{
-									String connectionKey = groupContextManager.getConnectionKey(commMode, ipAddress, port);
-									
-									// Creates a List of Parameters
-									ArrayList<String> parameters = new ArrayList<String>();
-									
-									for (String s : appProvider.getInformation(parser.toString()))
-									{
-										parameters.add(s);
-									}
-									
-									// Adds a Custom Parameter Needed by the DNS to Know Which Device this Advertisement is For
-									parameters.add("DESTINATION=" + deviceID);
-									
-									groupContextManager.sendComputeInstruction(
-											connectionKey, 
-											ApplicationSettings.DNS_CHANNEL, 
-											"LOS_DNS", 
-											new String[] { "LOS_DNS" }, 
-											"SEND_ADVERTISEMENT", 
-											parameters.toArray(new String[0]));	
-								}
+								appPayload.add(gson.toJson(appProvider.getInformation(parser.toString())));
 							}
 						}
+					}
+					
+					// Transmits All of the Payloads at Once
+					if (appPayload.size() > 0)
+					{
+						String connectionKey = "";
+						
+						// Either Connects, or Uses the Existing Connection
+						if (!groupContextManager.isConnected(commMode, ipAddress, port))
+						{
+							connectionKey = groupContextManager.connect(commMode, ipAddress, port);
+						}
+						else
+						{
+							connectionKey = groupContextManager.getConnectionKey(commMode, ipAddress, port);
+						}
+						
+						// Sends ONE Message with Everything :)
+						groupContextManager.sendComputeInstruction(
+								connectionKey, 
+								ApplicationSettings.DNS_CHANNEL, 
+								"LOS_DNS", 
+								new String[] { "LOS_DNS" }, 
+								"SEND_ADVERTISEMENT", 
+								new String[] { "DESTINATION=" + deviceID, "APPS=" + gson.toJson(appPayload.toArray(new String[0])) });	
 					}
 					
 					if (result.length() > 0)

@@ -46,7 +46,7 @@ public class BluetoothScanner
 	// Internal Tracking Variables
 	private int     scanInterval;		// In Milliseconds
 	private Date    scanStartDate;		// Date of the latest Bluetooth Scan
-	private Boolean scanning;			// Flag
+	private boolean scanning;			// Flag
 	
 	// Thread Used to Restart the Bluetooth Scanner After Discover is Complete
 	private RestartThread restartThread;
@@ -63,6 +63,7 @@ public class BluetoothScanner
 		this.bluetooth 	     = BluetoothAdapter.getDefaultAdapter();
 		this.scanStartDate   = new Date();
 		this.scanInterval    = 60000;
+		this.scanning        = false;
 				
 		// Sets Filter for When Bluetooth Devices are Found
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);

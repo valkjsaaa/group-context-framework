@@ -2,6 +2,7 @@ package com.adefreitas.gcfimpromptu;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -497,7 +498,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 							appObject.put("name", app.getAppContextType());
 							//appObject.put("expires", app.getDateExpires().getTime());
 							
-							long timeToExpire = System.currentTimeMillis() - app.getDateExpires().getTime();
+							long timeToExpire = app.getDateExpires().getTime() - System.currentTimeMillis();
 							appObject.put("expiring", timeToExpire < (UPDATE_SECONDS * 1000));
 							availableApps.put(appObject);
 						}
@@ -713,9 +714,6 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			Intent i = new Intent(ACTION_APP_UPDATE);
 			sendBroadcast(i);
 		}
-								
-		// Stores the Catalog in Long Term Memory
-		saveCatalog();
 	}
 	
 	public void removeApplicationFromCatalog(AppInfo appToRemove)
@@ -952,7 +950,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
 				gcfService.getGroupContextManager().registerContextProvider(acp);
 				gcfService.getGroupContextManager().registerContextProvider(audioProvider);
-				gcfService.getGroupContextManager().registerContextProvider(bluewaveProvider);
+				//gcfService.getGroupContextManager().registerContextProvider(bluewaveProvider);
 				gcfService.getGroupContextManager().registerContextProvider(bluetoothProvider);
 				
 				// Starts Activity Recognition
@@ -1032,60 +1030,75 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			// Registers an Application in the Catalog
 			if (command.equalsIgnoreCase("APPLICATION"))
 			{
-				try
+				String[] appsJson = gson.fromJson(instruction.getPayload("APPS"), new TypeToken<String[]>() {}.getType());
+				
+				Log.d(LOG_NAME, "Received " + appsJson.length + " apps.");
+				
+				for (String s : appsJson)
 				{
-					String 			  appID       	 = instruction.getPayload("APP_ID");
-					String			  appContextType = instruction.getPayload("APP_CONTEXT_TYPE");
-					String 			  appName     	 = instruction.getPayload("NAME");
-					String			  deviceID		 = instruction.getPayload("DEVICE_ID");
-					String 			  description    = instruction.getPayload("DESCRIPTION");
-					String 			  category	     = instruction.getPayload("CATEGORY");
-					String 			  logo		  	 = instruction.getPayload("LOGO");
-					int			      lifetime		 = Integer.parseInt(instruction.getPayload("LIFETIME"));
-					ArrayList<String> contexts    	 = CommMessage.getValues(payload, "CONTEXTS");
-					ArrayList<String> preferences 	 = CommMessage.getValues(payload, "PREFERENCES");
-					CommMode		  commMode		 = CommMode.valueOf(instruction.getPayload("COMM_MODE"));
-					String 			  ipAddress   	 = instruction.getPayload("APP_ADDRESS");
-					int				  port		  	 = Integer.valueOf(instruction.getPayload("APP_PORT"));
-					String 			  channel    	 = instruction.getPayload("APP_CHANNEL");
-					Double			  photoMatches   = (instruction.getPayload("PHOTO_MATCHES") != null) ? Double.valueOf(instruction.getPayload("PHOTO_MATCHES")) : 0.0;
+					String[] appPayload = gson.fromJson(s, new TypeToken<String[]>() {}.getType());
 					
-					// Starts Downloading Logo
-					if (logo != null && logo.length() > 0)
+					// Generates a Fake Instruction
+					ComputeInstruction appInstruction = new ComputeInstruction(contextType, sender, new String[0], command, appPayload);
+				
+					try
 					{
-						getLogo(logo);
-					}
-					
-					// Creates Individual Function Objects
-					ArrayList<ApplicationFunction> functions    = new ArrayList<ApplicationFunction>();
-					String 						   functionJSON = instruction.getPayload("FUNCTIONS");
-					
-					if (functionJSON != null && !functionJSON.equals("null"))
-					{					
-						JSONArray functionArray = new JSONArray(functionJSON);
+						String 			  appID       	 = appInstruction.getPayload("APP_ID");
+						String			  appContextType = appInstruction.getPayload("APP_CONTEXT_TYPE");
+						String 			  appName     	 = appInstruction.getPayload("NAME");
+						String			  deviceID		 = appInstruction.getPayload("DEVICE_ID");
+						String 			  description    = appInstruction.getPayload("DESCRIPTION");
+						String 			  category	     = appInstruction.getPayload("CATEGORY");
+						String 			  logo		  	 = appInstruction.getPayload("LOGO");
+						int			      lifetime		 = Integer.parseInt(appInstruction.getPayload("LIFETIME"));
+						ArrayList<String> contexts    	 = CommMessage.getValues(appInstruction.getPayload(), "CONTEXTS");
+						ArrayList<String> preferences 	 = CommMessage.getValues(appInstruction.getPayload(), "PREFERENCES");
+						CommMode		  commMode		 = CommMode.valueOf(appInstruction.getPayload("COMM_MODE"));
+						String 			  ipAddress   	 = appInstruction.getPayload("APP_ADDRESS");
+						int				  port		  	 = Integer.valueOf(appInstruction.getPayload("APP_PORT"));
+						String 			  channel    	 = appInstruction.getPayload("APP_CHANNEL");
+						Double			  photoMatches   = (appInstruction.getPayload("PHOTO_MATCHES") != null) ? Double.valueOf(appInstruction.getPayload("PHOTO_MATCHES")) : 0.0;
 						
-						for (int i=0; i<functionArray.length(); i++)
+						// Starts Downloading Logo
+						if (logo != null && logo.length() > 0)
 						{
-							// Gets Each Object Element and Converts It to an 
-							JSONObject 			functionElement = (JSONObject)functionArray.get(i);
-							ApplicationFunction function 	    = gson.fromJson(functionElement.toString(), ApplicationFunction.class);
+							getLogo(logo);
+						}
 						
-							if (function != null)
+						// Creates Individual Function Objects
+						ArrayList<ApplicationFunction> functions    = new ArrayList<ApplicationFunction>();
+						String 						   functionJSON = appInstruction.getPayload("FUNCTIONS");
+						
+						if (functionJSON != null && !functionJSON.equals("null"))
+						{					
+							JSONArray functionArray = new JSONArray(functionJSON);
+							
+							for (int i=0; i<functionArray.length(); i++)
 							{
-								functions.add(function);	
+								// Gets Each Object Element and Converts It to an 
+								JSONObject 			functionElement = (JSONObject)functionArray.get(i);
+								ApplicationFunction function 	    = gson.fromJson(functionElement.toString(), ApplicationFunction.class);
+							
+								if (function != null)
+								{
+									functions.add(function);	
+								}
 							}
 						}
+												
+						// Adds the App
+						AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
+						GCFApplication.this.addApplicationToCatalog(app);
 					}
-											
-					// Adds the App
-					AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
-					GCFApplication.this.addApplicationToCatalog(app);
+					catch (Exception ex)
+					{
+						ex.printStackTrace();
+						Toast.makeText(GCFApplication.this, "Problem With App: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+					}
 				}
-				catch (Exception ex)
-				{
-					ex.printStackTrace();
-					Toast.makeText(GCFApplication.this, "Problem With App: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-				}
+				
+				// Stores the Catalog in Long Term Memory
+				saveCatalog();
 			}
 		}
 	
@@ -1140,6 +1153,15 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		private void onBootup(Context context, Intent intent)
 		{
 			//startGCFService();
+		}
+	}
+	
+	public static class BootupReceiver extends BroadcastReceiver
+	{
+		@Override
+		public void onReceive(Context context, Intent intent) 
+		{	
+			
 		}
 	}
 	

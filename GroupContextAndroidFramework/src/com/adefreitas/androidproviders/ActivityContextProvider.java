@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.google.android.gms.common.ConnectionResult;
@@ -38,7 +37,6 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 	PendingIntent p;
 	
 	// Intent Filters
-	private ContextReceiver contextReceiver;
 	private IntentFilter    filter;
 	private IntentReceiver  intentReceiver;
 	
@@ -189,7 +187,7 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 				// DEBUG:  Produces a Toast if the Activity Changes
 				if (!activity.equals(intent.getStringExtra(ActivityRecognitionIntentService.EXTRA_ACTIVITY)))
 				{
-					Toast.makeText(context, "Activity: " + activity + " (" + confidence + "%)", Toast.LENGTH_SHORT).show();
+					//Toast.makeText(context, "Activity: " + activity + " (" + confidence + "%)", Toast.LENGTH_SHORT).show();
 				}
 				
 				// Stores Values
