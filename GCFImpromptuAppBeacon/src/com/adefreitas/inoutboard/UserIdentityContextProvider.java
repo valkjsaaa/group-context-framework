@@ -170,7 +170,7 @@ public class UserIdentityContextProvider extends ContextProvider
 				
 		for (UserData u : entries.values())
 		{
-			long timeElapsed = new Date().getTime() - u.getLastEncounteredDate().getTime(); 
+			long timeElapsed = System.currentTimeMillis() - u.getLastEncounteredDate().getTime(); 
 			
 			if (timeElapsed < 300000)
 			{

@@ -110,7 +110,7 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 		{
 			this.getGroupContextManager().log(LOG_NAME, this.getContextType() + " Provider Stopped");
 			
-			if (!runForever)
+			if (!runForever && googleApiClient.isConnected())
 			{
 				ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient, p);
 				googleApiClient.disconnect();
@@ -166,7 +166,7 @@ public class ActivityContextProvider extends ContextProvider implements GoogleAp
 		Log.d(LOG_NAME, "Activity Recognition Connected");
 		i = new Intent(context, ActivityRecognitionIntentService.class);
 		p = PendingIntent.getService(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-		ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 15000, p);
+		ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 30000, p);
 	}
 
 	@Override

@@ -15,7 +15,6 @@ public class MulticastCommThread extends CommThread
 	private String 			  group;
 	private Gson 			  gson;
 	private MulticastSocket   s;
-	private MessageProcessor  processor;
 	private boolean 		  alive;
 	
 	/**
@@ -23,14 +22,13 @@ public class MulticastCommThread extends CommThread
 	 * @param port  - the port the multicast communications occurs on
 	 * @param group - the group address
 	 */
-	public MulticastCommThread(CommManager commManager, int port, String group, MessageProcessor processor)
+	public MulticastCommThread(CommManager commManager, int port, String group)
 	{
 		super(commManager);
 		
 		this.port  	   = port;
 		this.group 	   = group;
 		this.gson 	   = new Gson();
-		this.processor = processor;
 		
 		connect(group, port);
 	}
@@ -74,12 +72,12 @@ public class MulticastCommThread extends CommThread
 				String json = new String(packet.getData(), 0, packet.getLength());
 				
 				// Sends the Received Message to a Handler to be Processed
-				CommMessage cm = CommMessage.jsonToMessage(json);
+				CommMessage msg = CommMessage.jsonToMessage(json);
 				
      			// Allows this Thread to Track WHO it has Seen Messages From
-     			this.addToArp(cm.getDeviceID());
+     			this.addToArp(msg.getDeviceID());
 				
-				processor.onMessage(cm);
+     			((DesktopCommManager)this.getCommManager()).onMessage(msg);	
 			}
 			catch (Exception ex)
 			{

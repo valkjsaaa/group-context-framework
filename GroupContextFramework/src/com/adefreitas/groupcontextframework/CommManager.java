@@ -146,16 +146,12 @@ public abstract class CommManager
 	 */
 	public void send(CommMessage message)
 	{
-		String[] 		  dest 		   = message.getDestination();
-		ArrayList<String> destinations = (dest != null) ? new ArrayList<String>(Arrays.asList(message.getDestination())) : new ArrayList<String>();
-		
-		// Prevents Network Access if the Message is Only Intended for this Device!
-		if (destinations.size() == 1 && destinations.get(0).equals(gcm.getDeviceID()))
+		// Prevents Network Access if the Message is Only Directed to this Device!
+		if (isSendToSelf(message))
 		{
-			//System.out.println("CommManager:  Rerouting back to the application.");
 			gcm.onMessage(message);
 		}
-		else if (destinations.size() == 0)
+		else if (isBroadcast(message))
 		{
 			//System.out.println("CommManager:  Broadcasting.");
 			
@@ -166,8 +162,8 @@ public abstract class CommManager
 			}	
 		}
 		else
-		{
-			//Date start = new Date();
+		{			
+			ArrayList<String> destinations = (message.getDestination() != null) ? new ArrayList<String>(Arrays.asList(message.getDestination())) : new ArrayList<String>();
 			
 			//System.out.println("CommManager:  Optimizing Path for " + message.getMessageType() + ": " + Arrays.toString(message.getDestination()));
 			ArrayList<String> threads = new ArrayList<String>();
@@ -240,7 +236,12 @@ public abstract class CommManager
 	 */
 	public void send(CommMessage message, String connectionKey)
 	{
-		if (commThreads.containsKey(connectionKey))
+		// Prevents Network Access if the Message is Only Directed to this Device!
+		if (isSendToSelf(message))
+		{
+			gcm.onMessage(message);
+		}
+		else if (commThreads.containsKey(connectionKey))
 		{
 			commThreads.get(connectionKey).send(message);
 		}
@@ -259,7 +260,12 @@ public abstract class CommManager
 	 */
 	public void send(CommMessage message, String connectionKey, String channel)
 	{
-		if (commThreads.containsKey(connectionKey))
+		// Prevents Network Access if the Message is Only Directed to this Device!
+		if (isSendToSelf(message))
+		{
+			gcm.onMessage(message);
+		}
+		else if (commThreads.containsKey(connectionKey))
 		{
 			commThreads.get(connectionKey).send(message, channel);
 		}
@@ -271,29 +277,40 @@ public abstract class CommManager
 	
 	/**
 	 * Sends a Message Along the Specified Channel
-	 * NOTE:  This may sends repeats to the same device if they are all on the same channels
+	 * NOTE:  This may send repeats to the same device if they are all on the same channels
 	 * @param message
 	 * @param channel
 	 */
 	public void sendUsingChannel(CommMessage message, String channel)
 	{
-		ArrayList<CommThread> threadsToUse = new ArrayList<CommThread>();
-		
-		for (String deviceID : message.getDestination())
+		// Prevents Network Access if the Message is Only Directed to this Device!
+		if (isSendToSelf(message))
 		{
-			for (CommThread commThread : commThreads.values())
+			gcm.onMessage(message);
+		}
+		else
+		{
+			ArrayList<CommThread> threadsToUse = new ArrayList<CommThread>();
+			
+			for (String deviceID : message.getDestination())
 			{
-				if (commThread.receivesMessagesFrom(deviceID))
+				for (CommThread commThread : commThreads.values())
 				{
-					threadsToUse.add(commThread);
-					break;
+					if (commThread.receivesMessagesFrom(deviceID))
+					{
+						if (threadsToUse.contains(commThread))
+						{
+							threadsToUse.add(commThread);	
+						}
+						break;
+					}
 				}
 			}
-		}
-		
-		for(CommThread commThread : threadsToUse)
-		{
-			commThread.send(message, channel);
+			
+			for(CommThread commThread : threadsToUse)
+			{
+				commThread.send(message, channel);
+			}	
 		}
 	}
 	
@@ -351,4 +368,14 @@ public abstract class CommManager
 		return commThreads.values().toArray(new CommThread[0]);
 	}
 	
+	// Private Methods -----------------------------------------------------------------------------------------
+	private boolean isSendToSelf(CommMessage message)
+	{
+		return message.getDestination().length == 1 && message.getDestination()[0].equals(gcm.getDeviceID());
+	}
+	
+	private boolean isBroadcast(CommMessage message)
+	{
+		return message.getDestination() == null || message.getDestination().length == 0;
+	}
 }

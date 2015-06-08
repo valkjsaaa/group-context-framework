@@ -10,15 +10,18 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar.LayoutParams;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -26,8 +29,10 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -58,8 +63,11 @@ import android.widget.Toast;
 import com.adefreitas.androidbluewave.JSONContextParser;
 import com.adefreitas.androidframework.AndroidCommManager;
 import com.adefreitas.androidframework.ContextReceiver;
+import com.adefreitas.androidframework.GCFService;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.androidframework.toolkit.HttpToolkit;
+import com.adefreitas.androidframework.toolkit.ImageToolkit;
+import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
 import com.adefreitas.liveos.ApplicationFunction;
@@ -68,6 +76,7 @@ import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class AppEngine extends ActionBarActivity implements ContextReceiver
@@ -98,6 +107,16 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	
 	// Object Serialization
 	private Gson gson;
+	
+	// Web Chrome Client Values
+    private static final int     FILECHOOSER_RESULTCODE = 12345;
+    private static final String  SS_FILE_PATH_CALLBACK  = "FILE_PATH_CALLBACK";
+    private static final String  SS_UPLOAD_MESSAGE      = "UPLOAD_MESSAGE";
+    private static final String  SS_CAMERA_PHOTO_PATH   = "CAMERA_PHOTO_PATH";
+    private static final String  SS_IMAGE_URI           = "IMAGE_URI";
+    
+    private String 				 mCameraPhotoPath;
+
 	
 	// Current App/Function
 	private AppInfo 					 app;
@@ -160,15 +179,13 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		webView.getSettings().setAllowFileAccess(true);
 		webView.addJavascriptInterface(jsInterface, JSInterface.JAVASCRIPT_OBJECT_NAME);
 		webView.setWebViewClient(new CustomBrowser());	
-
-		//setupWebView();
-		
+		webView.setWebChromeClient(new CustomChromeClient());
 		webViewPlaceholder.addView(webView);
-		
+	
 		// Restores the App State so Long as the App is Running!
 		if (savedInstanceState != null)
 		{
-			webView.restoreState(savedInstanceState);	
+	
 			progressSpinner.setVisibility(View.GONE);
 		}
 	}
@@ -257,12 +274,22 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	 */
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) 
-	{
-		if (item.toString().equalsIgnoreCase("settings"))
+	{		
+		if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_settings)))
 	    {
 	    	Intent intent = new Intent(this, SettingsActivity.class);
 	    	this.startActivity(intent);
 	    }
+		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_quit)))
+		{
+			// Kills the Timer Thread
+			application.halt();
+			
+			// Creates an Intent to Kill the GCF Service
+			Intent intent = new Intent(this, GCFService.class);
+			this.stopService(intent);
+			android.os.Process.killProcess(android.os.Process.myPid());
+		}
 		else if (item.toString().equalsIgnoreCase("refresh"))
 		{
 			if (app != null && app.getUI() != null)
@@ -274,6 +301,12 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 				Toast.makeText(application, "Cannot refresh app.", Toast.LENGTH_SHORT).show();
 			}
 		}
+		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_debug)))
+		{
+			Intent intent = new Intent(this, DebugActivity.class);
+			this.startActivity(intent);
+		}
+		
 	    
 	    return false;
 	}
@@ -284,19 +317,108 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	@Override
 	protected void onSaveInstanceState(Bundle outState)
 	{
+		//Toast.makeText(this, "Save Instance State Called", Toast.LENGTH_SHORT).show();
+		
 		super.onSaveInstanceState(outState);
 		webView.saveState(outState);
+		outState.putString(SS_CAMERA_PHOTO_PATH, mCameraPhotoPath);
 	}
-
-	/**
-	 * Android Method:  Used to Restore the Activity's State
-	 */
-	@Override
+	
 	protected void onRestoreInstanceState(Bundle savedInstanceState)
 	{
 		super.onRestoreInstanceState(savedInstanceState);
+		webView.restoreState(savedInstanceState);
+		mCameraPhotoPath = savedInstanceState.getString(SS_CAMERA_PHOTO_PATH);
 	}
 	
+	/**
+	 * Android Method:  Called when the User Presses the Back Button
+	 * This allows us to go back in the webview, as opposed to (only) the app
+	 */
+    @Override
+    // Detect when the back button is pressed
+    public void onBackPressed() 
+    { 
+        if(webView.canGoBack())
+        { 
+            webView.goBack();    
+        } 
+        else 
+        {
+            // Let the system handle the back button
+            super.onBackPressed();
+        }
+    }
+	
+    /**
+     * Android Method:  Called when an External Process (File Selector, Camera) Comes Back
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent)
+    {
+    	Toast.makeText(this, "Activity Result Called", Toast.LENGTH_SHORT).show();
+    	
+    	if (Build.VERSION.SDK_INT >= 21)
+    	{
+            if(requestCode != FILECHOOSER_RESULTCODE || application.mFilePathCallback == null) 
+            {
+            	Toast.makeText(this, "Unexpected Activity Result: " + requestCode, Toast.LENGTH_SHORT).show();
+                super.onActivityResult(requestCode, resultCode, intent);
+                return;
+            }
+
+            Uri[] results = null;
+
+            // Check that the response is a good one
+            if (resultCode == Activity.RESULT_OK) 
+            {
+                if(intent == null) {
+                    // If there is not data, then we may have taken a photo
+                    if(mCameraPhotoPath != null) 
+                    {
+                        results = new Uri[]{Uri.parse(mCameraPhotoPath)};
+                    }
+                } 
+                else 
+                {
+                    String dataString = intent.getDataString();
+                    if (dataString != null) 
+                    {
+                        results = new Uri[]{Uri.parse(dataString)};
+                    }
+                }
+            }
+
+            application.mFilePathCallback.onReceiveValue(results);
+            application.mFilePathCallback = null;
+            return;
+        }
+    	else
+    	{
+              if(requestCode==FILECHOOSER_RESULTCODE)
+              {  
+                  if (application.mUploadMessage == null) 
+                  {
+                	  return;
+                  }
+
+                    Uri result;
+                    if (resultCode != RESULT_OK) 
+                    {
+                        result = null;
+                    } 
+                    else 
+                    {
+                        result = (intent == null) ? application.imageUri : intent.getData(); // retrieve from the private variable if the intent is null
+                    }
+
+                    application.mUploadMessage.onReceiveValue(result);
+                    application.mUploadMessage = null;
+              } 
+        }
+        
+    }
+    
 	// GCF Methods --------------------------------------------------------------------------
 	public void onContextData(ContextData data)
 	{		
@@ -445,168 +567,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
         }
         return app_installed ;
     }
-	
-	 public Uri imageUri;
-     
-	    private static final int FILECHOOSER_RESULTCODE   = 2888;
-	    private ValueCallback<Uri> mUploadMessage;
-	    private Uri mCapturedImageURI = null;
-	
-	/**
-	 * Experimental:  Enabling Camera Code!
-	 */
-	private void setupWebView()
-	{
-		webView.setWebViewClient(new WebViewClient() {      
-            ProgressDialog progressDialog;
-          
-            //If you will not use this method url links are open in new brower not in webview
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {              
-                 
-                // Check if Url contains ExternalLinks string in url 
-                // then open url in new browser
-                // else all webview links will open in webview browser
-                if(url.contains("google")){ 
-                     
-                    // Could be cleverer and use a regex
-                    //Open links in new browser
-                    view.getContext().startActivity(
-                            new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                     
-                    // Here we can open new activity
-                     
-                    return true;
-                     
-                } else {
-                     
-                    // Stay within this webview and load url
-                    view.loadUrl(url); 
-                    return true;
-                }
-                   
-            }
-             
-            //Show loader on url load
-            public void onLoadResource (WebView view, String url) {
-             
-                // if url contains string androidexample
-                // Then show progress  Dialog
-                if (progressDialog == null && url.contains("androidexample") 
-                        ) {
-                     
-                    // in standard case YourActivity.this
-                    progressDialog = new ProgressDialog(AppEngine.this);
-                    progressDialog.setMessage("Loading...");
-                    progressDialog.show();
-                }
-            }
-             
-            // Called when all page resources loaded
-            public void onPageFinished(WebView view, String url) {
-                 
-                try{
-                    // Close progressDialog
-                    if (progressDialog.isShowing()) {
-                        progressDialog.dismiss();
-                        progressDialog = null;
-                    }
-                }catch(Exception exception){
-                    exception.printStackTrace();
-                }
-            }
-            
-        }); 
-		
-		webView.setWebChromeClient(new WebChromeClient() {
-            
-           // openFileChooser for Android 3.0+
-           public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType){  
-               
-               // Update message
-               mUploadMessage = uploadMsg;
-                
-               try{    
-                
-                   // Create AndroidExampleFolder at sdcard
-                    
-                   File imageStorageDir = new File(
-                                          Environment.getExternalStoragePublicDirectory(
-                                          Environment.DIRECTORY_PICTURES)
-                                          , "Impromptu");
-                                           
-                   if (!imageStorageDir.exists()) {
-                       // Create AndroidExampleFolder at sdcard
-                       imageStorageDir.mkdirs();
-                   }
-                    
-                   // Create camera captured image file path and name 
-                   File file = new File(
-                                   imageStorageDir + File.separator + "IMG_"
-                                   + String.valueOf(System.currentTimeMillis()) 
-                                   + ".jpg");
-                                    
-                   mCapturedImageURI = Uri.fromFile(file); 
-                    
-                   // Camera capture image intent
-                   final Intent captureIntent = new Intent(
-                                                 android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                                                  
-                   captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
-                   
-                   Intent i = new Intent(Intent.ACTION_GET_CONTENT); 
-                   i.addCategory(Intent.CATEGORY_OPENABLE);
-                   i.setType("image/*");
-                    
-                   // Create file chooser intent
-                   Intent chooserIntent = Intent.createChooser(i, "Image Chooser");
-                    
-                   // Set camera intent to file chooser 
-                   chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS
-                                          , new Parcelable[] { captureIntent });
-                    
-                   // On select image call onActivityResult method of activity
-                   startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
-                    
-                 }
-                catch(Exception e){
-                    Toast.makeText(getBaseContext(), "Exception:"+e, 
-                               Toast.LENGTH_LONG).show();
-                }
-                
-           }
-            
-           // openFileChooser for Android < 3.0
-           public void openFileChooser(ValueCallback<Uri> uploadMsg){
-               openFileChooser(uploadMsg, "");
-           }
-            
-           //openFileChooser for other Android versions
-           public void openFileChooser(ValueCallback<Uri> uploadMsg, 
-                                      String acceptType, 
-                                      String capture) {
-                                       
-               openFileChooser(uploadMsg, acceptType);
-           }
-
-
-
-           // The webPage has 2 filechoosers and will send a 
-           // console message informing what action to perform, 
-           // taking a photo or updating the file
-            
-           public boolean onConsoleMessage(ConsoleMessage cm) {  
-                  
-               onConsoleMessage(cm.message(), cm.lineNumber(), cm.sourceId());
-               return true;
-           }
-            
-           public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-               //Log.d("androidruntime", "Show console messages, Used for debugging: " + message);
-                
-           }
-       });   // End setWebChromeClient
-	}
-		
+			
 	public void verifyFunctionExecution(final ApplicationFunction function, final ArrayList<ApplicationObject> applicationObjects)
 	{	
 		// Creates a Confirmation Dialog if there Are Contexts
@@ -922,7 +883,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		}
 	}
 	
-	// Custom Browser Class -----------------------------------------------------------------
+	// Custom Browser Classes ---------------------------------------------------------------
 	private class CustomBrowser extends WebViewClient 
 	{
 	   @Override
@@ -939,4 +900,99 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
        }
 	}
 	
+    public class CustomChromeClient extends WebChromeClient
+    {
+    //For Android 4.1
+    @SuppressWarnings("unused")
+     public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType)
+     {
+    	Toast.makeText(AppEngine.this, "onShowFileChoser (Android 4.1+)", Toast.LENGTH_SHORT).show();
+    	
+    	application.mUploadMessage = uploadMsg;  
+        
+    	// Create the File where the photo should go
+        File photoFile       = ImageToolkit.getOutputMediaFile("Impromptu", "photoToUpload.jpeg");
+        application.imageUri = Uri.fromFile(photoFile); 
+
+        final List<Intent> cameraIntents = new ArrayList<Intent>();
+        final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        final PackageManager packageManager = getPackageManager();
+        final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
+        for(ResolveInfo res : listCam) 
+        {
+            final String packageName = res.activityInfo.packageName;
+            final Intent i = new Intent(captureIntent);
+            i.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
+            i.setPackage(packageName);
+            i.putExtra(MediaStore.EXTRA_OUTPUT, application.imageUri);
+            cameraIntents.add(i);
+        }
+
+        application.mUploadMessage = uploadMsg; 
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);  
+        i.addCategory(Intent.CATEGORY_OPENABLE);  
+        i.setType("image/*"); 
+        Intent chooserIntent = Intent.createChooser(i,"Image Chooser");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[0]));
+        AppEngine.this.startActivityForResult(chooserIntent,  FILECHOOSER_RESULTCODE);
+    }
+    
+     //For Android 5.0+
+     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) 
+     {
+    	//Toast.makeText(AppEngine.this, "onShowFileChoser (Android 5+)", Toast.LENGTH_SHORT).show();
+    	 
+        // Double check that we don't have any existing callbacks
+        if(application.mFilePathCallback != null) 
+        {
+        	application.mFilePathCallback.onReceiveValue(null);
+        }
+        application.mFilePathCallback = filePathCallback;
+
+        // Set up the take picture intent
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(AppEngine.this.getPackageManager()) != null) 
+        {        	
+            // Create the File where the photo should go
+            File photoFile = ImageToolkit.getOutputMediaFile("Impromptu", "photoToUpload.jpeg");
+
+            // Continue only if the File was successfully created
+            if (photoFile != null) 
+            {
+                mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+            } 
+            else 
+            {
+                takePictureIntent = null;
+            }
+        }
+
+        // Set up the intent to get an existing image
+        Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        contentSelectionIntent.setType("image/*");
+
+        // Set up the intents for the Intent chooser
+        Intent[] intentArray;
+        if(takePictureIntent != null) 
+        {
+            intentArray = new Intent[]{ takePictureIntent };
+        } 
+        else 
+        {
+            intentArray = new Intent[0];
+        }
+
+        Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+        chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+        chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
+
+        startActivityForResult(chooserIntent, AppEngine.FILECHOOSER_RESULTCODE);
+
+        return true;
+    }
+    	
+    }
 }

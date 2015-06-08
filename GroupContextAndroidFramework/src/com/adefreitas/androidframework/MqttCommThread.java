@@ -390,7 +390,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	    		
 				MqttConnectOptions options = new MqttConnectOptions();
 				options.setUserName(deviceID);
-				options.setKeepAliveInterval(60);
+				options.setKeepAliveInterval(300);
 				options.setCleanSession(true);
 				
 				client = new MqttClient("tcp://" + serverIP + ":" + port, "mqtt_" + new Date().getTime(), null);

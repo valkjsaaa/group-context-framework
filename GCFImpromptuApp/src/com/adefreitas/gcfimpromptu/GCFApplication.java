@@ -36,6 +36,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.webkit.ValueCallback;
 import android.widget.Toast;
 
 import com.adefreitas.androidbluewave.BluewaveManager;
@@ -52,6 +53,7 @@ import com.adefreitas.androidproviders.AudioContextProvider;
 import com.adefreitas.androidproviders.BluetoothContextProvider;
 import com.adefreitas.androidproviders.BluewaveContextProvider;
 import com.adefreitas.androidproviders.GoogleCalendarProvider;
+import com.adefreitas.androidproviders.LocationContextProvider;
 import com.adefreitas.awareproviders.LightContextProvider;
 import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
@@ -65,10 +67,11 @@ import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.adefreitas.messages.ContextData;
+import com.adefreitas.messages.ContextRequest;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class GCFApplication extends Application// implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+public class GCFApplication extends Application
 {	
 	// Application Constants
 	public static final String LOG_NAME          	  = "IMPROMPTU"; 
@@ -197,7 +200,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		// Performs an Initial Context Update
 		setPersonalContext(null);
 		
-		// Loads App Directory
+		// Loads App Directory from Memory
 		if (appSharedPreferences.contains(PREFERENCE_APP_CATALOG))
 		{
 			String json = appSharedPreferences.getString(PREFERENCE_APP_CATALOG, "");
@@ -222,7 +225,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			Log.d(LOG_NAME, "Creating New App Catalog");
 		}
 		
-		// Loads App Preferences
+		// Loads App Preferences from Memory
 		if (appSharedPreferences.contains(PREFERENCE_APP_PREF))
 		{
 			String json = appSharedPreferences.getString(PREFERENCE_APP_PREF, "");
@@ -246,7 +249,6 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		{
 			Log.d(LOG_NAME, "Creating New App Preferences");
 		}
-		
 	}
 	
 	/**
@@ -258,6 +260,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		{
 			// Creates Service for GCF
 			Intent i = new Intent(this, GCFService.class);
+			i.putExtra("name", "Impromptu");
 			this.bindService(i, gcfServiceConnection, BIND_AUTO_CREATE);
 			this.startService(i);
 		}
@@ -305,17 +308,53 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 	}
 	
 	/**
+	 * Retrieves the Current HTTP Toolkit
+	 * @return
+	 */
+	public HttpToolkit getHttpToolkit()
+	{
+		return httpToolkit;
+	}
+	
+	/**
 	 * Creates a Toast Notification
 	 * @param title
 	 * @param subtitle
 	 */
-	public void createNotification(String title, String subtitle, AppInfo app)
+	public void createNotification(ArrayList<AppInfo> apps)
 	{
 		if (!isInForeground())
 		{
-			Intent intent = new Intent(this.getApplicationContext(), MainActivity.class);
-			intent.putExtra("APP_ID", app.getID());
+			String title    = "";
+			String subtitle = "";
+			Intent intent;
 			
+			// Creates the Intent
+			if (apps.size() == 1)
+			{
+				AppInfo app = apps.get(0);
+				title       = "New App: " + app.getName();
+				subtitle    = app.getDescription();
+				
+				intent = new Intent(this.getApplicationContext(), MainActivity.class);
+				intent.putExtra("APP_ID", app.getID());
+			}
+			else
+			{
+				title = apps.size() + " New Apps Available";
+				
+				for (AppInfo app : apps)
+				{
+					subtitle += app.getName() + ", ";
+				}
+				
+				// Removes the Last Comma
+				subtitle = subtitle.substring(0, subtitle.length()-2);
+				
+				intent = new Intent(this.getApplicationContext(), MainActivity.class);
+			}
+			
+			// Generates the Notification
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
 			{
 				 Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -324,6 +363,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				 
 				 PendingIntent 		 pendingIntent 		 = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 				 NotificationManager notificationManager = (NotificationManager)this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+				 notificationManager.cancelAll();
 				 
 				 Notification note = new Notification.Builder(this)
 				 	.setLargeIcon(bm)
@@ -339,7 +379,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			else
 			{
 				Toast.makeText(this, title + ": " + subtitle, Toast.LENGTH_SHORT).show();
-			}
+			}	
 		}
 	}
 	
@@ -386,6 +426,17 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		sendBroadcast(i);
 	}
 	
+	/**
+	 * Performs Any Tasks Needed to Halt the Application
+	 */
+	public void halt()
+	{
+		if (timerHandler != null)
+		{
+			timerHandler.stop();
+		}
+	}
+	
 	// Context Update Methods -------------------------------------------------------------
 	private void setPersonalContext(String photoFilePath)
 	{		
@@ -419,23 +470,12 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		{
 			try
 			{
-				// TODO:  Experimental Location Code
-				LocationManager lm        = (LocationManager) getSystemService(Context.LOCATION_SERVICE);  
-		        List<String>    providers = lm.getProviders(true);
+				LocationContextProvider locationProvider = (LocationContextProvider)gcfService.getGroupContextManager().getContextProvider("LOC");
 
-		        /* Loop over the array backwards, and if you get an accurate location, then break out the loop*/
-		        Location l = null;
-		        
-		        for (int i=providers.size()-1; i>=0; i--) 
+		        if (locationProvider != null && locationProvider.hasLocation()) 
 		        {
-		                l = lm.getLastKnownLocation(providers.get(i));
-		                if (l != null) break;
-		        }
-
-		        if (l != null) 
-		        {
-		        	location.put("LATITUDE", l.getLatitude());
-		            location.put("LONGITUDE", l.getLongitude());
+		        	location.put("LATITUDE", locationProvider.getLatitude());
+		            location.put("LONGITUDE", locationProvider.getLongitude());
 		        }
 			}
 			catch (Exception ex)
@@ -668,11 +708,18 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 		editor.commit();
 	}
 	
+	// TODO:  TEMPORARY VALUES NEEDED TO TEST screen rotation issues with app engine
+    public ValueCallback<Uri[]> mFilePathCallback;
+    public ValueCallback<Uri>   mUploadMessage;
+    public Uri      			imageUri;
+	
 	// Catalog Methods --------------------------------------------------------------------------
-	public void addApplicationToCatalog(AppInfo newApp)
+	public boolean addApplicationToCatalog(AppInfo newApp)
 	{	
 		boolean foundCategory = false;
+		boolean isNew		  = false;
 		
+		// Tries to Add an App to an Existing Category
 		for (AppCategoryInfo category : appCatalog)
 		{
 			// Looks for the Category
@@ -689,8 +736,8 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				else
 				{
 					// Creates a New App Entry from Scratch!
-					createNotification("New App: " + newApp.getName(), newApp.getDescription(), newApp);
 					category.addApp(newApp);
+					isNew = true;
 				}
 
 				// Notifies the Application that the App List has Changed (or been erased)
@@ -707,13 +754,14 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			AppCategoryInfo newCategory = new AppCategoryInfo(newApp.getCategory());
 			newCategory.addApp(newApp);
 			appCatalog.add(newCategory);
-			
-			createNotification("New App: " + newApp.getName(), newApp.getDescription(), newApp);
+			isNew = true;
 			
 			// Notifies the Application that the App List has Changed (or been erased)
 			Intent i = new Intent(ACTION_APP_UPDATE);
 			sendBroadcast(i);
 		}
+		
+		return isNew;
 	}
 	
 	public void removeApplicationFromCatalog(AppInfo appToRemove)
@@ -888,10 +936,6 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			{
 				onContextDataReceived(context, intent);
 			}
-			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_OUTPUT))
-			{
-				onOutput(context, intent);
-			}
 			else if (intent.getAction().equals(BluewaveManager.ACTION_USER_CONTEXT_UPDATED))
 			{
 				onUserContextUpdated(context, intent);
@@ -939,22 +983,30 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				
 				// Creates Context Providers
 				ContextProvider 		 calendarProvider  = new GoogleCalendarProvider(gcfService.getGroupContextManager(), GCFApplication.this.getContentResolver());
-				ContextProvider 		 lightProvider     = new LightContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				//ContextProvider 		 lightProvider     = new LightContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				ActivityContextProvider  acp 			   = new ActivityContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				AudioContextProvider     audioProvider     = new AudioContextProvider(gcfService.getGroupContextManager());
 				BluewaveContextProvider  bluewaveProvider  = new BluewaveContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
 				BluetoothContextProvider bluetoothProvider = new BluetoothContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
+				LocationContextProvider  locationProvider  = new LocationContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				
 				// Registers Context Providers
 				gcfService.getGroupContextManager().registerContextProvider(calendarProvider);
-				gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
+				//gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
 				gcfService.getGroupContextManager().registerContextProvider(acp);
 				gcfService.getGroupContextManager().registerContextProvider(audioProvider);
 				//gcfService.getGroupContextManager().registerContextProvider(bluewaveProvider);
 				gcfService.getGroupContextManager().registerContextProvider(bluetoothProvider);
+				gcfService.getGroupContextManager().registerContextProvider(locationProvider);
 				
 				// Starts Activity Recognition
-				acp.start(true);
+				//acp.start(true);
+				
+				// Starts Location
+				//locationProvider.start(true);
+				
+				gcfService.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
+				gcfService.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
 				
 				if (!isInForeground())
 				{
@@ -969,6 +1021,8 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			String   contextType = intent.getStringExtra(ContextData.CONTEXT_TYPE);
 			String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
 			String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
+						
+			Log.d(LOG_NAME, "Received [" + contextType + "]: " + Arrays.toString(values));
 			
 			// Forwards Values to the ContextReceiver for Processing
 			if (contextReceiver != null)
@@ -976,19 +1030,7 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				contextReceiver.onContextData(new ContextData(contextType, deviceID, values));
 			}
 		}
-	
-		private void onOutput(Context context, Intent intent)
-		{
-			// Extracts the values from the intent
-			String text = intent.getStringExtra(AndroidGroupContextManager.GCF_OUTPUT);
-			
-			// Forwards Values to the Application for Processing
-			if (contextReceiver != null)
-			{
-				contextReceiver.onGCFOutput(text);
-			}
-		}
-	
+		
 		private void onUserContextUpdated(Context context, Intent intent)
 		{
 			
@@ -1030,10 +1072,9 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			// Registers an Application in the Catalog
 			if (command.equalsIgnoreCase("APPLICATION"))
 			{
-				String[] appsJson = gson.fromJson(instruction.getPayload("APPS"), new TypeToken<String[]>() {}.getType());
-				
-				Log.d(LOG_NAME, "Received " + appsJson.length + " apps.");
-				
+				String[] appsJson          = gson.fromJson(instruction.getPayload("APPS"), new TypeToken<String[]>() {}.getType());
+				ArrayList<AppInfo> newApps = new ArrayList<AppInfo>();
+									
 				for (String s : appsJson)
 				{
 					String[] appPayload = gson.fromJson(s, new TypeToken<String[]>() {}.getType());
@@ -1088,7 +1129,12 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 												
 						// Adds the App
 						AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
-						GCFApplication.this.addApplicationToCatalog(app);
+						boolean isNew = GCFApplication.this.addApplicationToCatalog(app);
+						
+						if (isNew)
+						{
+							newApps.add(app);
+						}
 					}
 					catch (Exception ex)
 					{
@@ -1099,34 +1145,40 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 				
 				// Stores the Catalog in Long Term Memory
 				saveCatalog();
+				
+				if (newApps.size() >= 1)
+				{
+					createNotification(newApps);
+					Log.d(LOG_NAME, "Received " + appsJson.length + " apps (" + newApps.size() + " new)");
+				}
 			}
 		}
 	
 		private void onChannelSubscribed(Context context, Intent intent)
 		{
-			String channel = intent.getStringExtra("CHANNEL");
+			//String channel = intent.getStringExtra("CHANNEL");
 			
-			if (channel.equals("dev/" + getGroupContextManager().getDeviceID()))
-			{				
-				// Creates the Scheduled Event Timer	
-				timerHandler = new ContextAutoDeliveryHandler(GCFApplication.this, gcfService);				
-				timerHandler.start();
+			// Creates the Scheduled Event Timer
+			if (timerHandler == null)
+			{
+				timerHandler = new ContextAutoDeliveryHandler(GCFApplication.this);				
+				timerHandler.start();	
 			}
 		}
 	
 		private void onSnapToItUploadComplete(Context context, Intent intent)
 		{
-			String uploadPath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
-			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+			String response = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + response, Toast.LENGTH_SHORT).show();
 			
-		    // Makes the File Visible!
-		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
-			
-			// Updates Context with the New Upload Path
-			setPersonalContext(uploadPath);		
-			
-			// Sends a New Query!
-			sendQuery(GCFApplication.this, true);
+//		    // Makes the File Visible!
+//		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
+//			
+//			// Updates Context with the New Upload Path
+//			setPersonalContext(uploadPath);		
+//			
+//			// Sends a New Query!
+//			sendQuery(GCFApplication.this, true);
 		}
 	
 		private void onLogoDownloaded(Context context, Intent intent)
@@ -1209,36 +1261,36 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 	{
 		private boolean 		     running;
 		private final GCFApplication app;
-		private final GCFService 	 gcfService;
 		
-		public ContextAutoDeliveryHandler(final GCFApplication app, final GCFService gcfService)
+		public ContextAutoDeliveryHandler(final GCFApplication app)
 		{			
-			running 		= false;
-			this.app 		= app;
-			this.gcfService = gcfService;
+			running  = false;
+			this.app = app;
 		}
 		
 		private Runnable scheduledTask = new Runnable() 
 		{	
 			public void run() 
 			{ 	
-				Date currentDate = new Date();
-				Date nextExecute = (app.isInForeground()) ? 
-						new Date(currentDate.getTime() + UPDATE_SECONDS * 1000) :
-						new Date(currentDate.getTime() + 2 * UPDATE_SECONDS * 1000);
-				
-				// Sends the Context to the Application Directory
-				sendQuery(app, false);
-				
-				// Removes Any Existing Callbacks
-				removeCallbacks(this);
-				
-				// Notifies the Application that the App List has Changed (or been erased)
-				Intent i = new Intent(ACTION_APP_UPDATE);
-				app.sendBroadcast(i);
-				
-				// Sleep Time Depends on Whether or Not the Application is in the Foreground
-				postDelayed(this, nextExecute.getTime() - currentDate.getTime());	
+				if (running)
+				{
+					Date nextExecute = (app.isInForeground()) ? 
+							new Date(System.currentTimeMillis() + UPDATE_SECONDS * 1000) :
+							new Date(System.currentTimeMillis() + 2 * UPDATE_SECONDS * 1000);
+					
+					// Sends the Context to the Application Directory
+					sendQuery(app, false);
+					
+					// Removes Any Existing Callbacks
+					removeCallbacks(this);
+					
+					// Notifies the Application that the App List has Changed (or been erased)
+					Intent i = new Intent(ACTION_APP_UPDATE);
+					app.sendBroadcast(i);
+					
+					// Sleep Time Depends on Whether or Not the Application is in the Foreground
+					postDelayed(this, nextExecute.getTime() - System.currentTimeMillis());		
+				}
 			}
 		};
 		
@@ -1265,5 +1317,5 @@ public class GCFApplication extends Application// implements GoogleApiClient.Con
 			return running;
 		}
 	}
-
+	
 }

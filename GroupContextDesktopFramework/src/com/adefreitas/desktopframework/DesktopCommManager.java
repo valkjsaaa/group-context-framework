@@ -3,12 +3,14 @@ package com.adefreitas.desktopframework;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.messages.CommMessage;
 
-public class DesktopCommManager extends CommManager implements MessageProcessor
+public class DesktopCommManager extends CommManager
 {
-
+	private DesktopGroupContextManager gcm;
+	
 	public DesktopCommManager(DesktopGroupContextManager gcm)
 	{
 		super(gcm);
+		this.gcm = gcm;
 	}
 
 	@Override
@@ -23,21 +25,21 @@ public class DesktopCommManager extends CommManager implements MessageProcessor
 			{
 				if (commMode == CommManager.CommMode.UDP_MULTICAST)
 				{
-					MulticastCommThread t = new MulticastCommThread(this, port, ipAddress, this);
+					MulticastCommThread t = new MulticastCommThread(this, port, ipAddress);
 					t.start();
 					
 					this.commThreads.put(socketKey, t);
 				}
 				else if (commMode == CommManager.CommMode.TCP)
 				{
-					TCPCommThread t = new TCPCommThread(this, this.getGroupContextManager().getDeviceID(), port, ipAddress, this);
+					TCPCommThread t = new TCPCommThread(this, this.getGroupContextManager().getDeviceID(), port, ipAddress);
 					t.start();
 					
 					this.commThreads.put(socketKey, t);
 				}
 				else if (commMode == CommManager.CommMode.MQTT)
 				{
-					MqttCommThread t = new MqttCommThread(this, this.getGroupContextManager().getDeviceID(), ipAddress, port, this);
+					MqttCommThread t = new MqttCommThread(this, this.getGroupContextManager().getDeviceID(), ipAddress, port);
 					t.start();
 					
 					this.commThreads.put(socketKey, t);
@@ -62,15 +64,9 @@ public class DesktopCommManager extends CommManager implements MessageProcessor
 		return null;
 	}
 
-	@Override
 	public void onMessage(CommMessage message)
 	{		
-		// All Messages Get Forwarded to the GCM
-		if (this.getGroupContextManager() instanceof MessageProcessor)
-		{
-			MessageProcessor p = (MessageProcessor)this.getGroupContextManager();
-			p.onMessage(message);
-		}
+		gcm.onMessage(message);
 	}
 
 }

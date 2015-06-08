@@ -14,5 +14,6 @@
     <string name="title_activity_camera">Snap-To-It</string>
     <string name="title_activity_splashscreen">Splashscreen</string>
     <string name="title_activity_debug">Developer Tools</string>
+    <string name="title_activity_show_web_view">ShowWebView</string>
 
 </resources>

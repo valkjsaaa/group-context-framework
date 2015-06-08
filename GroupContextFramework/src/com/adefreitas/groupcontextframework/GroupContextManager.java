@@ -15,7 +15,7 @@ import com.adefreitas.messages.ContextSubscription;
 
 public abstract class GroupContextManager
 {
-	public static final double FRAMEWORK_VERSION = 0.83;
+	public static final double FRAMEWORK_VERSION = 0.85;
 	public static enum DeviceType { Desktop, Laptop, Mobile, Sensor, Other };
 
 	// Log Types
@@ -353,6 +353,54 @@ public abstract class GroupContextManager
 	 */
 	protected void sendSubscription(ContextSubscription.SubscriptionUpdateType updateType, ContextRequest request, ContextCapability capability)
 	{			
+		sendSubscriptions(updateType, request, new ContextCapability[] { capability });
+		
+//		if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Subscribe))
+//		{	
+//			// Creates the List if it does not already exist
+//			if (!subscribedCapabilities.containsKey(request))
+//			{
+//				subscribedCapabilities.put(request, new ArrayList<ContextCapability>());
+//			}
+//			
+//			// Adds the Capability to the List of Subscribed Capabilities
+//			subscribedCapabilities.get(request).add(capability);
+//				
+//			// Remembers when the message was sent for timeout purposes
+//			ContextReliabilityInfo cri = reliabilityInfo.get(capability.getDeviceID());
+//			cri.setSubscriptionStartDate(capability.getContextType());
+//						
+//			log(LOG_SUBSCRIPTION, "Subscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
+//			onCapabilitySubscribe(capability);
+//		}
+//		else if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Unsubscribe))
+//		{
+//			if (subscribedCapabilities.containsKey(request))
+//			{
+//				// Removes this Capability to the List of Subscribed Capabilities
+//				subscribedCapabilities.get(request).remove(capability);
+//					
+//				// Removes the List Entirely if it is Empty
+//				if (subscribedCapabilities.get(request).size() == 0)
+//				{
+//					subscribedCapabilities.remove(request);
+//				}
+//			}
+//			
+//			log(LOG_SUBSCRIPTION, "Unsubscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
+//			onCapabilityUnsubscribe(capability);
+//		}
+//		
+//		// Creates and Sends the Subscription Message
+//		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, new String[] { capability.getDeviceID() }, capability.getContextType(), request.getRefreshRate(), capability.getHeartbeatRate(), request.getPayload());
+//		commManager.send(subscriptionUpdate);
+	}
+	
+	protected void sendSubscriptions(ContextSubscription.SubscriptionUpdateType updateType, ContextRequest request, ContextCapability[] capabilities)
+	{
+		ArrayList<String> deviceIDs     = new ArrayList<String>();
+		int 			  heartbeatRate = Integer.MAX_VALUE;
+		
 		if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Subscribe))
 		{	
 			// Creates the List if it does not already exist
@@ -361,39 +409,60 @@ public abstract class GroupContextManager
 				subscribedCapabilities.put(request, new ArrayList<ContextCapability>());
 			}
 			
-			// Adds the Capability to the List of Subscribed Capabilities
-			subscribedCapabilities.get(request).add(capability);
+			for (ContextCapability capability : capabilities)
+			{
+				if (!deviceIDs.contains(capability.getDeviceID()))
+				{
+					deviceIDs.add(capability.getDeviceID());
+					heartbeatRate = Math.min(heartbeatRate, capability.getHeartbeatRate());
+				}
 				
-			// Remembers when the message was sent for timeout purposes
-			ContextReliabilityInfo cri = reliabilityInfo.get(capability.getDeviceID());
-			cri.setSubscriptionStartDate(capability.getContextType());
-						
-			log(LOG_SUBSCRIPTION, "Subscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
-			onCapabilitySubscribe(capability);
+				// Adds the Capability to the List of Subscribed Capabilities
+				if (!subscribedCapabilities.get(request).contains(capability))
+				{
+					subscribedCapabilities.get(request).add(capability);
+				}
+					
+				// Remembers when the message was sent for timeout purposes
+				ContextReliabilityInfo cri = reliabilityInfo.get(capability.getDeviceID());
+				cri.setSubscriptionStartDate(capability.getContextType());
+							
+				log(LOG_SUBSCRIPTION, "Subscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
+				onCapabilitySubscribe(capability);
+			}
 		}
 		else if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Unsubscribe))
 		{
-			if (subscribedCapabilities.containsKey(request))
+			for (ContextCapability capability : capabilities)
 			{
-				// Removes this Capability to the List of Subscribed Capabilities
-				subscribedCapabilities.get(request).remove(capability);
-					
-				// Removes the List Entirely if it is Empty
-				if (subscribedCapabilities.get(request).size() == 0)
+				if (!deviceIDs.contains(capability.getDeviceID()))
 				{
-					subscribedCapabilities.remove(request);
+					deviceIDs.add(capability.getDeviceID());
+					heartbeatRate = Math.min(heartbeatRate, capability.getHeartbeatRate());
 				}
+				
+				if (subscribedCapabilities.containsKey(request))
+				{
+					// Removes this Capability to the List of Subscribed Capabilities
+					subscribedCapabilities.get(request).remove(capability);
+						
+					// Removes the List Entirely if it is Empty
+					if (subscribedCapabilities.get(request).size() == 0)
+					{
+						subscribedCapabilities.remove(request);
+					}
+				}
+				
+				log(LOG_SUBSCRIPTION, "Unsubscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
+				onCapabilityUnsubscribe(capability);	
 			}
-			
-			log(LOG_SUBSCRIPTION, "Unsubscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
-			onCapabilityUnsubscribe(capability);
 		}
 		
 		// Creates and Sends the Subscription Message
-		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, new String[] { capability.getDeviceID() }, capability.getContextType(), request.getRefreshRate(), capability.getHeartbeatRate(), request.getPayload());
+		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, deviceIDs.toArray(new String[0]), request.getContextType(), request.getRefreshRate(), heartbeatRate, request.getPayload());
 		commManager.send(subscriptionUpdate);
 	}
-		
+	
 	// REQUESTS --------------------------------------------------------------------------------------------------------------
 	/**
 	 * Broadcasts a Request for Context Information When no Weights are Specified
@@ -425,7 +494,7 @@ public abstract class GroupContextManager
 	{				
 		// Sends the Request using the Default Weights
 		sendRequest(contextType, 
-				ContextRequest.MULTIPLE_SOURCE, 
+				requestType, 
 				refreshRate, 
 				DEFAULT_WEIGHT_BATTERY,
 				DEFAULT_WEIGHT_SENSOR_QUALITY, 
@@ -450,8 +519,14 @@ public abstract class GroupContextManager
 	 */
 	public void sendRequest(String contextType, int requestType, int refreshRate, double w_battery, double w_sensorFitness, double w_foreign, double w_providing, double w_reliability, String[] parameters, String[] deviceIDs)
 	{
+		// Sets the Destination on Context Request Messages
+		if (requestType == ContextRequest.LOCAL_ONLY)
+		{
+			deviceIDs = new String[] { this.getDeviceID() };
+		}
+		
 		boolean 	   found   = false;
-		ContextRequest request = new ContextRequest(deviceID, contextType, requestType, refreshRate, w_battery, w_sensorFitness, w_foreign, w_providing, w_reliability, parameters, deviceIDs);
+		ContextRequest request = new ContextRequest(deviceID, contextType, requestType, deviceIDs, refreshRate, w_battery, w_sensorFitness, w_foreign, w_providing, w_reliability, parameters);
 		
 		// Looks for an Identical Request
 		for (ContextRequest r : internalRequests)
@@ -712,7 +787,7 @@ public abstract class GroupContextManager
 	// (ABSTRACT) SYSTEM EVENTS -----------------------------------------------------------------------------------------------------
 	public abstract void log(String category, String message);
 	
-	protected abstract void deliverDataToApp(ContextData data, ContextRequest request);
+	protected abstract void onContextDataReceived(ContextData data, ContextRequest request);
 	
 	protected abstract void onCapabilityReceived(ContextCapability capability);
 	
@@ -926,7 +1001,7 @@ public abstract class GroupContextManager
 						if (data.getDestination().length == 0)
 						{
 							// If Not Specified, Assume Message is for Everyone
-							deliverDataToApp(data, r);
+							onContextDataReceived(data, r);
 						}
 						else
 						{
@@ -935,7 +1010,7 @@ public abstract class GroupContextManager
 							{
 								if (destinationDeviceID.equals(deviceID))
 								{
-									deliverDataToApp(data, r);
+									onContextDataReceived(data, r);
 									break;
 								}
 							}
@@ -955,7 +1030,7 @@ public abstract class GroupContextManager
 		// Still Forwards the Data to the Application if GCM is Set to Promiscuous
 		if (promiscuous && !requestMatch)
 		{
-			deliverDataToApp(data, null);
+			onContextDataReceived(data, null);
 		}	
 	}
 
@@ -1290,6 +1365,7 @@ public abstract class GroupContextManager
 			
 			// The list of all providers that the arbiter has decided this device should describe to
 			ArrayList<ContextCapability> toSubscribe;
+			ArrayList<ContextCapability> capabilitiesToUnsubscribe = new ArrayList<ContextCapability>(); 
 			
 			// Populates the List of Candidates
 			for (ContextCapability c : new ArrayList<ContextCapability>(receivedCapabilities))
@@ -1313,8 +1389,7 @@ public abstract class GroupContextManager
 				toSubscribe = new ArrayList<ContextCapability>(subscribed);
 				log(LOG_REQUEST, "No new capabilities for " + request.getContextType());
 			}		
-			
-			// Cancels Subscriptions that are Currently Active, but Not Selected by the Arbiter
+						
 			for (ContextCapability s : subscribed)
 			{
 				boolean found = false;
@@ -1345,18 +1420,29 @@ public abstract class GroupContextManager
 				{
 					// Unsubscribes if the provider is not in the list selected by the Arbiter
 					// TODO:  Verify that this won't cause accidental unsubscriptions if a provider is late!
-					sendSubscription(ContextSubscription.SubscriptionUpdateType.Unsubscribe, request, s);
+					capabilitiesToUnsubscribe.add(s);
 				}
 			}
 			
+			// Sends ONE Message to Unsubscribe to Everything
+			if (capabilitiesToUnsubscribe.size() > 0)
+			{
+				sendSubscriptions(ContextSubscription.SubscriptionUpdateType.Unsubscribe, request, capabilitiesToUnsubscribe.toArray(new ContextCapability[0]));
+			}
+						
 			// Debug Statement
 			log(LOG_REQUEST, "After processing, " + toSubscribe.size() + " capabilities have yet to be subscribed to.");
 			
 			// Subscribes to all Context Capabilities that Haven't Been Subscribed to Yet
-			for (ContextCapability ts : toSubscribe)
+			if (toSubscribe.size() > 0)
 			{
-				sendSubscription(ContextSubscription.SubscriptionUpdateType.Subscribe, request, ts);
+				sendSubscriptions(ContextSubscription.SubscriptionUpdateType.Subscribe, request, toSubscribe.toArray(new ContextCapability[0]));
 			}
+			
+//			for (ContextCapability ts : toSubscribe)
+//			{
+//				sendSubscription(ContextSubscription.SubscriptionUpdateType.Subscribe, request, ts);
+//			}
 		}
 		else
 		{

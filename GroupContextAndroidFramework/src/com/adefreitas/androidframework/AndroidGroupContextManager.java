@@ -21,9 +21,11 @@ public class AndroidGroupContextManager extends GroupContextManager
 	
 	// Intent Labels
 	public static final String ACTION_GCF_DATA_RECEIVED 	= "ACTION_GCF_DATA_RECEIVED";
-	public static final String ACTION_GCF_OUTPUT			= "ACTION_GCF_OUTPUT";
-	public static final String GCF_OUTPUT					= "GCF_OUTPUT";
 	public static final String ACTION_PROVIDER_SUBSCRIPTION = "GCF_CONTEXT_PROVIDER_SUBSCRIBED";
+
+	// Deprecated
+	public static final String ACTION_GCF_OUTPUT = "ACTION_GCF_OUTPUT";
+	public static final String GCF_OUTPUT		 = "GCF_OUTPUT";
 	
 	// Constants
 	private static final int REQUEST_DELAY = 2000;
@@ -128,7 +130,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 	
 	// OUTPUT METHODS -------------------------------------------------------------------------------------
 	@Override
-	protected void deliverDataToApp(ContextData data, ContextRequest request) 
+	protected void onContextDataReceived(ContextData data, ContextRequest request) 
 	{
 		// Creates the Intent
 		Intent dataDeliveryIntent = new Intent(ACTION_GCF_DATA_RECEIVED);

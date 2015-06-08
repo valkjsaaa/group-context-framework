@@ -57,13 +57,15 @@ public abstract class CommThread extends Thread
 	public abstract void send(CommMessage message);
 
 	/**
-	 * Sends a Message to a Specific Channel
+	 * Sends a Message to a Specific Channel.  Important:  Not all comm thread types support channels.  You need to check using the supportsChannels() method.
 	 * @param message
 	 * @param channel
 	 */
 	public void send(CommMessage message, String channel)
 	{
-		// DO NOTHING BY DEFAULT
+		// By Default, Just Send the Normal Way
+		// Each thread needs to override this method
+		this.send(message);
 	}
 	
 	/**
@@ -123,7 +125,7 @@ public abstract class CommThread extends Thread
 	}
 	
 	/**
-	 * Accesses the Communications Manager that is Controlling this Thread
+	 * Accesses the Communications Manager that is Overseeing this Thread
 	 * @return
 	 */
 	public CommManager getCommManager()
@@ -175,13 +177,13 @@ public abstract class CommThread extends Thread
 	{
 		if (!arp.contains(deviceID))
 		{
-			System.out.println("Mapped " + deviceID + " to " + ipAddress + ":" + port);
+			this.getCommManager().getGroupContextManager().log(GroupContextManager.LOG_COMMUNICATIONS, "Mapped " + deviceID + " to " + ipAddress + ":" + port);
 			arp.add(deviceID);
 		}
 	}
 	
 	/**
-	 * 
+	 * Tells You if this Thread has Ever Received a Message from the Specified Device ID
 	 * @param deviceID
 	 * @return
 	 */

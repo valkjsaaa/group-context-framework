@@ -145,10 +145,10 @@ public abstract class ApplicationProvider extends ContextProvider
 		result.add("DEVICE_ID=" + this.getGroupContextManager().getDeviceID());
 		result.add("NAME=" + getName(userContextJSON));
 		result.add("DESCRIPTION=" + getDescription(userContextJSON));
-		result.add("CATEGORY=" + category);
+		result.add("CATEGORY=" + getCategory(userContextJSON));
 		result.add("CONTEXTS=" + arrayToString(contextsRequired));
 		result.add("PREFERENCES=" + arrayToString(preferencesToRequest));
-		result.add("LOGO=" + logoPath);
+		result.add("LOGO=" + getLogoPath(userContextJSON));
 		result.add("LIFETIME=" + getLifetime(userContextJSON));
 		result.add("FUNCTIONS="	+ getFunctions());
 		result.add("COMM_MODE="	+ commMode.toString());
@@ -169,7 +169,7 @@ public abstract class ApplicationProvider extends ContextProvider
 		this.name = newName;
 	}
 	
-	public String getCategory()
+	public String getCategory(String userContextJSON)
 	{
 		return category;
 	}
@@ -192,6 +192,11 @@ public abstract class ApplicationProvider extends ContextProvider
 	public void setLifetime(int newLifetime)
 	{
 		this.lifetime = newLifetime;
+	}
+	
+	public String getLogoPath(String userContextJSON)
+	{
+		return logoPath;
 	}
 	
 	// METHODS TO IMPLEMENT/OVERRIDE ------------------------------------------------------------------

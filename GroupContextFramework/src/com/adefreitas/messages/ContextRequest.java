@@ -33,9 +33,9 @@ public class ContextRequest extends CommMessage
 	 * @param w_reliability
 	 * @param parameters
 	 */
-	public ContextRequest(String deviceID, String contextType, int requestType, int refreshRate, 
-						  double w_battery, double w_sensorFitness, double w_foreign, double w_providing, 
-						  double w_reliability, String[] payload, String[] destination)
+	public ContextRequest(String deviceID, String contextType, int requestType, String[] destination, 
+						  int refreshRate, double w_battery, double w_sensorFitness, double w_foreign, 
+						  double w_providing, double w_reliability, String[] payload)
 	{
 		super(CommMessage.MESSAGE_TYPE_REQUEST);
 		this.deviceID        = deviceID;

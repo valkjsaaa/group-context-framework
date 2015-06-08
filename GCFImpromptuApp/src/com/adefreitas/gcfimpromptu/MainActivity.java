@@ -116,6 +116,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			if (selectedApp != null)
 			{
 				this.promptToConnect(selectedApp, false);
+				this.getIntent().removeExtra(APP_ID);
 			}
 			else
 			{
@@ -129,6 +130,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			if (selectedApp != null)
 			{
 				this.promptToConnect(selectedApp, false);
+				savedInstanceState.remove(APP_ID);
 			}
 			else
 			{
@@ -173,6 +175,10 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_quit)))
 		{
+			// Kills the Timer Thread
+			application.halt();
+			
+			// Creates an Intent to Kill the GCF Service
 			Intent intent = new Intent(this, GCFService.class);
 			this.stopService(intent);
 			android.os.Process.killProcess(android.os.Process.myPid());
@@ -215,12 +221,11 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		if (application.getActiveApplications().size() > 0)
 		{			
 			// Terminates Active Subscriptions
-			for (ContextRequest request : application.getGroupContextManager().getRequests())
-			{
-				application.getGroupContextManager().cancelRequest(request.getContextType());
-			}
-			
-			
+//			for (ContextRequest request : application.getGroupContextManager().getRequests())
+//			{
+//				application.getGroupContextManager().cancelRequest(request.getContextType());
+//			}
+						
 			for (AppInfo app : application.getActiveApplications())
 			{
 				if (application.getGroupContextManager().isConnected(app.getCommMode(), app.getIPAddress(), app.getPort()))
@@ -275,12 +280,6 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	public void onContextData(ContextData data)
 	{
 		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void onGCFOutput(String output)
-	{
-		// TODO Auto-generated method stub	
 	}
 	
 	@Override
@@ -439,15 +438,17 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 				imgIconBig.setBackground(this.getResources().getDrawable(R.drawable.ic_launcher));
 			}
 			
-			// Determines if the Snap To It Button is Visible
-			if (new Date().getTime() - application.getLastSnapToItDeviceContact().getTime() > 120000)
-			{
-				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
-			}
-			else
-			{
-				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
-			}	
+			// Determines if the Snap To It Button is Visible\
+			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
+			
+//			if (new Date().getTime() - application.getLastSnapToItDeviceContact().getTime() > 120000)
+//			{
+//				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
+//			}
+//			else
+//			{
+//				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
+//			}	
 		}
 		else
 		{
@@ -537,7 +538,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 				selectedApp = application.getCatalog().get(groupPosition).getApps().get(childPosition);
 				
 				if (selectedApp != null)
-				{
+				{ 
 					promptToConnect(selectedApp, false);	
 				} 
 				

@@ -2,12 +2,7 @@ package com.adefreitas.gcfimpromptu;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
-
-import com.adefreitas.gcfmagicapp.R;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -17,12 +12,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,13 +27,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.adefreitas.androidframework.toolkit.ImageToolkit;
+import com.adefreitas.gcfmagicapp.R;
+
 public class CameraActivity extends Activity 
 {		
 	// Constants
 	public  static final int    IMAGE_HEIGHT 		  = 480;
 	public  static final int    IMAGE_WIDTH  		  = 640;
-	public  static final String CLOUD_FOLDER 		  = "/var/www/html/gcf/universalremote/";
+	public  static final String CLOUD_UPLOAD_URL	  = "http://gcf.cmu-tbank.com/snaptoit/upload_image.php";
 	private static final String IMAGE_DIRECTORY_NAME  = "SnapToIt";
+	private static final String IMAGE_NAME 			  = "sti_photo.jpeg";
 	private static final String LOG_NAME 			  = "SnapToIt";
 
 	// Activity request codes
@@ -57,8 +56,14 @@ public class CameraActivity extends Activity
 	private ImageView	 imgPreview;
 	
 	// Camera Variables
-	private boolean imageTaken = false;
+	private boolean cameraStarted = false;
+	private boolean imageTaken    = false;
 	private Uri 	fileUri; // file url to store image/video
+
+	// Encoding
+	String encodedString = "";
+	String stiFilename   = "";
+	String archive       = "";
 	
 	/**
 	 * Android Method:  Called when this activity is created
@@ -84,10 +89,16 @@ public class CameraActivity extends Activity
 		// Sets Event Handlers
 		btnQuit.setOnClickListener(onQuitClickListener);
 		
-//		// Determines Whether to Launch the Camera App or Show a Picture
+		// Determines Whether to Launch the Camera App or Show a Picture
 		if (savedInstanceState != null && savedInstanceState.containsKey("IMAGE_TAKEN") && savedInstanceState.getBoolean("IMAGE_TAKEN"))
 		{
 			imageTaken = savedInstanceState.getBoolean("IMAGE_TAKEN");
+		}
+
+		// Determines Whether to Launch the Camera App
+		if (savedInstanceState != null && savedInstanceState.containsKey("CAMERA_STARTED"))
+		{
+			cameraStarted = savedInstanceState.getBoolean("CAMERA_STARTED");
 		}
 		
 		// Displays a Quick Warning if the Device is in Capture Mode
@@ -105,7 +116,10 @@ public class CameraActivity extends Activity
 		super.onResume();
 		this.registerReceiver(receiver, intentFilter);
 		
-		captureImage();
+		if (!cameraStarted)
+		{
+			captureImage();	
+		}
 	}
 	
 	/**
@@ -150,6 +164,7 @@ public class CameraActivity extends Activity
 	protected void onSaveInstanceState(Bundle bundle)
 	{
 		bundle.putBoolean("IMAGE_TAKEN", imageTaken);
+		bundle.putBoolean("CAMERA_STARTED", cameraStarted);
 	}
 	
 	// Camera Methods
@@ -157,18 +172,22 @@ public class CameraActivity extends Activity
 	{
 	    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 	 
-	    fileUri = getOutputMediaFileUri();
+	    File imageFile = ImageToolkit.getOutputMediaFile(IMAGE_DIRECTORY_NAME, IMAGE_NAME);
+	    fileUri        = ImageToolkit.getOutputMediaFileUri(imageFile);
 	    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
 	    intent.putExtra("imageUri", fileUri.toString());
 	    
 	    // start the image capture Intent
 	    startActivityForResult(intent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE);
+	    
+	    cameraStarted = true;
 	}
 	
 	/**
 	 * Camera Method:  Called after a picture has been taken!
 	 */
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) 
+	{
 		super.onActivityResult(requestCode, resultCode, data);
 		
 		// Processes Camera Data
@@ -180,10 +199,10 @@ public class CameraActivity extends Activity
 			    
 			    try
 			    {
-			    	Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(cr, getOutputMediaFileUri());
+			    	File imageFile = ImageToolkit.getOutputMediaFile(IMAGE_DIRECTORY_NAME, IMAGE_NAME);
 			    	
 			    	// Resizes the Bitmap Image
-			    	Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, IMAGE_WIDTH, IMAGE_HEIGHT, true);			    	
+			    	Bitmap resizedBitmap = ImageToolkit.resizeImage(cr, imageFile, IMAGE_WIDTH, IMAGE_HEIGHT);		    	
 			    							
 			    	// Determines if we are in Capture Mode
 			    	boolean captureMode = PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getBoolean("sti_capture", false);
@@ -192,34 +211,32 @@ public class CameraActivity extends Activity
 			    	String filename = (captureMode) ? 
 			    			application.getGroupContextManager().getDeviceID() + new Date().getTime() + ".jpeg" :
 			    			application.getGroupContextManager().getDeviceID() + ".jpeg";
-			    	
-			        // Writes a File Containing the Bitmap Image
-			        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-					resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);	
-					File dir = getPictureDirectory();
-					
-			    	System.out.println("Created file: " + dir.getAbsolutePath() + "/" + filename);
-					
-				    File 			 file = new File(dir.getAbsolutePath() + "/" + filename);
-				    FileOutputStream fos  = new FileOutputStream(file);
-				    fos.write(stream.toByteArray());
-				    fos.close();
 									    
 				    // Uploads or Saves the File, Depending on the Mode
 				    if (!captureMode)
 				    {
+				    	String encodedString = "";
+				    	String stiFilename   = "";
+				    	String archive       = "";
+				    	
 				    	application.setPhotoTaken();
-				    	application.getCloudToolkit().uploadFile(CLOUD_FOLDER, file, GCFApplication.ACTION_IMAGE_UPLOADED);
+				    	//application.getCloudToolkit().uploadFile(CLOUD_FOLDER, file, GCFApplication.ACTION_IMAGE_UPLOADED);
+				    	encodeImageToString(resizedBitmap, application.getGroupContextManager().getDeviceID().replace(" ", "%20"), false);
+				    	
 				    }
 				    else
 				    {
-				    	Toast.makeText(this, "Created : " + filename, Toast.LENGTH_LONG).show();
+				    	Toast.makeText(this, "Created : " + filename, Toast.LENGTH_SHORT).show();
+				    	
+				        // Writes a File Containing the Bitmap Image
+				        //File file = ImageToolkit.writeBitmapToJPEG(resizedBitmap, IMAGE_DIRECTORY_NAME, filename);
+				    	encodeImageToString(resizedBitmap, application.getGroupContextManager().getDeviceID().replace(" ", "%20"), true);
 				    }
 			    }
-			    catch (Exception e)
+			    catch (Exception ex)
 			    {
-			        Toast.makeText(this, "Failed to process picture: " + e.getMessage(), Toast.LENGTH_LONG).show();
-			        e.printStackTrace();
+			        Toast.makeText(this, "Failed to process picture: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+			        ex.printStackTrace();
 			    }
 			}
 			catch (Exception ex)
@@ -235,33 +252,7 @@ public class CameraActivity extends Activity
 		
 	    this.finish();
 	}
-	
-    /**
-     * Display image from a path to ImageView
-     */
-    private void previewCapturedImage() 
-    {
-        try 
-        {
-            imgPreview.setVisibility(View.VISIBLE);
- 
-            // bimatp factory
-            BitmapFactory.Options options = new BitmapFactory.Options();
- 
-            // downsizing image as it throws OutOfMemory Exception for larger
-            // images
-            options.inSampleSize = 8;
- 
-            final Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath(), options);
- 
-            imgPreview.setImageBitmap(bitmap);
-        } 
-        catch (NullPointerException e) 
-        {
-            e.printStackTrace();
-        }
-    }
-	
+
 	// Event Handler
 	final OnClickListener onQuitClickListener = new OnClickListener() 
 	{
@@ -287,61 +278,37 @@ public class CameraActivity extends Activity
 			Log.e(LOG_NAME, "Unexpected Intent (Action: " + intent.getAction() + ")");	
 		}
 	}
+	
+	private void encodeImageToString(final Bitmap bitmap, final String filename, final boolean archive)
+	{
+		new AsyncTask<Void, Void, String>()
+		{
+			protected void onPreExecute()
+			{
+				
+			}
 
-	// Helper Methods
-	/**
-	 * Creating file uri to store image/video
-	 */
-	public Uri getOutputMediaFileUri() 
-	{
-	    return Uri.fromFile(getOutputMediaFile());
-	}
-	 
-	/**
-	 * returning image
-	 */
-	private static File getOutputMediaFile() 
-	{
-	    // External sdcard location
-	    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), IMAGE_DIRECTORY_NAME);
-	 
-	    // Create the storage directory if it does not exist
-	    if (!mediaStorageDir.exists()) 
-	    {
-	        if (!mediaStorageDir.mkdirs()) 
-	        {
-	            Log.d(LOG_NAME, "Oops! Failed create " + IMAGE_DIRECTORY_NAME + " directory");
-	            return null;
-	        }
-	    }
-	 
-	    // Create a media file name
-	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-	    File   mediaFile = new File(mediaStorageDir.getPath() + File.separator + "sti_photo.jpg");
-	 
-	    return mediaFile;
-	}
-
-	private File getPictureDirectory()
-	{
-		File   storageDir = null;
-		String dirPath    = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), IMAGE_DIRECTORY_NAME).getAbsolutePath() + "/";
-	      
-	      if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-	            storageDir = new File(dirPath);
-	            if (storageDir != null) {
-	                  if (!storageDir.mkdirs()) {
-	                        if (!storageDir.exists()){
-	                              Log.e("DropboxToolkit", "failed to create directory: " + dirPath);
-	                              return null;
-	                        }
-	                  }
-	            }    
-	      } 
-	      else 
-	      {
-	            Log.e("DropboxToolkit", "External storage is not mounted READ/WRITE.");
-	      }
-	      return storageDir;
+			@Override
+			protected String doInBackground(Void... params) 
+			{
+				long startTime = System.currentTimeMillis();
+				
+				ByteArrayOutputStream stream = new ByteArrayOutputStream();
+				bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+				byte[] byteArray = stream.toByteArray();
+				encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+				
+				long timeElapsed = System.currentTimeMillis() - startTime;
+				
+				Log.d(LOG_NAME, "Encoded " + encodedString.length() + " Bytes in " + timeElapsed + "ms");
+				return "";
+			}
+			
+			protected void onPostExecute(String msg)
+			{
+				String url = CLOUD_UPLOAD_URL + "?deviceID=" + filename + "&archive=" + archive;
+				application.getHttpToolkit().post(url, "jpeg=" + encodedString, GCFApplication.ACTION_IMAGE_UPLOADED);
+			}
+		}.execute(null, null, null);
 	}
 }

@@ -1,6 +1,7 @@
 package com.adefreitas.desktopframework;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import com.adefreitas.groupcontextframework.BatteryMonitor;
@@ -12,117 +13,187 @@ import com.adefreitas.messages.ContextCapability;
 import com.adefreitas.messages.ContextData;
 import com.adefreitas.messages.ContextRequest;
 
-public class DesktopGroupContextManager extends GroupContextManager implements MessageProcessor
+public class DesktopGroupContextManager extends GroupContextManager
 {
-	private boolean DEBUG = false;
-	
-	private MessageProcessor messageProcessor;
-	private RequestProcessor requestProcessor;
-	private ScheduledTask    scheduledTimerTask;
-	
 	// Request Delay
 	private static final int REQUEST_DELAY_TIME = 5000;
 	
-	public DesktopGroupContextManager(String deviceID, BatteryMonitor batteryMonitor, boolean promiscuous)
+	// This Flag is Used to Determine Whether or not to Display Debug Events
+	private boolean DEBUG;
+	
+	// This Thread Performs Scheduled GCF Tasks 
+	private ScheduledTask scheduledTimerTask;
+	
+	// This Object is Used to Manage Event Receivers
+	private ArrayList<EventReceiver> eventReceivers;
+	
+	// This is Used to Manage Print Debug Statements
+	private ArrayList<String> debugFilter;
+	
+	/**
+	 * Constructor (Does Not Form Any Connections)
+	 * @param deviceID
+	 * @param batteryMonitor
+	 * @param promiscuous
+	 */
+	public DesktopGroupContextManager(String deviceID, boolean promiscuous)
 	{
-		super(deviceID, GroupContextManager.DeviceType.Desktop, batteryMonitor, promiscuous);
+		super(deviceID, GroupContextManager.DeviceType.Desktop, new DesktopBatteryMonitor(), promiscuous);
 
 		// Creates a Basic Communications Manager
 		this.commManager = new DesktopCommManager(this);
+		
+		// Disables Debug Mode by Default
+		DEBUG       = false;
+		debugFilter = new ArrayList<String>();
+		
+		// Initializes List of Event Receivers
+		this.eventReceivers = new ArrayList<EventReceiver>();
 		
 		// Starts the Scheduled Events Thread
 		scheduledTimerTask = new ScheduledTask();
 		scheduledTimerTask.start();
 	}
 	
-	public DesktopGroupContextManager(String deviceID, CommManager.CommMode commMode, String ipAddress, int port, BatteryMonitor batteryMonitor, boolean promiscuous) 
+	/**
+	 * Constructor (Connects to the Specified IP Address / Port)
+	 * @param deviceID
+	 * @param commMode
+	 * @param ipAddress
+	 * @param port
+	 * @param batteryMonitor
+	 * @param promiscuous
+	 */
+	public DesktopGroupContextManager(String deviceID, CommManager.CommMode commMode, String ipAddress, int port, boolean promiscuous) 
 	{
 		// Calls the Base Constructor
-		this(deviceID, batteryMonitor, promiscuous);
+		this(deviceID, promiscuous);
 		
 		this.commManager.connect(commMode, ipAddress, port);
 	}
 	
-	public DesktopGroupContextManager(String deviceID, CommManager.CommMode commMode, String ipAddress, int port, String channel, BatteryMonitor batteryMonitor, boolean promiscuous)
+	/**
+	 * Constructor (Connects to the Specified IP Address / Port, and Subscribes to the Specified Channel
+	 * @param deviceID
+	 * @param commMode
+	 * @param ipAddress
+	 * @param port
+	 * @param channel
+	 * @param batteryMonitor
+	 * @param promiscuous
+	 */
+	public DesktopGroupContextManager(String deviceID, CommManager.CommMode commMode, String ipAddress, int port, String channel, boolean promiscuous)
 	{
-		this(deviceID, batteryMonitor, promiscuous);
+		this(deviceID, promiscuous);
 		
 		String connectionKey = this.commManager.connect(commMode, ipAddress, port);
 		
 		this.commManager.subscribe(connectionKey, channel);
 	}
 	
-	public void setDebug(boolean value)
-	{
-		DEBUG = value;
-	}
-	
-	public void registerOnMessageProcessor(MessageProcessor processor)
-	{
-		this.messageProcessor = processor;
-	}
-	
-	public void registerOnRequestProcessor(RequestProcessor processor)
-	{
-		this.requestProcessor = processor;
-	}
-	
-	@Override
-	protected void deliverDataToApp(ContextData data, ContextRequest request) 
-	{
-		if (messageProcessor != null)
-		{
-			messageProcessor.onMessage(data);
-		}
-	}
-
-	@Override
-	public void log(String category, String s) 
-	{	
-		if (DEBUG)
-		{
-			SimpleDateFormat sdf 	      = new SimpleDateFormat("MM-dd-yyyy @ HH:mm:ss");	
-			String 			 outputString = sdf.format(new Date()) + ": [" + category + "]  " + s;
-			
-			System.out.println(outputString);	
-		}
-	}
-
-	public void sendRequest(String type, int requestType, int refreshRate, String[] parameters)
-	{
-		super.sendRequest(type, requestType, refreshRate, parameters);
-		scheduledTimerTask.interrupt();
-	}
-
+	/**
+	 * Sends a Request for Context Information
+	 */
 	public void sendRequest(String contextType, int requestType, String[] deviceIDs, int refreshRate, String[] parameters)
 	{
 		super.sendRequest(contextType, requestType, deviceIDs, refreshRate, parameters);
 		scheduledTimerTask.interrupt();
 	}
-	
-	@Override
-	protected void onRequestReceived(ContextRequest request) {
 		
-	}
-	
+	/**
+	 * Cancels a Request for Context Information
+	 */
 	public void cancelRequest(String type)
 	{
 		super.cancelRequest(type);
 	}
 	
+	/**
+	 * Cancels a Request for Context from a Specific Device
+	 * Warning:  GCF Will Automatically 
+	 */
 	public void cancelRequest(String type, String deviceID)
 	{
 		super.cancelRequest(type, deviceID);
 	}
 	
+	// Debug -----------------------------------------------------------------------------------------------------
+	/**
+	 * Determines if GCM Should Print Debug Statements
+	 * @param value
+	 */
+	public void setDebugMode(boolean value)
+	{
+		DEBUG = value;
+	}
+	
+	public void addDebugFilter(String filterCategory)
+	{
+		if (!this.debugFilter.contains(filterCategory))
+		{
+			this.debugFilter.add(filterCategory);	
+		}
+	}
+	
+	public void removeDebugFilter(String filterCategory)
+	{
+		this.debugFilter.remove(filterCategory);
+	}
+	
+	public void clearDebugFilter()
+	{
+		this.debugFilter.clear();
+	}
+	
+	@Override
+	public void log(String category, String s) 
+	{	
+		if (DEBUG || (debugFilter != null && debugFilter.contains(category)))
+		{
+			SimpleDateFormat sdf 	      = new SimpleDateFormat("MM-dd-yy @ HH:mm:ss");	
+			String 			 outputString = sdf.format(new Date()) + ": [" + category + "]  " + s;
+			
+			System.out.println(outputString);	
+		}
+	}
+	
+	// Event Receiver --------------------------------------------------------------------------------------------
+	public void registerEventReceiver(EventReceiver eventReceiver)
+	{
+		if (!eventReceivers.contains(eventReceiver))
+		{
+			eventReceivers.add(eventReceiver);
+		}
+	}
+	
+	public void removeEventReceiver(EventReceiver eventReceiver)
+	{
+		eventReceivers.remove(eventReceiver);
+	}
+	
+	public void removeAllEventReceivers()
+	{
+		this.eventReceivers.clear();
+	}
+	
+	// Events ----------------------------------------------------------------------------------------------------	
+	@Override
+	protected void onContextDataReceived(ContextData data, ContextRequest request) 
+	{
+		for (EventReceiver e : eventReceivers)
+		{
+			e.onContextData(data);
+		}
+	}
+	
 	@Override
 	protected void onCapabilitySubscribe(ContextCapability capability) {
-		log("GCM-Sub", "Subscribing [" + capability.getContextType() + "]: " + capability.getDeviceID());
+		log(GroupContextManager.LOG_SUBSCRIPTION, "Subscribing [" + capability.getContextType() + "]: " + capability.getDeviceID());
 	}
 
 	@Override
 	protected void onCapabilityUnsubscribe(ContextCapability capability) {
-		log("GCM-Sub", "Unsubscribing [" + capability.getContextType() + "]: " + capability.getDeviceID());
+		log(GroupContextManager.LOG_SUBSCRIPTION, "Unsubscribing [" + capability.getContextType() + "]: " + capability.getDeviceID());
 	}
 
 	protected void onSendingData(ContextData data)
@@ -130,21 +201,25 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 		
 	}
 	
-	protected void onSendingRequest(ContextRequest request) {
-		if (requestProcessor != null)
-		{
-			requestProcessor.onSendingRequest(request);
-		}
+	protected void onSendingRequest(ContextRequest request) 
+	{
+
 	};
+
+	@Override
+	protected void onRequestReceived(ContextRequest request) 
+	{
+		// TODO Auto-generated method stub	
+	}
 	
 	@Override
 	protected void onRequestTimeout(ContextRequest request, ContextCapability capability) {
-		log("GCM-Request", "Request timeout [" + request.getContextType() + "]: " + capability.getDeviceID());
+		log(GroupContextManager.LOG_REQUEST, "Request timeout [" + request.getContextType() + "]: " + capability.getDeviceID());
 	}
 
 	@Override
 	protected void onSubscriptionTimeout(ContextSubscriptionInfo subscription) {
-		log("GCM-Sub","Subscription timeout [" + subscription.getContextType() + "]: " + subscription.getDeviceID());
+		log(GroupContextManager.LOG_SUBSCRIPTION,"Subscription timeout [" + subscription.getContextType() + "]: " + subscription.getDeviceID());
 	}
 
 	@Override
@@ -156,8 +231,19 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 	protected void onProviderUnsubscribe(ContextProvider provider) {
 		// TODO Auto-generated method stub
 	}	
+
+	@Override
+	protected void onCapabilityReceived(ContextCapability capability) {
+		// TODO Auto-generated method stub
 		
-	class ScheduledTask extends Thread
+	}
+		
+	/**
+	 * This Thread Continually Performs GCF Related Events
+	 * @author adefreit
+	 *
+	 */
+	private class ScheduledTask extends Thread
 	{
 		private boolean run;
 		private long    scheduledTaskDelay;
@@ -188,12 +274,6 @@ public class DesktopGroupContextManager extends GroupContextManager implements M
 				}
 			}	
 		}
-	}
-
-	@Override
-	protected void onCapabilityReceived(ContextCapability capability) {
-		// TODO Auto-generated method stub
-		
 	}
 
 

@@ -4,7 +4,13 @@
         android:id="@+id/action_inoutboard"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="@string/title_in_out_board"/>
+        android:title="@string/title_activity_in_out_board"/>
+    
+    <item
+        android:id="@+id/action_sign"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/title_activity_sign"/>
     
     <item
         android:id="@+id/action_settings"

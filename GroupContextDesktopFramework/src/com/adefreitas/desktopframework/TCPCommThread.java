@@ -19,7 +19,6 @@ public class TCPCommThread extends CommThread
     private OutputStream  	 sendStream;
     private InputStream   	 recvStream;
     private Gson 		     gson;
-	private MessageProcessor processor;
     private String           buffer;
 	
     private String 			 deviceID;
@@ -36,7 +35,7 @@ public class TCPCommThread extends CommThread
      * @param serverIP	- the IP address of the destination machine (the TCP relay)
      * @param processor - where fully formed messages should be delivered once assembled
      */
-	public TCPCommThread(CommManager commManager, String deviceID, int port, String serverIP, MessageProcessor processor)  
+	public TCPCommThread(CommManager commManager, String deviceID, int port, String serverIP)  
 	{
 		super(commManager);
 		
@@ -44,7 +43,6 @@ public class TCPCommThread extends CommThread
 		this.port      = port;
 		this.serverIP  = serverIP;
 	    gson 	   	   = new Gson();
-	    this.processor = processor;
 	    
 	    // Repeatedly Tries to Connect
 		connect(serverIP, port);
@@ -188,14 +186,7 @@ public class TCPCommThread extends CommThread
              			// Sends the message to the GUI
              			if (msg != null)
              			{             				
-             				if (processor != null)
-             				{
-             					processor.onMessage(msg);	
-             				}
-             				else
-             				{
-             					System.out.println("Message Processor is NULL");
-             				}
+             				((DesktopCommManager)this.getCommManager()).onMessage(msg);	
              			}
              						
              			// Removes the Parsed string from the buffer

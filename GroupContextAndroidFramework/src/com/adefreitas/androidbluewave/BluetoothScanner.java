@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import com.aware.Bluetooth;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -35,7 +37,7 @@ public class BluetoothScanner
 	private HashMap<String, BluetoothDeviceInfo> log;
 	
 	// Android Application Context
-	private Context 		 context;
+	private Context context;
 	
 	// Bluewave Manager
 	private BluewaveManager bluewaveManager;
@@ -50,6 +52,12 @@ public class BluetoothScanner
 	
 	// Thread Used to Restart the Bluetooth Scanner After Discover is Complete
 	private RestartThread restartThread;
+	private ClockThread   clockThread;
+	
+	// Power Management
+	private PowerManager powerManager;
+	private WakeLock 	 wakeLock;
+	private final String WAKELOCK_NAME = "BT_WAKELOCK";
 	
 	/**
 	 * Constructor
@@ -74,10 +82,20 @@ public class BluetoothScanner
 		btDevicesFound  = new ArrayList<String>();
 		log 		  = new HashMap<String, BluetoothDeviceInfo>();
 		restartThread = new RestartThread();
+		
+		// Creates the Wakelock
+	    powerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+	    wakeLock     = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_NAME);
 	}
 	
 	public void start(int scanInterval)
-	{				
+	{			
+		if (clockThread == null || !clockThread.isRunning())
+		{
+			clockThread = new ClockThread();
+			clockThread.start();
+		}
+		
 		// Enables Bluetooth on Device if Not Already
 		if (!bluetooth.isEnabled())
 		{
@@ -90,6 +108,8 @@ public class BluetoothScanner
 		{
 			bluetooth.cancelDiscovery();
 		}
+		
+		setWakeLock();
 		
 		bluetooth.startDiscovery();
 		scanning 	  = true;
@@ -105,6 +125,8 @@ public class BluetoothScanner
 			bluetooth.cancelDiscovery();
 			Log.d(LOG_NAME, "Bluetooth Scan Stopped");
 		}
+		
+		releaseWakeLock();
 		
 		scanning = false;
 	}
@@ -267,19 +289,38 @@ public class BluetoothScanner
         	
         	if (scanning)
         	{
-            	final long timeElapsed = new Date().getTime() - scanStartDate.getTime();
+            	final long timeElapsed = System.currentTimeMillis() - scanStartDate.getTime();
             	final long timeToRest  = scanInterval - timeElapsed;
             	
             	// Creates a Simple Thread that Lets the Device Sleep for a Bit Before Scanning Again
-            	restartThread.kill();
-            	
-            	restartThread = new RestartThread();
-            	restartThread.setTimeToRest(timeToRest);
-            	restartThread.start();	
+//            	restartThread.kill();
+//            	
+//            	restartThread = new RestartThread();
+//            	restartThread.setTimeToRest(timeToRest);
+//            	restartThread.start();	
         	}
 	    }
 	};
 
+	// Wake Lock
+	public void setWakeLock()
+	{
+		if (wakeLock != null)
+		{
+			Log.d(LOG_NAME, "WakeLock Obtained");
+			wakeLock.acquire();
+		}
+	}
+	
+	public void releaseWakeLock()
+	{
+		if (wakeLock != null && wakeLock.isHeld())
+		{
+			Log.d(LOG_NAME, "WakeLock Released");
+			wakeLock.release();
+		}
+	}
+	
 	/**
 	 * This Thread Restarts Discovery after a Set Period of Time
 	 * @author adefreit
@@ -305,7 +346,7 @@ public class BluetoothScanner
 		{	
 			try
 			{
-				
+				Log.d(LOG_NAME, "Sleeping for " + timeToRest);
 				Thread.sleep(timeToRest);
 				
 				// Keeps Sleeping Until Bluetooth Isn't Scanning Anymore
@@ -333,6 +374,49 @@ public class BluetoothScanner
 			{
 				this.interrupt();
 			}
+		}
+	}
+	
+	private class ClockThread extends Thread
+	{
+		private boolean running = false;
+		private long    id      = System.currentTimeMillis();
+		
+		public void run()
+		{
+			running = true;
+			Log.i(LOG_NAME, "Clock Thread [" + id + "] Started");
+			
+			while (running)
+			{
+				try
+				{
+					Log.i(LOG_NAME, "Clock Thread [" + id + "] Tick");
+					sleep(scanInterval);
+										
+					if (running)
+					{
+						// Restarts Bluetooth Discovery
+			        	BluetoothScanner.this.start(scanInterval);	
+					}
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}
+			
+			Log.i(LOG_NAME, "Clock Thread [" + id + "] Terminated");
+		}
+		
+		public boolean isRunning()
+		{
+			return running;
+		}
+		
+		public void kill()
+		{
+			running = false;
 		}
 	}
 	

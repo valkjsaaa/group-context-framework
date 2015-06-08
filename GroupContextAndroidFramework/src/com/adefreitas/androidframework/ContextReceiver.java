@@ -11,7 +11,5 @@ public interface ContextReceiver
 {
 	public void onContextData(ContextData data);
 	
-	public void onGCFOutput(String output);
-
 	public void onBluewaveContext(JSONContextParser parser);
 }

@@ -135,16 +135,20 @@ public class JSInterface
 	}
 	
 	@JavascriptInterface
-	public String getUserContext()
-	{
-		return application.getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext().toString();
-	}
-	
-	@JavascriptInterface
-	public String getTelephoneNumber()
-	{
-		TelephonyManager tMgr = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
-		return tMgr.getLine1Number();
+	public void uploadFile(String callbackCommand, String dialogMessage, String[] filetypes)
+	{	
+		try
+		{	
+			// Allows User to Select a File and Upload it via SCP
+			UploadFileDialog fd = new UploadFileDialog(context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, application.getCloudToolkit(), GCFApplication.UPLOAD_SFTP_PATH, "UPLOAD_COMPLETE");
+			
+			this.callbackCommand = callbackCommand;
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+			toast("Error Calling uploadFile(): " + ex.getLocalizedMessage());
+		}
 	}
 	
 	@JavascriptInterface
@@ -165,6 +169,19 @@ public class JSInterface
 	}
 	
 	@JavascriptInterface
+	public String getUserContext()
+	{
+		return application.getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext().toString();
+	}
+	
+	@JavascriptInterface
+	public String getTelephoneNumber()
+	{
+		TelephonyManager tMgr = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+		return tMgr.getLine1Number();
+	}
+			
+	@JavascriptInterface
 	public void setPreference(String key, String value)
 	{		
 		try
@@ -177,6 +194,12 @@ public class JSInterface
 		}
 	}
 
+	@JavascriptInterface
+	public String getPreference(String key)
+	{
+		return application.getPreference(key);
+	}
+	
 	@JavascriptInterface
 	public void takePhoto()
 	{
@@ -214,20 +237,4 @@ public class JSInterface
 		});
 	}
 	
-	@JavascriptInterface
-	public void uploadFile(String callbackCommand, String dialogMessage, String[] filetypes)
-	{	
-		try
-		{	
-			// Allows User to Select a File and Upload it via SCP
-			UploadFileDialog fd = new UploadFileDialog(context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, application.getCloudToolkit(), GCFApplication.UPLOAD_SFTP_PATH, "UPLOAD_COMPLETE");
-			
-			this.callbackCommand = callbackCommand;
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-			toast("Error Calling uploadFile(): " + ex.getLocalizedMessage());
-		}
-	}
 }

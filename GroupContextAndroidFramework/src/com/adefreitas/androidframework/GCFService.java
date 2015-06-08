@@ -20,17 +20,17 @@ import com.adefreitas.groupcontextframework.Settings;
 
 public class GCFService extends Service
 {
-	public static final String LOG_NAME = "GCFService";
+	public static final String LOG_NAME = "GCFService [" + (System.currentTimeMillis() % 1000) + "]";
 	
 	// Intent Variables
 	public static final String GCF_WAKELOCK		  = "GCF_WAKELOCK";
 	public static final String ACTION_GCF_STARTED = "ACTION_GCF_STARTED";
 	
 	// Service Variables
-	private Date					   dateStarted;
-	private String 					   deviceID;
-	private AndroidGroupContextManager gcm;
-	private IBinder					   binder;
+	private static Date					       dateStarted;
+	private static String 					   deviceID;
+	private static AndroidGroupContextManager  gcm;
+	private static IBinder					   binder;
 	
 	// Power Management
 	private PowerManager powerManager;
@@ -75,6 +75,11 @@ public class GCFService extends Service
 		if (gcm == null)
 		{
 			Log.d(LOG_NAME, "OnStartCommand: Creating New GCM");
+		
+			if (intent != null && intent.hasExtra("name"))
+			{
+				Log.d(LOG_NAME, "  " + intent.getStringExtra("name"));
+			}
 			
 			// Gets the Device Name (or generates one)
 			this.deviceID = Settings.getDeviceName(android.os.Build.SERIAL);
@@ -111,6 +116,11 @@ public class GCFService extends Service
 	{
 		Log.d(LOG_NAME, "OnTaskRemoved");
 				
+		if (intent.hasExtra("name"))
+		{
+			Log.d(LOG_NAME, "  " + intent.getStringExtra("name"));
+		}
+		
 		if (gcm != null)
 		{
 			for (ContextProvider p : gcm.getRegisteredProviders())
@@ -143,6 +153,12 @@ public class GCFService extends Service
 	public IBinder onBind(Intent intent) 
 	{
 		Log.d(LOG_NAME, "OnBind");
+		
+		if (intent.hasExtra("name"))
+		{
+			Log.d(LOG_NAME, "  " + intent.getStringExtra("name"));
+		}
+				
 		return binder;
 	}
 

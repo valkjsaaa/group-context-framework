@@ -19,6 +19,8 @@ import android.content.SharedPreferences;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -31,11 +33,12 @@ import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.androidliveos.AndroidApplicationProvider;
 import com.adefreitas.androidproviders.BluewaveContextProvider;
+import com.adefreitas.beaconapps.App_GameConnectMeFactory;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextType;
 import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.inoutboard.App_Identity;
+import com.adefreitas.inoutboard.App_InOutBoardIdentity;
 import com.adefreitas.inoutboard.UserIdentityContextProvider;
 import com.adefreitas.liveos.ApplicationProvider;
 import com.adefreitas.liveos.ApplicationSettings;
@@ -45,16 +48,17 @@ import com.google.gson.Gson;
 public class GCFApplication extends Application
 {
 	// Application Constants
-	public static final String  APP_TICK 			   = "TICK";
-	public static final String  LOG_NAME 			   = "GCF_APP"; 
-	public static final int     SCAN_PERIOD_IN_SECONDS = 60;
+	public static final String  LOG_NAME 			   = "APP_BEACON"; 
 	public static final String  PREFERENCES_NAME       = "com.adefreit.impromptu.appbeaconpreferences";
+	public static final int     SCAN_PERIOD_IN_SECONDS = 30;
+	public static final boolean BLUETOOTH_DISCOVERABLE = false;
 	
 	// GCF Communication Settings (BROADCAST_MODE Assumes a Functional TCP Relay Running)
-	public static final CommMode COMM_MODE  = CommMode.MQTT;
-	public static final String   IP_ADDRESS = Settings.DEV_MQTT_IP;
-	public static final int      PORT 	    = Settings.DEV_MQTT_PORT;
-	public static final String 	 DEV_NAME   = Settings.getDeviceName(android.os.Build.SERIAL);
+	public static final CommMode COMM_MODE  	 = CommMode.MQTT;
+	public static final String   IP_ADDRESS 	 = Settings.DEV_MQTT_IP;
+	public static final int      PORT 	    	 = Settings.DEV_MQTT_PORT;
+	public static final String 	 DEV_NAME   	 = Settings.getDeviceName(android.os.Build.SERIAL);
+	public static final String   APP_DIR_CONTEXT = "LOS_DNS";
 		
 	// GCF Variables
 	public AndroidBatteryMonitor      batteryMonitor;
@@ -64,8 +68,8 @@ public class GCFApplication extends Application
 	// GCF Context Providers
 	public UserIdentityContextProvider identityProvider;
 	
-	// GSON Serializer
-	private Gson gson = new Gson();
+	// GSON Serializer (Converts Java Objects to JSON, and vice versa)
+	private Gson gson;
 	
 	// Cloud Storage Settings
 	private CloudStorageToolkit cloudToolkit;
@@ -91,7 +95,7 @@ public class GCFApplication extends Application
 		groupContextManager  = new AndroidGroupContextManager(this, DEV_NAME, batteryMonitor, false);
 			
 		// Initializes Bluewave
-		groupContextManager.getBluewaveManager().setDiscoverable(false);
+		groupContextManager.getBluewaveManager().setDiscoverable(BLUETOOTH_DISCOVERABLE);
 		groupContextManager.startBluewaveScan(SCAN_PERIOD_IN_SECONDS * 1000);
 		
 		// Creates a Custom Context Provider for Bluewave Data
@@ -103,9 +107,12 @@ public class GCFApplication extends Application
 		// Creates an Array of Context Receivers
 		this.contextReceivers = new ArrayList<ContextReceiver>();
 		
-		// Initialization
+		// Initializing Sensors and Services
 		configureContextProviders();
 		configureAppProviders();
+		
+		// Initializing Serialization Tools
+		gson = new Gson();
 		
 		// Create Intent Filter and Receiver
 		this.intentReceiver = new IntentReceiver();
@@ -116,7 +123,7 @@ public class GCFApplication extends Application
 		this.filter.addAction(AndroidCommManager.ACTION_COMMTHREAD_CONNECTED);
 		this.registerReceiver(intentReceiver, filter);
 	}
-	
+		
 	/**
 	 * Returns the Group Contest Manager
 	 * @return
@@ -170,28 +177,34 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	// Application Specific Methods -------------------------------------------------------------	
+	// Application Initialization Methods -------------------------------------------------------------	
+	/**
+	 * Adds Context Providers (i.e., "sensors") to the Beacon
+	 */
 	private void configureContextProviders()
 	{
 		// Application Preferences
 		SharedPreferences appSharedPreferences = this.getApplicationContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
 		
-		// Creates the Provider
+		// Creates the Provider(s)
 		identityProvider = new UserIdentityContextProvider(groupContextManager, appSharedPreferences);
 		
-		// Registers the Provider
+		// Registers the Provider(s)
 		groupContextManager.registerContextProvider(identityProvider);
 	}
 	
+	/**
+	 * Adds Applications (i.e., "services") to the Beacon
+	 */
 	private void configureAppProviders()
 	{
-		// Creates the List of Apps
+		// Creates a List of Apps
 		apps = new ArrayList<ApplicationProvider>();
 		
 		// Creates Application Providers
+		//apps.add(new App_InOutBoardIdentity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_ContactCard(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_HomeLights(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
-		apps.add(new App_Identity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Listens on the Channel for these Applications
@@ -206,7 +219,53 @@ public class GCFApplication extends Application
 	}
 	
 	// Group Context Framework Methods ----------------------------------------------------------	
+	/**
+	 * This Method is Called Each Time the Device Receives Bluewave Information
+	 * @param parser
+	 */
 	public void onBluewaveContext(JSONContextParser parser)
+	{
+		// Gives Context to Beacon Apps
+		// This allows them to see if they should be "installed" on the user's device
+		analyzeBluewaveContext(parser);
+		
+		// Creates a Toast
+		Toast.makeText(this, "Discovered: " + parser.getDeviceID(), Toast.LENGTH_SHORT).show();
+		
+		// TODO:  Add Any Application Wide Context Analysis Here
+		// IMPORTANT:  If you need to analyze context within an activity, just use setContextReceiver
+	}
+	
+	/**
+	 * This method is used by an activity to allow it to receive context without having to create an intent filter
+	 * @param newContextReceiver
+	 */
+	public void setContextReceiver(ContextReceiver newContextReceiver)
+	{		
+		if (!contextReceivers.contains(newContextReceiver))
+		{
+			contextReceivers.add(newContextReceiver);
+		}
+	}
+	
+	/**
+	 * This method is used by an activity to allow it to stop receiving context
+	 * @param contextReceiver
+	 */
+	public void removeContextReceiver(ContextReceiver contextReceiver)
+	{
+		if (contextReceivers.contains(contextReceiver))
+		{
+			contextReceivers.remove(contextReceiver);
+		}
+	}
+	
+	// Private Methods --------------------------------------------------------------------------
+	/**
+	 * This method allows all installed beacon apps to see the Bluewave context
+	 * @param parser
+	 */
+	private void analyzeBluewaveContext(JSONContextParser parser)
 	{
 		// Attempts to Extract Connection Information
 		JSONObject context = parser.getJSONObject("identity");
@@ -266,7 +325,7 @@ public class GCFApplication extends Application
 						groupContextManager.sendComputeInstruction(
 								connectionKey, 
 								ApplicationSettings.DNS_CHANNEL, 
-								"LOS_DNS", 
+								APP_DIR_CONTEXT, 
 								new String[] { "LOS_DNS" }, 
 								"SEND_ADVERTISEMENT", 
 								new String[] { "DESTINATION=" + deviceID, "APPS=" + gson.toJson(appPayload.toArray(new String[0])) });	
@@ -286,15 +345,12 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	public void setContextReceiver(ContextReceiver newContextReceiver)
-	{		
-		if (!contextReceivers.contains(newContextReceiver))
-		{
-			contextReceivers.add(newContextReceiver);
-		}
-	}
-	
-	// Private Methods --------------------------------------------------------------------------
+	/**
+	 * This method is used to determine if an app has already been sent to a device
+	 * @param appProvider
+	 * @param context
+	 * @return
+	 */
 	private boolean isRedundant(AndroidApplicationProvider appProvider, JSONObject context)
 	{
 		if (context.has("APPS"))
@@ -341,10 +397,6 @@ public class GCFApplication extends Application
 			{
 				onGCFData(context, intent);
 			}
-			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_OUTPUT))
-			{
-				onOutput(context, intent);
-			}
 			else if (intent.getAction().equals(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED))
 			{
 				onOtherUserContextReceived(context, intent);
@@ -372,19 +424,7 @@ public class GCFApplication extends Application
 				contextReceiver.onContextData(new ContextData(contextType, deviceID, values));
 			}
 		}
-	
-		private void onOutput(Context context, Intent intent)
-		{
-			// Extracts the values from the intent
-			String text = intent.getStringExtra(AndroidGroupContextManager.GCF_OUTPUT);
-			
-			// Forwards Values to the Application for Processing
-			for (ContextReceiver contextReceiver : contextReceivers)
-			{
-				contextReceiver.onGCFOutput(text);
-			}
-		}
-	
+
 		private void onOtherUserContextReceived(Context context, Intent intent)
 		{
 			// This is the Raw JSON from the Device

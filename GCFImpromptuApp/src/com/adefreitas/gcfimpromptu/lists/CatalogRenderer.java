@@ -94,6 +94,12 @@ public class CatalogRenderer
 			}
 		}
 		
+		// Creates a Little Breating Room on the Bottom
+		LinearLayout bottomBuffer = new LinearLayout(context);
+		bottomBuffer.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 100));
+		bottomBuffer.setOrientation(LinearLayout.VERTICAL);
+		layout.addView(bottomBuffer);
+		
 		// Adds the List of Apps to the ScrollView
 		container.addView(layout);
 		

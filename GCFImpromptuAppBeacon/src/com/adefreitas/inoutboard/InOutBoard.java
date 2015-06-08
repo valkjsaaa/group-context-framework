@@ -76,7 +76,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 		// Create Intent Filter and Receiver
 		this.intentReceiver = new IntentReceiver();
 		this.filter = new IntentFilter();
-		this.filter.addAction(App_Identity.ACTION_IDENTITY_UPDATE);
+		this.filter.addAction(App_InOutBoardIdentity.ACTION_IDENTITY_UPDATE);
 		this.filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 		this.filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 	}
@@ -123,6 +123,8 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 	    
 	    // Disables the Intent Listener
 	    this.unregisterReceiver(intentReceiver);
+	    
+	    application.removeContextReceiver(this);
 	}
 	
 	/**
@@ -301,13 +303,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 		p.update(data.getPayload("VALUES"));
 		updateView();
 	}
-	
-	@Override
-	public void onGCFOutput(String output) 
-	{
-		// TODO Auto-generated method stub
-	}
-	
+
 	@Override
 	public void onBluewaveContext(JSONContextParser parser) 
 	{
@@ -320,7 +316,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 		@Override
 		public void onReceive(Context context, Intent intent) 
 		{	
-			if (intent.getAction().equals(App_Identity.ACTION_IDENTITY_UPDATE))
+			if (intent.getAction().equals(App_InOutBoardIdentity.ACTION_IDENTITY_UPDATE))
 			{
 				updateView();
 			}

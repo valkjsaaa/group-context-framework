@@ -12,6 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommThread;
+import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.Gson;
@@ -21,10 +22,9 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	private static final boolean DEBUG = true;
 	private static final int 	 QOS   = 0;
 	
-	private String 			 brokerIP;
-	private int 			 port;
-    private Gson 		     gson;
-	private MessageProcessor processor;
+	private String brokerIP;
+	private int    port;
+    private Gson   gson;
 	
 	private MqttClient 		  client;
 	private ArrayList<String> channels;
@@ -42,13 +42,12 @@ public class MqttCommThread extends CommThread implements MqttCallback
      * @param brokerIP	- the IP address of the destination machine (the TCP relay)
      * @param processor - where fully formed messages should be delivered once assembled
      */
-	public MqttCommThread(CommManager commManager, String deviceID, String brokerIP, int port, MessageProcessor processor)  
+	public MqttCommThread(CommManager commManager, String deviceID, String brokerIP, int port)  
 	{
 		super(commManager);
 		
 		this.deviceID   = deviceID;
 	    this.gson  	    = new Gson();
-	    this.processor  = processor;
 	    this.channels   = new ArrayList<String>();
 	    this.run	    = false;
 	    this.sendBuffer = new ArrayList<MqttMessage>();
@@ -251,7 +250,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 		String 	    s   = new String(message.getPayload(), "UTF-8");
 		CommMessage msg = CommMessage.jsonToMessage(s);
 		
-		if (processor != null && msg != null)
+		if (msg != null)
 		{
 			if (!(msg instanceof ComputeInstruction))
 			{
@@ -265,7 +264,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				}					
 			}
 			
-			processor.onMessage(msg);
+			((DesktopCommManager)this.getCommManager()).onMessage(msg);
 		}	
 	}
 
