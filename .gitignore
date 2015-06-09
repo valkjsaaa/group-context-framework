@@ -25,12 +25,14 @@ hs_err_pid*
 Miscellaneous/
 GCFUniversalRemote/
 GCFBluetoothDemo/
+google-play-services_lib/
+android-support-v7-appcompat/
 libraries/
 appData/
 
 # Generated files
-bin/
-gen/
+bin/*
+gen/*
 
 # Gradle files
 .gradle/

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.TargetApi;
@@ -34,6 +35,7 @@ import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.androidliveos.AndroidApplicationProvider;
 import com.adefreitas.androidproviders.BluewaveContextProvider;
 import com.adefreitas.beaconapps.App_GameConnectMeFactory;
+import com.adefreitas.beaconapps.App_TestApp;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextProvider;
 import com.adefreitas.groupcontextframework.ContextType;
@@ -206,6 +208,7 @@ public class GCFApplication extends Application
 		//apps.add(new App_ContactCard(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_HomeLights(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
+		apps.add(new App_TestApp(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Listens on the Channel for these Applications
 		for (ApplicationProvider app : apps)
@@ -231,6 +234,18 @@ public class GCFApplication extends Application
 		
 		// Creates a Toast
 		Toast.makeText(this, "Discovered: " + parser.getDeviceID(), Toast.LENGTH_SHORT).show();
+		
+		//Log.e("Bluewave-Scan", "HELLO WORLD");
+		
+//		try 
+//		{
+//			Log.e("Bluewave-Scan", "FOUND: " + parser.getJSONObject("preferences").getString("Hello"));
+//		} 
+//		catch (JSONException e) 
+//		{
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		// TODO:  Add Any Application Wide Context Analysis Here
 		// IMPORTANT:  If you need to analyze context within an activity, just use setContextReceiver
