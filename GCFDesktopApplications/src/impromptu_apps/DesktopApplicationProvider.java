@@ -60,6 +60,34 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 			System.out.println("A problem occurred while creating the robot: " + ex.getMessage());
 		}
 	}
+	
+	public DesktopApplicationProvider(GroupContextManager groupContextManager, 
+			String contextType, 
+			String name, 
+			String description, 
+			String category,
+			String[] contextsRequired, 
+			String[] preferencesToRequest, 
+			String logoPath, 
+			int lifetime,
+			CommMode commMode,
+			String ipAddress, 
+			int port,
+			String channel) 
+	{
+		super(groupContextManager, contextType, name, description, category, contextsRequired, preferencesToRequest, logoPath, lifetime, commMode, ipAddress, port, channel);
+		
+		try
+		{
+			System.out.print("Initializing Application " + name + " . . . ");
+			robot = new Robot();
+			System.out.println("DONE!");
+		}
+		catch (Exception ex)
+		{
+			System.out.println("A problem occurred while creating the robot: " + ex.getMessage());
+		}
+	}
 
 	@Override
 	public void onSubscription(ContextSubscriptionInfo newSubscription)
@@ -166,7 +194,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	 * @param Height
 	 * @return
 	 */
-	public static File resizeImage(String picturePath, String outputName, int Width,int Height)
+	public static File resizeImage(String picturePath, String outputName, int Width, int Height)
 	{
 		File outputFile = null;
 		
@@ -241,6 +269,11 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		return parser.getJSONObject("device").get("deviceID").getAsString();
 	}
 
+	/**
+	 * Returns the Latitude Coordinate Specified in this Context
+	 * @param parser
+	 * @return
+	 */
 	protected double getLatitude(JSONContextParser parser)
 	{
 		try
@@ -253,6 +286,11 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		}
 	}
 
+	/**
+	 * Returns the Longitude Coordinate Specified in this Context
+	 * @param parser
+	 * @return
+	 */
 	protected double getLongitude(JSONContextParser parser)
 	{
 		try
@@ -281,7 +319,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		return activity;
 	}
 	
-	protected int getConfidence(JSONContextParser parser)
+	protected int getActivityConfidence(JSONContextParser parser)
 	{
 		int confidence = 0;
 		

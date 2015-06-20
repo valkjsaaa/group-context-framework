@@ -1,7 +1,8 @@
 package impromptu_apps;
 
-import impromptu_apps.creationfest.TaskDispatcher;
-import impromptu_apps.favors.FavorDispatcher;
+import impromptu_apps.creationfest.*;
+import impromptu_apps.desktop.*;
+import impromptu_apps.favors.*;
 
 import java.util.ArrayList;
 
@@ -13,6 +14,7 @@ import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.desktopframework.toolkit.SQLToolkit;
 import com.adefreitas.groupcontextframework.CommManager;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
+import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.liveos.ApplicationSettings;
 import com.adefreitas.messages.ContextData;
@@ -72,7 +74,7 @@ public class Application implements EventReceiver
 
 		// Initializes SQL Connection
 		//sqlToolkit = new SQLToolkit("citrus-acid.com", "citrusa_michael", "mysql1234", "citrusa_michael");
-		sqlToolkit = new SQLToolkit("epiwork.hcii.cs.cmu.edu", "adrian", "@dr1@n1234", "GCF");
+		sqlToolkit = new SQLToolkit("epiwork.hcii.cs.cmu.edu", "adrian", "@dr1@n1234", "gcf_impromptu");
 		
 		// Initializes Apps
 		initializeApps();
@@ -85,6 +87,8 @@ public class Application implements EventReceiver
 			System.out.println("Application [" + app.toString() + "] Ready.");
 		}
 		
+		gcm.unsubscribe(connectionKey, CommThread.PUBLIC_CHANNEL);
+		
 		System.out.println(appProviders.size() + " App(s) Initialized!\n");
 	}
 
@@ -94,26 +98,28 @@ public class Application implements EventReceiver
 	private void initializeApps()
 	{
 		// Standard Apps
-//		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
-// 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
+ 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
- 	    appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
-		appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
+ 	    //appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		//appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// CreationFest
 		//appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		t = new TaskDispatcher(sqlToolkit, gcm);
+		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CreationFestSurvey(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CreationFestUninstaller(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		t = new TaskDispatcher(sqlToolkit, gcm);
 		
 		// Favors
 		//f = new FavorDispatcher(sqlToolkit, gcm);
@@ -143,6 +149,7 @@ public class Application implements EventReceiver
 		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_QuickTask(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
+		// This is Used by the Dispatchers!
 		updateThread = new UpdateThread();
 		updateThread.start();
 	}

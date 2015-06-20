@@ -3,7 +3,8 @@ package impromptu_apps.creationfest;
 import impromptu_apps.DesktopApplicationProvider;
 
 import java.util.ArrayList;
-
+import java.util.Arrays;
+import java.util.Calendar;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
@@ -15,8 +16,9 @@ import com.google.gson.JsonObject;
 public class App_Task extends DesktopApplicationProvider
 {	
 	// Constants
-	private static final String UPDATE_URL  = "http://gcf.cmu-tbank.com/apps/creationfest/getRecentProblems.php?timestamp=";
-
+	private static final String UPDATE_URL   = "http://gcf.cmu-tbank.com/apps/creationfest/getRecentProblems.php?timestamp=";
+	private static final double MIN_DISTANCE = 0.50;
+	
 	// Properties
 	private int		   timestamp;
 	private String	   id;
@@ -43,31 +45,20 @@ public class App_Task extends DesktopApplicationProvider
 				id, 
 				"Task", 
 				"You are in range of a reported problem.  Click for more details.", 
-				"TASK",
+				"CREATIONFEST TASK",
 				new String[] { }, 
 				new String[] { }, 
-				"http://25.media.tumblr.com/tumblr_kvewyajk5c1qzxzwwo1_500.jpg",
+				"https://cdn2.iconfinder.com/data/icons/ios-7-style-metro-ui-icons/128/Flurry_Google_Maps.png",
 				30,
 				commMode, 
 				ipAddress, 
-				port);
+				port,
+				"TASK");
 		
-		this.timestamp   = timestamp;
-		this.id			 = id;
-		this.description = description;
-		this.telephone   = telephone;
-		this.photoURL    = photoURL;
-		this.latitude    = latitude;
-		this.longitude   = longitude;
-		this.status		 = status;
 		this.dispatcher  = dispatcher;
 		this.completed   = false;
 		
-		this.roles = new ArrayList<String>();
-		for (String tag : tags)
-		{
-			roles.add(tag);
-		}
+		update(id, timestamp, description, telephone, photoURL, latitude, longitude, status, tags);
 	}
 		
 	/**
@@ -112,10 +103,17 @@ public class App_Task extends DesktopApplicationProvider
 		JSONContextParser parser   = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
 		double			  distance = this.getDistance(parser, latitude, longitude);
 		
-		// Debug Text
-		System.out.print("Distance: " + distance + " ");
+		boolean distanceCheck = distance < MIN_DISTANCE;
+		boolean roleCheck     = tagsMatch(bluewaveContext);
 		
-		return tagsMatch(bluewaveContext) && !completed && this.getDistance(parser, latitude, longitude) < 100.0;
+		Calendar cal = Calendar.getInstance();
+		cal.set(2015, 5, 20, 00, 00);
+		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
+		
+		// Debug Text
+		System.out.print("Distance: " + distanceCheck + "; " + "Role: " + roleCheck + "; ");
+		
+		return  !completed && roleCheck && distanceCheck && pastDate;
 	}
 
 	/**
@@ -135,20 +133,24 @@ public class App_Task extends DesktopApplicationProvider
 	
 	public String getName(String userContextJSON)
 	{
-		return description.substring(0, Math.min(description.length()-1, 40));
+		return description.substring(0, Math.min(description.length(), 40));
 	}
 	
 	public String getDescription(String userContextJSON)
 	{
-		String result = "You are near a potential problem.  Click for more information.\n\n";
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
+		
+		String result = String.format("Distance: %1.2fkm\n", this.getDistance(parser, latitude, longitude));
+		result += "Roles: " + Arrays.toString(roles.toArray(new String[0]));		
+		result += "\n";
 		
 		if (this.getSubscriptions().length > 0)
 		{
-			result += "[" + this.getSubscriptions().length + " users looking at this task]";
+			result += this.getSubscriptions().length + " users looking at this.";
 		}
 		else
 		{
-			result += views + " views total.";
+			result += views + " total views.";
 		}
 		
 		return result;
@@ -185,5 +187,23 @@ public class App_Task extends DesktopApplicationProvider
 		}
 		
 		return false;
+	}
+
+	public void update(String id, int timestamp, String description, String telephone, String photo, double latitude, double longitude, String status, String[] tags)
+	{
+		this.id = id;
+		this.timestamp = timestamp;
+		this.description = description;
+		this.telephone = telephone;
+		this.photoURL = photo;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.status = status;
+		
+		this.roles = new ArrayList<String>();
+		for (String tag : tags)
+		{
+			roles.add(tag);
+		}
 	}
 }

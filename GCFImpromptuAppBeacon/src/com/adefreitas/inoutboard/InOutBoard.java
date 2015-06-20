@@ -105,7 +105,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 		application.setContextReceiver(this);
 		
 		// Asks for Context
-		application.getGroupContextManager().sendRequest("USER_ID", ContextRequest.MULTIPLE_SOURCE, new String[0], 60000, new String[0]);
+		application.getGroupContextManager().sendRequest("USER_ID", ContextRequest.MULTIPLE_SOURCE, new String[0], 60000, new String[] { "CHANNEL=IN_OUT_SIGN" });
 		
 		// Sets Up Initial View
 		this.updateView();

@@ -172,9 +172,9 @@ public abstract class GroupContextManager
 	 * Retrieves the GCM's Battery Percentage Estimate
 	 * @return
 	 */
-	public double getBatteryPercentage()
+	public BatteryMonitor getBatteryMonitor()
 	{
-		return batteryMonitor.getBatteryPercent();
+		return batteryMonitor;
 	}
 	
 	/**

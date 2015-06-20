@@ -263,10 +263,10 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				this.addToArp(msg.getDeviceID());
 				
 				// Allows this Thread to Track WHICH CHANNEL a Device is On
-				if (!channelARP.containsKey(msg.getDeviceID()) || !channelARP.get(msg.getDeviceID()).equals(channel))
+				//if (!channelARP.containsKey(msg.getDeviceID()) || !channelARP.get(msg.getDeviceID()).equals(channel))
 				{
 					channelARP.put(msg.getDeviceID(), channel);
-					Log.d(LOG_NAME, "Associating " + msg.getDeviceID() + " with channel [" + channel + "]");	
+					//Log.d(LOG_NAME, "Associating " + msg.getDeviceID() + " with channel [" + channel + "]");	
 				}
 			}
 			

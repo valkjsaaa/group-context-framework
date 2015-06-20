@@ -78,17 +78,23 @@
         		android:text="DESCRIPTION GOES HERE"/>
         </LinearLayout>
     </LinearLayout>
-                
-    <ImageView
-        android:id="@+id/imgCameraSmall"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_margin="15dp"
-        android:padding="8dp"
-        android:elevation="5dp"
-        android:background="@drawable/camera_focused"
-        android:src="@drawable/ic_camera"/>
+            
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+	    android:layout_margin="15dp"
+	    android:elevation="5dp"
+        android:orientation="horizontal">
+        
+		<ImageView
+	        android:id="@+id/imgCameraSmall"
+	        android:layout_width="50dp"
+	        android:layout_height="50dp"
+	        android:padding="8dp"
+	        android:background="@drawable/camera_focused"
+	        android:src="@drawable/ic_camera"/>
+        
+    </LinearLayout>
 
 </RelativeLayout>

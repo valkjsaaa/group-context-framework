@@ -98,6 +98,8 @@ public abstract class BatteryMonitor
 		}
 	}
 
+	public abstract boolean isCharging();
+	
 	public class BatteryInfo
 	{
 		private Date    timestamp;

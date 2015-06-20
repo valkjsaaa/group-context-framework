@@ -38,18 +38,26 @@ public class GCFDesktopApplication implements EventReceiver
 		
 		// Creates the Group Context Manager
 		gcm = new DesktopGroupContextManager(deviceID, false);
-		gcm.registerEventReceiver(this);
-
-		// Sets the Debug Mode Flags (Default is False)
-		gcm.setDebugMode(true);
-		
-		// Connects to Channel
 		String connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
-		gcm.subscribe(connectionKey, "TEST_CHANNEL");
+
+		// GCM Settings
+		gcm.registerEventReceiver(this);
+		gcm.setDebugMode(false);
+		
+		try
+		{
+			System.out.println("Initializing Framework . . .");
+			Thread.sleep(5000);
+			System.out.println("DONE!");
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
 		
 		// Requests Context
-		gcm.sendRequest("PCP", ContextRequest.SINGLE_SOURCE, new String[0], 60000, new String[] { "CHANNEL=TEST_CHANNEL" });
-		//gcm.sendRequest("BLU", ContextRequest.SINGLE_SOURCE, new String[] { "Nexus 5-A" }, 60000, new String[] { "CHANNEL=TEST_CHANNEL" });
+		//gcm.sendRequest("PCP", ContextRequest.SINGLE_SOURCE, new String[0], 60000, new String[] { "CHANNEL=TEST_CHANNEL" });
+		gcm.sendRequest("ACT", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=dev/" + deviceID});
 	}
 	
 	/**
@@ -58,7 +66,7 @@ public class GCFDesktopApplication implements EventReceiver
 	@Override
 	public void onContextData(ContextData data) 
 	{
-		System.out.println(new Date().toString() + "\nReceived Data [" + data.getContextType() + "]: " + data.getDeviceID() + "\n" + data.toString());
+		System.out.println("\nReceived Data [" + data.getContextType() + "] (" +  new Date().toString() + ": " + data.getDeviceID() + "\n" + data.toString() + "\n");
 	}
 
 	/**

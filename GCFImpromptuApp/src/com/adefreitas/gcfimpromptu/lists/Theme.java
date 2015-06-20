@@ -39,9 +39,8 @@ public class Theme
 		{
 			return "View Details";
 		}
-
 		
-		// Default Color
+		// Default Message
 		return "Run Application";
 	}
 }

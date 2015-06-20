@@ -71,6 +71,41 @@ public abstract class ApplicationProvider extends ContextProvider
 		this.port 				  = port;
 		this.channel			  = contextType;
 	}
+	
+	/**
+	 * Constructor (Allows you to Specify a Custom Communications Channel)
+	 * @param groupContextManager
+	 * @param contextType
+	 * @param name
+	 * @param description
+	 * @param category
+	 * @param contextsRequired
+	 * @param preferencesToRequest
+	 * @param logoPath
+	 * @param lifetime
+	 * @param commMode
+	 * @param ipAddress
+	 * @param port
+	 * @param channel
+	 */
+	public ApplicationProvider(GroupContextManager groupContextManager, 
+			String contextType, 
+			String name, 
+			String description, 
+			String category,
+			String[] contextsRequired, 
+			String[] preferencesToRequest, 
+			String logoPath, 
+			int lifetime,
+			CommMode commMode,
+			String ipAddress, 
+			int port,
+			String channel) 
+	{	
+		this(groupContextManager, contextType, name, description, category, contextsRequired, preferencesToRequest, logoPath, lifetime, commMode, ipAddress, port);
+		
+		this.channel = channel;
+	}
 
 	@Override
 	public void start() 
@@ -113,10 +148,13 @@ public abstract class ApplicationProvider extends ContextProvider
 	
 	public void sendContext()
 	{
+		String connectionKey = this.getGroupContextManager().getConnectionKey(this.commMode, this.ipAddress, this.port);
+		
 		for (ContextSubscriptionInfo info : this.getSubscriptions())
 		{
 			//System.out.println("Sending Interface to: " + info.getDeviceID());
-			this.getGroupContextManager().sendContext(CONTEXT_TYPE, new String[] { info.getDeviceID() }, getInterface(info));
+			//this.sendContext(new String[] { info.getDeviceID() }, getInterface(info));
+			this.getGroupContextManager().sendContext(connectionKey, this.channel, this.getContextType(), new String[] { info.getDeviceID() }, getInterface(info));
 		}
 	}
 	
@@ -197,6 +235,11 @@ public abstract class ApplicationProvider extends ContextProvider
 	public String getLogoPath(String userContextJSON)
 	{
 		return logoPath;
+	}
+	
+	public String getChannel()
+	{
+		return channel;
 	}
 	
 	// METHODS TO IMPLEMENT/OVERRIDE ------------------------------------------------------------------

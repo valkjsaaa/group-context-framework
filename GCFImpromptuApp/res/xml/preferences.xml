@@ -14,10 +14,30 @@
             android:selectable="false"
             android:persistent="false"
             android:shouldDisableView="false"/>
+                
+        <CheckBoxPreference
+            android:title="Send Context"
+            android:summary="If checked, device will upload context automatically."
+            android:defaultValue="true"
+            android:key="impromptu_send"/>
+        
+    </PreferenceCategory>
+
+    <PreferenceCategory 
+        android:title="Group Context Framework"
+        android:key="category_gcf">
         
         <EditTextPreference 
             android:key="gcf_version"
             android:title="GCF Version" 
+            android:enabled="false"
+            android:selectable="false"
+            android:persistent="false"
+            android:shouldDisableView="false"/>
+        
+		<EditTextPreference 
+            android:key="gcf_service"
+            android:title="GCF Service" 
             android:enabled="false"
             android:selectable="false"
             android:persistent="false"
@@ -37,7 +57,8 @@
             android:enabled="false"
             android:selectable="false"
             android:persistent="false"
-            android:shouldDisableView="false"/>   
+            android:shouldDisableView="false"/>
+        
     </PreferenceCategory>
     
     <PreferenceCategory 

@@ -2,6 +2,7 @@ package impromptu_app_directory;
 
 import com.adefreitas.desktopframework.DesktopGroupContextManager;
 import com.adefreitas.groupcontextframework.CommManager;
+import com.adefreitas.groupcontextframework.CommThread;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.liveos.ApplicationSettings;
@@ -28,7 +29,6 @@ public class GCFController
 	public GCFController()
 	{
 		System.out.println("Starting Impromptu Directory Service");
-		
 		gcm = new DesktopGroupContextManager(COMPUTER_NAME, false);
 		
 		// Manages Debugging
@@ -38,6 +38,16 @@ public class GCFController
 		connectionKey = gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
 		gcm.subscribe(connectionKey, ApplicationSettings.DNS_APP_CHANNEL);
 		gcm.subscribe(connectionKey, ApplicationSettings.DNS_CHANNEL);
+		
+		try
+		{
+			Thread.sleep(1000);
+			gcm.unsubscribe(connectionKey, CommThread.PUBLIC_CHANNEL);
+		}
+		catch (Exception ex)
+		{
+			
+		}
 		
 		// Creates Context Providers
 		gcm.registerContextProvider(new DNSProvider(gcm, connectionKey));

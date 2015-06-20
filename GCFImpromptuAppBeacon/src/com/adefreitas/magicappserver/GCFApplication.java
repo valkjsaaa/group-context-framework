@@ -105,6 +105,7 @@ public class GCFApplication extends Application
 		
 		// Connects to the Server
 		connectionKey = groupContextManager.connect(COMM_MODE, IP_ADDRESS, PORT);
+		groupContextManager.subscribe(connectionKey, "IN_OUT_SIGN");
 		
 		// Creates an Array of Context Receivers
 		this.contextReceivers = new ArrayList<ContextReceiver>();
@@ -204,11 +205,11 @@ public class GCFApplication extends Application
 		apps = new ArrayList<ApplicationProvider>();
 		
 		// Creates Application Providers
-		//apps.add(new App_InOutBoardIdentity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
+		apps.add(new App_InOutBoardIdentity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_ContactCard(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_HomeLights(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
-		apps.add(new App_TestApp(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
+		//apps.add(new App_TestApp(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Listens on the Channel for these Applications
 		for (ApplicationProvider app : apps)

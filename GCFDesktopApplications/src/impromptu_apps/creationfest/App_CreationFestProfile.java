@@ -1,6 +1,8 @@
 package impromptu_apps.creationfest;
 
 
+import java.util.Calendar;
+
 import impromptu_apps.DesktopApplicationProvider;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
@@ -15,7 +17,7 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 	{
 		super(groupContextManager, 
 				"CF_USER",
-				"User Settings",
+				"Manage Profile",
 				"Configure your contact and profile settings through this app.",
 				"CREATIONFEST 2015",
 				new String[] { },  // Contexts
@@ -44,6 +46,30 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
-		return hasEmailAddress(parser, "adrian.defreitas@gmail.com");
+		Calendar cal = Calendar.getInstance();
+		cal.set(2015, 5, 20, 00, 00);
+		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
+		
+		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
+		
+		return (this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) && pastDate)  
+				|| (pastDate && distanceToFestival < 5.0);
 	}
+	
+	/**
+	 * OPTIONAL:  Allows you to Customize the Description of the App on a Per User Basis
+	 */
+	public String getDescription(String userContextJSON)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
+		
+		if (parser.getJSONObject("preferences").has("roles"))
+		{
+			String roles = parser.getJSONObject("preferences").get("roles").toString();
+			return "Current Roles: " + roles + "\n\nClick to Modify these Settings.";
+		}
+		
+		return description;
+	}
+	
 }

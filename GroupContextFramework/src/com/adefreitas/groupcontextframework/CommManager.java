@@ -17,6 +17,9 @@ public abstract class CommManager
 	// CommThreads Used by the CommManager
 	protected HashMap<String, CommThread> commThreads;
 	
+	// C
+	protected HashMap<String, ArpItem> arp;
+	
 	/**
 	 * Constructor
 	 * @param gcm
@@ -235,7 +238,7 @@ public abstract class CommManager
 	 * @param connectionKey
 	 */
 	public void send(CommMessage message, String connectionKey)
-	{
+	{		
 		// Prevents Network Access if the Message is Only Directed to this Device!
 		if (isSendToSelf(message))
 		{
@@ -259,7 +262,7 @@ public abstract class CommManager
 	 * @param channel
 	 */
 	public void send(CommMessage message, String connectionKey, String channel)
-	{
+	{		 
 		// Prevents Network Access if the Message is Only Directed to this Device!
 		if (isSendToSelf(message))
 		{
@@ -298,7 +301,7 @@ public abstract class CommManager
 				{
 					if (commThread.receivesMessagesFrom(deviceID))
 					{
-						if (threadsToUse.contains(commThread))
+						if (!threadsToUse.contains(commThread))
 						{
 							threadsToUse.add(commThread);	
 						}
@@ -307,10 +310,18 @@ public abstract class CommManager
 				}
 			}
 			
-			for(CommThread commThread : threadsToUse)
+			if (threadsToUse.size() > 0)
 			{
-				commThread.send(message, channel);
-			}	
+				for(CommThread commThread : threadsToUse)
+				{
+					gcm.log(GroupContextManager.LOG_COMMUNICATIONS, "Sending message to " + message.getDeviceID() + " using channel " + channel);
+					commThread.send(message, channel);
+				}	
+			}
+			else
+			{
+				gcm.log(GroupContextManager.LOG_COMMUNICATIONS, "Cannot Find CommThread for Devices: " + Arrays.toString(message.getDestination()));
+			}
 		}
 	}
 	
@@ -377,5 +388,36 @@ public abstract class CommManager
 	private boolean isBroadcast(CommMessage message)
 	{
 		return message.getDestination() == null || message.getDestination().length == 0;
+	}
+
+	/**
+	 * This Class Keeps Track of Where a Device has Last been Heard From
+	 * @author adefreit
+	 *
+	 */
+	private class ArpItem
+	{
+		private String deviceID;
+		private String connectionKey;
+		private String channel;
+		
+		public ArpItem(String deviceID, String connectionKey, String channel)
+		{
+			this.deviceID 	   = deviceID;
+			this.connectionKey = connectionKey;
+			this.channel 	   = channel;
+		}
+
+		public String getDeviceID() {
+			return deviceID;
+		}
+
+		public String getConnectionKey() {
+			return connectionKey;
+		}
+
+		public String getChannel() {
+			return channel;
+		}
 	}
 }

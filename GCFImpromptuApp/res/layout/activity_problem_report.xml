@@ -1,0 +1,107 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    tools:context="com.adefreitas.gcfimpromptu.ProblemReport" >
+
+    <!-- TOOLBAR -->
+	<android.support.v7.widget.Toolbar
+	    xmlns:app="http://schemas.android.com/apk/res-auto"
+	    android:id="@+id/toolbar"
+	    android:layout_height="wrap_content"
+	    android:layout_width="match_parent"
+	    app:theme="@style/Theme.MyTheme"
+	    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+	    android:background="#FFFFFF" />
+					
+	<View 
+		android:layout_width="fill_parent" 
+		android:layout_height="2dp" 
+		android:background="#333333" />
+    
+	<!-- INPUTS -->
+    <ScrollView         
+    	android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp">
+	
+        <LinearLayout
+            android:focusableInTouchMode="true"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical">
+	       			
+			<!-- Details -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Step 1: Description (Mandatory)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<EditText
+			    android:id="@+id/txtDescription"
+			    android:layout_width="fill_parent"
+			    android:layout_height="60dp"
+			    android:gravity="top"
+			    android:hint="Type a Description!"
+			    android:textColor="#333333" />
+			
+			<!-- Details -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Step 2: Phone Number (Optional)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<EditText
+			     android:id="@+id/txtPhone"
+   				 android:layout_width="fill_parent"
+    			 android:layout_height="wrap_content"
+    			 android:hint="XXX-XXX-XXXX"
+    			 android:inputType="phone" />
+		
+			<!-- CAMERA -->
+			<TextView
+			    android:id="@+id/txt_camera"
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Step 3: Photo (Optional)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<SurfaceView 
+			    android:id="@+id/surface_camera"
+				android:layout_width="fill_parent" 
+				android:layout_marginTop="10dp"
+				android:layout_marginLeft="10dp"
+				android:layout_marginRight="10dp"
+				android:layout_height="200dp"/>
+					
+			<Button
+		    	android:id="@+id/btnCamera"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:theme="@style/ThemeOverlay.AppCompat.Light"
+				android:layout_marginLeft="10dp"
+				android:layout_marginRight="10dp"
+		        android:text="Take Picture"
+		        android:textColor="#000000"/>
+			
+			<Button
+		    	android:id="@+id/btnSubmit"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:text="Submit"
+		        android:layout_marginTop="10dp"
+		        android:background="#339966"
+		        android:textColor="#FFFFFF"/>
+			
+		</LinearLayout>
+        
+	</ScrollView>
+
+</LinearLayout>

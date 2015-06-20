@@ -17,4 +17,11 @@ public class DesktopBatteryMonitor extends BatteryMonitor
 	{
 		return 0.0;
 	}
+
+	
+	@Override
+	public boolean isCharging() {
+		// TODO Auto-generated method stub
+		return true;
+	}
 }

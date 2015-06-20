@@ -210,6 +210,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 			{
 				for (MqttMessage m : sendBuffer)
 				{
+					//System.out.println("Sending to " + channel + " " + message);
 					client.getTopic(channel).publish(m);
 				}
 				
@@ -245,7 +246,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	}
 	
 	@Override
-	public void messageArrived(String topic, MqttMessage message) throws Exception
+	public void messageArrived(String channel, MqttMessage message) throws Exception
 	{
 		String 	    s   = new String(message.getPayload(), "UTF-8");
 		CommMessage msg = CommMessage.jsonToMessage(s);
@@ -258,9 +259,10 @@ public class MqttCommThread extends CommThread implements MqttCallback
 				this.addToArp(msg.getDeviceID());	
 				
 				// Allows this Thread to Track WHICH CHANNEL a Device is On
-				if (!channelARP.containsKey(msg.getDeviceID()))
+				//if (!channelARP.containsKey(msg.getDeviceID()))
 				{
-					channelARP.put(msg.getDeviceID(), topic);	
+					//System.out.println("Learned that " + msg.getDeviceID() + " comes from " + channel);
+					channelARP.put(msg.getDeviceID(), channel);	
 				}					
 			}
 			

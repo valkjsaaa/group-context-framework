@@ -179,6 +179,10 @@ public class CatalogRenderer
 		LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View 		   appView  = inflater.inflate(R.layout.app_info_single, null);
 		
+		// Gets Time to Expiration
+		long   expirationInMinutes = (app.getDateExpires().getTime() - System.currentTimeMillis()) / 1000 / 60;
+		String expirationMessage   = (expirationInMinutes == 0) ? "<1 min" : expirationInMinutes + " min";
+		
 		// Gets Controls
 		TextView  txtTitle 	 	 = (TextView)appView.findViewById(R.id.txtTitle);
 		TextView  txtCategory    = (TextView)appView.findViewById(R.id.txtCategory);
@@ -190,7 +194,7 @@ public class CatalogRenderer
 		txtTitle.setText(app.getName());
 		txtCategory.setText(app.getCategory());
 		txtDescription.setText(app.getDescription());
-		txtRunMessage.setText(Theme.getRunMessage(app.getCategory()));
+		txtRunMessage.setText(Theme.getRunMessage(app.getCategory()) + " (" + expirationMessage + " left)" );
 					
 		// Sets Colors
 		txtTitle.setTextColor(Theme.getColor(app.getCategory()));

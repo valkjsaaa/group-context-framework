@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
 import org.json.JSONArray;
@@ -27,14 +26,12 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.location.Location;
-import android.location.LocationManager;
-import android.media.MediaScannerConnection;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.ValueCallback;
 import android.widget.Toast;
@@ -52,9 +49,10 @@ import com.adefreitas.androidproviders.ActivityContextProvider;
 import com.adefreitas.androidproviders.AudioContextProvider;
 import com.adefreitas.androidproviders.BluetoothContextProvider;
 import com.adefreitas.androidproviders.BluewaveContextProvider;
+import com.adefreitas.androidproviders.CompassContextProvider;
+import com.adefreitas.androidproviders.GPSContextProvider;
 import com.adefreitas.androidproviders.GoogleCalendarProvider;
 import com.adefreitas.androidproviders.LocationContextProvider;
-import com.adefreitas.awareproviders.LightContextProvider;
 import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
@@ -122,7 +120,7 @@ public class GCFApplication extends Application
 	};
 	
 	// Object Serialization
-	private Gson gson;
+	private Gson 			  gson;
 	
 	// App Storage
 	private SharedPreferences appSharedPreferences;
@@ -171,7 +169,7 @@ public class GCFApplication extends Application
 		startGCFService();
 
 		// Application Preferences
-		appSharedPreferences = this.getApplicationContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+		appSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		
 		// Creates the Cloud Toolkit Helper
 		cloudToolkit = new SftpToolkit(this);
@@ -258,6 +256,8 @@ public class GCFApplication extends Application
 	{
 		if (gcfService == null)
 		{
+			Log.d(LOG_NAME, "Starting GCF Service");
+			
 			// Creates Service for GCF
 			Intent i = new Intent(this, GCFService.class);
 			i.putExtra("name", "Impromptu");
@@ -466,22 +466,19 @@ public class GCFApplication extends Application
 	{
 		JSONObject location = new JSONObject();
 		
-		if (appSharedPreferences.getBoolean("BLUEWAVE_location", true))
+		try
 		{
-			try
-			{
-				LocationContextProvider locationProvider = (LocationContextProvider)gcfService.getGroupContextManager().getContextProvider("LOC");
+			LocationContextProvider locationProvider = (LocationContextProvider)gcfService.getGroupContextManager().getContextProvider("LOC");
 
-		        if (locationProvider != null && locationProvider.hasLocation()) 
-		        {
-		        	location.put("LATITUDE", locationProvider.getLatitude());
-		            location.put("LONGITUDE", locationProvider.getLongitude());
-		        }
-			}
-			catch (Exception ex)
-			{
-				Toast.makeText(this, "Could not write location context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-			}
+	        if (locationProvider != null && locationProvider.hasLocation()) 
+	        {
+	        	location.put("LATITUDE", locationProvider.getLatitude());
+	            location.put("LONGITUDE", locationProvider.getLongitude());
+	        }
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write location context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
 		}
         
         return location;
@@ -712,6 +709,7 @@ public class GCFApplication extends Application
     public ValueCallback<Uri[]> mFilePathCallback;
     public ValueCallback<Uri>   mUploadMessage;
     public Uri      			imageUri;
+    public String 				mCameraPhotoPath;
 	
 	// Catalog Methods --------------------------------------------------------------------------
 	public boolean addApplicationToCatalog(AppInfo newApp)
@@ -846,8 +844,9 @@ public class GCFApplication extends Application
 			
 			if (!category.containsAvailableApps())
 			{
-				appCatalog.remove(category);
-				appCatalog.add(category);
+				//appCatalog.remove(category);
+				//appCatalog.add(category);
+				changed = true;
 			}
 		}
 				
@@ -977,7 +976,7 @@ public class GCFApplication extends Application
 		private void onGCFServiceStarted(Context context, Intent intent)
 		{
 			if (gcfService != null && gcfService.isReady())
-			{
+			{	
 				// Connects to Default DNS Channel and Channels
 				connectionKey = gcfService.getGroupContextManager().connect(COMM_MODE, IP_ADDRESS, PORT);
 				
@@ -989,6 +988,8 @@ public class GCFApplication extends Application
 				BluewaveContextProvider  bluewaveProvider  = new BluewaveContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
 				BluetoothContextProvider bluetoothProvider = new BluetoothContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
 				LocationContextProvider  locationProvider  = new LocationContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				GPSContextProvider		 gpsProvider	   = new GPSContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				CompassContextProvider   compassProvider   = new CompassContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				
 				// Registers Context Providers
 				gcfService.getGroupContextManager().registerContextProvider(calendarProvider);
@@ -998,15 +999,13 @@ public class GCFApplication extends Application
 				//gcfService.getGroupContextManager().registerContextProvider(bluewaveProvider);
 				gcfService.getGroupContextManager().registerContextProvider(bluetoothProvider);
 				gcfService.getGroupContextManager().registerContextProvider(locationProvider);
+				gcfService.getGroupContextManager().registerContextProvider(gpsProvider);
+				gcfService.getGroupContextManager().registerContextProvider(compassProvider);
 				
-				// Starts Activity Recognition
-				//acp.start(true);
-				
-				// Starts Location
-				//locationProvider.start(true);
-				
+				// Requests Context Information from Self
 				gcfService.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
 				gcfService.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
+				//gcfService.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, 250, new String[0]);
 				
 				if (!isInForeground())
 				{
@@ -1219,32 +1218,44 @@ public class GCFApplication extends Application
 	
 	public static void sendQuery(GCFApplication application, boolean force)
 	{
+		boolean sendUpdate = application.appSharedPreferences.getBoolean("impromptu_send", true) || application.getGroupContextManager().getBatteryMonitor().isCharging();
+		//Toast.makeText(application, "Send Update = " + sendUpdate, Toast.LENGTH_SHORT).show();
+		
 		if (application.getGCFService() != null)
 		{
 			JSONContextParser context = application.getGCFService().getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext(); 
 			
-			//long timeElapsed = new Date().getTime() - lastTransmission.getTime();
-			
-			if (force || context != null)// && timeElapsed > UPDATE_SECONDS * 1000)
+			if (context != null)
 			{
 				Log.d(LOG_NAME, "Sending Context to DNS: " + context.toString().length() + " bytes");
 				
 				// Updates the Application Catalog to Remove Expired Entries
 				application.updateCatalog();
 				
-				// Updates the Device's Personal Context
-				application.setPersonalContext(null);
-				
 				// Sends a Context Update to the System
-				application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
-						ApplicationSettings.DNS_CHANNEL, 
-						"LOS_DNS", 
-						new String[] { "LOS_DNS" }, 
-						"QUERY", 
-						new String[] { "CONTEXT=" + context.toString(), "TIMESTAMP=" + new Date().toString(), "PID=" + APP_PROCESS_ID });
-								
-				//lastTransmission = new Date();
-			}		
+				if (sendUpdate || force)
+				{
+					// Updates the Device's Personal Context
+					application.setPersonalContext(null);
+					
+					// Sends the Context to the Application Directory
+					application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
+							ApplicationSettings.DNS_CHANNEL, 
+							"LOS_DNS", 
+							new String[] { "LOS_DNS" }, 
+							"QUERY", 
+							new String[] { "CONTEXT=" + context.toString(), "TIMESTAMP=" + new Date().toString(), "PID=" + APP_PROCESS_ID });
+					
+					if (force)
+					{
+						Toast.makeText(application, "Sending Context", Toast.LENGTH_SHORT).show();
+					}
+				}
+			}
+			else
+			{
+				Toast.makeText(application, "No Context Generated.  Stand By.", Toast.LENGTH_SHORT).show();
+			}
 		}
 		else
 		{
@@ -1283,10 +1294,6 @@ public class GCFApplication extends Application
 					
 					// Removes Any Existing Callbacks
 					removeCallbacks(this);
-					
-					// Notifies the Application that the App List has Changed (or been erased)
-					Intent i = new Intent(ACTION_APP_UPDATE);
-					app.sendBroadcast(i);
 					
 					// Sleep Time Depends on Whether or Not the Application is in the Foreground
 					postDelayed(this, nextExecute.getTime() - System.currentTimeMillis());		

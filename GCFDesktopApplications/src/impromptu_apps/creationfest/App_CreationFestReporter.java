@@ -1,7 +1,6 @@
 package impromptu_apps.creationfest;
 
 import impromptu_apps.DesktopApplicationProvider;
-import impromptu_apps.ProblemContextProvider;
 
 import java.util.Calendar;
 
@@ -51,10 +50,10 @@ public class App_CreationFestReporter extends DesktopApplicationProvider
 		super.onComputeInstruction(instruction);
 	}
 
-	public int getLifetime()
+	public int getLifetime(String userContextJSON)
 	{
 		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 6, 28, 8, 0);
+		cal.set(2015, 5, 29, 0, 0);
 		
 		return (int)((cal.getTimeInMillis() - System.currentTimeMillis()) / 1000);
 	}
@@ -63,6 +62,9 @@ public class App_CreationFestReporter extends DesktopApplicationProvider
 	public boolean sendAppData(String json)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-		return hasEmailAddress(parser, "adrian.defreitas@gmail.com");
+		
+		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
+		
+		return this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) || distanceToFestival < 5.0;
 	}
 }

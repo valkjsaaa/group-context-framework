@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -114,10 +115,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
     private static final String  SS_UPLOAD_MESSAGE      = "UPLOAD_MESSAGE";
     private static final String  SS_CAMERA_PHOTO_PATH   = "CAMERA_PHOTO_PATH";
     private static final String  SS_IMAGE_URI           = "IMAGE_URI";
-    
-    private String 				 mCameraPhotoPath;
-
-	
+    	
 	// Current App/Function
 	private AppInfo 					 app;
 	private ArrayList<ApplicationObject> applicationObjects;
@@ -185,7 +183,6 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		// Restores the App State so Long as the App is Running!
 		if (savedInstanceState != null)
 		{
-	
 			progressSpinner.setVisibility(View.GONE);
 		}
 	}
@@ -239,8 +236,6 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	protected void onPause() 
 	{
 	    super.onPause();
-	    this.unregisterReceiver(receiver);
-	    this.application.setContextReceiver(null);
 	    this.application.setInForeground(false);
 	}
 	
@@ -252,6 +247,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		super.onDestroy();
 		this.application.setContextReceiver(null);
 		this.application.clearSnapToItHistory();
+	    this.unregisterReceiver(receiver);
 		webView.destroy();
 	}
 	
@@ -282,6 +278,8 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_quit)))
 		{
+			finish();
+			
 			// Kills the Timer Thread
 			application.halt();
 			
@@ -318,17 +316,20 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	protected void onSaveInstanceState(Bundle outState)
 	{
 		//Toast.makeText(this, "Save Instance State Called", Toast.LENGTH_SHORT).show();
-		
 		super.onSaveInstanceState(outState);
+		outState.putString(SS_CAMERA_PHOTO_PATH, application.mCameraPhotoPath);
 		webView.saveState(outState);
-		outState.putString(SS_CAMERA_PHOTO_PATH, mCameraPhotoPath);
 	}
 	
+	/**
+	 * Android Method:  Used to Restore the Activity's State
+	 */
 	protected void onRestoreInstanceState(Bundle savedInstanceState)
 	{
 		super.onRestoreInstanceState(savedInstanceState);
+		application.mCameraPhotoPath = savedInstanceState.getString(SS_CAMERA_PHOTO_PATH);
 		webView.restoreState(savedInstanceState);
-		mCameraPhotoPath = savedInstanceState.getString(SS_CAMERA_PHOTO_PATH);
+		
 	}
 	
 	/**
@@ -356,8 +357,6 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent)
     {
-    	Toast.makeText(this, "Activity Result Called", Toast.LENGTH_SHORT).show();
-    	
     	if (Build.VERSION.SDK_INT >= 21)
     	{
             if(requestCode != FILECHOOSER_RESULTCODE || application.mFilePathCallback == null) 
@@ -372,21 +371,27 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
             // Check that the response is a good one
             if (resultCode == Activity.RESULT_OK) 
             {
-                if(intent == null) {
-                    // If there is not data, then we may have taken a photo
-                    if(mCameraPhotoPath != null) 
-                    {
-                        results = new Uri[]{Uri.parse(mCameraPhotoPath)};
-                    }
-                } 
-                else 
-                {
-                    String dataString = intent.getDataString();
-                    if (dataString != null) 
-                    {
-                        results = new Uri[]{Uri.parse(dataString)};
-                    }
-                }
+//                if(intent == null) 
+//                {
+//                	System.out.println("A");
+//                	// If there is not data, then we may have taken a photo
+//                    if(application.mCameraPhotoPath != null) 
+//                    {
+//                        results = new Uri[]{Uri.parse(application.mCameraPhotoPath)};
+//                    }
+//                } 
+//                else 
+//                {
+//                    String dataString = intent.getDataString();
+//                	System.out.println("B " + dataString);
+//                    //if (dataString != null) 
+//                    {
+//                        //results = new Uri[]{Uri.parse(dataString)};
+//                    	results = new Uri[] { Uri.parse(application.mCameraPhotoPath) };
+//                    }
+//                }
+            	
+            	results = new Uri[] { Uri.parse(application.mCameraPhotoPath) };
             }
 
             application.mFilePathCallback.onReceiveValue(results);
@@ -674,6 +679,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		final String userInterface  = data.getPayload("UI");
 		final String websitePath    = data.getPayload("WEBSITE");
 		final String packageName    = data.getPayload("PACKAGE");
+		final String uninstallName  = data.getPayload("UNINSTALL");
 		
 		// Extracts EXTRA Values 
 		final String objectJSON     = data.getPayload("OBJECTS");
@@ -690,9 +696,10 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		String previousUI = "";
 		if (app.getUI() != null)
 		{
-			String previousHtml    = app.getUI().getPayload("UI");
-			String previousWebsite = app.getUI().getPayload("WEBSITE");
-			String previousPackage = app.getUI().getPayload("PACKAGE");
+			String previousHtml      = app.getUI().getPayload("UI");
+			String previousWebsite   = app.getUI().getPayload("WEBSITE");
+			String previousPackage   = app.getUI().getPayload("PACKAGE");
+			String previousUninstall = app.getUI().getPayload("UNINSTALL");
 			
 			if (previousHtml != null)
 			{
@@ -705,6 +712,10 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 			else if (previousPackage != null)
 			{
 				previousUI = previousPackage;
+			}
+			else if (previousUninstall != null)
+			{
+				previousUI = previousUninstall;
 			}
 		}
 		
@@ -750,6 +761,20 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 			
 			// Kills this Activity Since we Don't Need it Anymore!
 			finish();
+		}
+		else if (uninstallName != null && (!uninstallName.equals(previousUI) || force))
+		{
+			app.setUI(data);
+			
+			if (appInstalled(uninstallName))
+			{
+				Uri packageUri = Uri.parse("package:" + uninstallName);
+	            Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageUri);
+	            startActivity(uninstallIntent);
+				
+				// Kills this Activity Since we Don't Need it Anymore!
+				finish();
+			}
 		}
 		
 		// EXPERIMENTAL Processes Objects
@@ -834,6 +859,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 				// Sends the Request for Contextual Information
 				application.getGroupContextManager().sendRequest(app.getAppContextType(), ContextRequest.SINGLE_SOURCE, new String[] { app.getDeviceID() }, 60000, 
 					new String[] { 
+						"CHANNEL=dev/" + application.getGroupContextManager().getDeviceID(),
 						"credentials=" + application.getGroupContextManager().getDeviceID(),
 						"preferences=" + ((preferences.length() > 0) ? preferences.substring(0, preferences.length()-1) : ""),
 						"context="     + application.getBluewaveManager().getPersonalContextProvider().getContext().toString()
@@ -902,7 +928,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	
     public class CustomChromeClient extends WebChromeClient
     {
-    //For Android 4.1
+     //For Android 4.1
     @SuppressWarnings("unused")
      public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType)
      {
@@ -959,7 +985,8 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
             // Continue only if the File was successfully created
             if (photoFile != null) 
             {
-                mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
+            	application.mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
+                Toast.makeText(AppEngine.this, "Photo Path: " + application.mCameraPhotoPath, Toast.LENGTH_SHORT).show();
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
             } 
             else 

@@ -15,5 +15,6 @@
     <string name="title_activity_splashscreen">Splashscreen</string>
     <string name="title_activity_debug">Developer Tools</string>
     <string name="title_activity_show_web_view">ShowWebView</string>
+    <string name="title_activity_problem_report">Problem Reporter</string>
 
 </resources>

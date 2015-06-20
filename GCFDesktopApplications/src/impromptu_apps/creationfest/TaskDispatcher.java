@@ -22,6 +22,7 @@ public class TaskDispatcher
 	
 	// GCF
 	private GroupContextManager gcm;
+	private String 				connectionKey;
 	
 	// Record of all Active Tasks
 	private HashMap<String, App_Task> tasks = new HashMap<String, App_Task>();
@@ -33,8 +34,9 @@ public class TaskDispatcher
 	 */
 	public TaskDispatcher(SQLToolkit toolkit, GroupContextManager gcm)
 	{
-		this.toolkit = toolkit;
-		this.gcm 	 = gcm;
+		this.toolkit 	   = toolkit;
+		this.gcm 		   = gcm;
+		this.connectionKey = this.gcm.getConnectionKey(COMM_MODE, IP_ADDRESS, PORT);
 	}
 	
 	/**
@@ -42,7 +44,7 @@ public class TaskDispatcher
 	 * @param id
 	 * @param resultSet
 	 */
-	public void createTask(String id, ResultSet resultSet)
+	public void createOrUpdateTask(String id, ResultSet resultSet)
 	{		
 		try
 		{
@@ -60,6 +62,11 @@ public class TaskDispatcher
 				App_Task newTask = new App_Task(id, this, timestamp, description, telephone, photo, latitude, longitude, status, tags, gcm, COMM_MODE, IP_ADDRESS, PORT);
 				gcm.registerContextProvider(newTask);
 				tasks.put(id, newTask);
+				gcm.subscribe(connectionKey, newTask.getChannel());
+			}
+			else
+			{
+				tasks.get(id).update(id, timestamp, description, telephone, photo, latitude, longitude, status, tags);
 			}
 		}
 		catch (Exception ex)
@@ -67,7 +74,7 @@ public class TaskDispatcher
 			ex.printStackTrace();
 		}
 	}
-	
+		
 	/**
 	 * Removes a Task from the Queue
 	 * @param id
@@ -78,6 +85,7 @@ public class TaskDispatcher
 		{
 			System.out.println("  Removing Task: " + id);
 			gcm.unregisterContextProvider(id);
+			gcm.unsubscribe(connectionKey, tasks.get(id).getChannel());
 			tasks.remove(id);
 		}
 	}
@@ -92,6 +100,9 @@ public class TaskDispatcher
 		toolkit.runUpdateQuery(query);
 	}
 	
+	/**
+	 * Periodically Looks at the DB and Updates the List of Tasks
+	 */
 	public void run()
 	{
 		try
@@ -112,15 +123,8 @@ public class TaskDispatcher
 				// Keeps a Log of Apps that are Considered ACTIVE
 				tasksUpdated.add(id);
 				
-				if (!tasks.containsKey(id))
-				{
-					createTask(id, result);
-				}
-				else
-				{
-					// TODO: Updates a Task
-					//tasks.get(id).update();
-				}
+				// Creates or Updates a Task
+				createOrUpdateTask(id, result);
 			}
 			
 			for (String generatedTaskID : tasks.keySet().toArray(new String[0]))

@@ -177,6 +177,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		{
 			// Kills the Timer Thread
 			application.halt();
+		
+			application.getGCFService().setRestart(false);
 			
 			// Creates an Intent to Kill the GCF Service
 			Intent intent = new Intent(this, GCFService.class);
@@ -225,9 +227,12 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 //			{
 //				application.getGroupContextManager().cancelRequest(request.getContextType());
 //			}
-						
+			
+			// Clears Active Applications
 			for (AppInfo app : application.getActiveApplications())
 			{
+				application.getGroupContextManager().cancelRequest(app.getAppContextType());
+				
 				if (application.getGroupContextManager().isConnected(app.getCommMode(), app.getIPAddress(), app.getPort()))
 				{
 					String connectionKey = application.getGroupContextManager().getConnectionKey(app.getCommMode(), app.getIPAddress(), app.getPort());
@@ -295,6 +300,17 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	 */
 	public void promptToConnect(final AppInfo app, final boolean forceConfirmation)
 	{	
+		// CHEATER CHEATER!!!
+		if (app.getAppContextType().equals("CF_REPORT"))
+		{
+		  	// Immediately Connects if No Context/Preferences are Needed
+			Intent i = new Intent(application, ProblemReport.class);
+    		startActivity(i); 
+    		application.addActiveApplication(app);
+    		selectedApp = null;
+			return;
+		}
+
 		if (app.getPreferences().size() == 0 && app.getContextsRequired().size() == 0 && !forceConfirmation)
 		{
 			selectedApp = null;
@@ -374,7 +390,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			
 		    // Shows the Finished Dialog
 			alertDialog.show();	
-		}
+		}	
 	}
 	
 	/**
@@ -382,6 +398,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	 */
 	public void updateViewContents()
 	{					
+		//Toast.makeText(this, "Updating View", Toast.LENGTH_SHORT).show();
+		
 		// Determines What Apps are Currently Available
 		List<AppInfo> availableApps = application.getAvailableApps();
 		
@@ -400,7 +418,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			// Runs a Process to Auto Launch the Best App
 			runAutoLaunch();
 			
-			// EXPERIMENTAL:  Rendering Custom UI
+			// Rendering Custom UI
 			layoutApps.addView(CatalogRenderer.renderCatalog(this, application.getCatalog()));
 			
 			// Displays the Snap-To-It Control (Assuming that the Feature is Enabled in Settings)
@@ -438,17 +456,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 				imgIconBig.setBackground(this.getResources().getDrawable(R.drawable.ic_launcher));
 			}
 			
-			// Determines if the Snap To It Button is Visible\
+			// Determines if the Snap To It Button is Visible
 			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
-			
-//			if (new Date().getTime() - application.getLastSnapToItDeviceContact().getTime() > 120000)
-//			{
-//				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_unfocused));
-//			}
-//			else
-//			{
-//				imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
-//			}	
 		}
 		else
 		{
@@ -572,7 +581,6 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		public void onClick(View v) 
 		{
 			GCFApplication.sendQuery(application, true);
-			Toast.makeText(application, "Sending Updated Context", Toast.LENGTH_SHORT).show();
 		}
     };
 	

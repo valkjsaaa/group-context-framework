@@ -104,6 +104,27 @@ public class ImageToolkit
 		try
 		{
 	    	Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(cr, ImageToolkit.getOutputMediaFileUri(originalFile));
+	    	return resizeImage(originalBitmap, newWidth, newHeight);
+		}
+		catch (Exception ex)
+		{
+			Log.e(LOG_NAME, "Problem Resizing Image: " + ex.getMessage());
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Resizes the Specified Bitmap
+	 * @param originalBitmap
+	 * @param newWidth
+	 * @param newHeight
+	 * @return
+	 */
+	public static Bitmap resizeImage(Bitmap originalBitmap, int newWidth, int newHeight)
+	{
+		try
+		{
 	    	Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true);
 	    	
 	    	return resizedBitmap;
@@ -115,7 +136,7 @@ public class ImageToolkit
 		
 		return null;
 	}
-
+	
 	/**
 	 * Writes the Bitmap to a File
 	 * @param bitmap

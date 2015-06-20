@@ -34,19 +34,24 @@ public class SettingsActivity extends PreferenceActivity
 		// Saves a Link to the Application
 		this.application = (GCFApplication)this.getApplication();
 		
-		// Sets Read-Only Preferences
 		try
 		{
-			PreferenceCategory gcfCategory = (PreferenceCategory)findPreference("category_app_details");
+			PreferenceCategory appCategory = (PreferenceCategory)findPreference("category_app_details");
 			
 			// Sets the Application Version
 			String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-			EditTextPreference versionPref = (EditTextPreference)gcfCategory.findPreference("app_version");
+			EditTextPreference versionPref = (EditTextPreference)appCategory.findPreference("app_version");
 			versionPref.setSummary(version);
+			
+			PreferenceCategory gcfCategory = (PreferenceCategory)findPreference("category_gcf");
 			
 			// Sets the GCF Version
 			EditTextPreference gcfVersionPref = (EditTextPreference)gcfCategory.findPreference("gcf_version");
 			gcfVersionPref.setSummary(GroupContextManager.FRAMEWORK_VERSION + "");
+
+			// Sets the GCF Service
+			EditTextPreference gcfServicePref = (EditTextPreference)gcfCategory.findPreference("gcf_service");
+			gcfServicePref.setSummary("ID: " + application.getGCFService().getServiceID() + "\nStarted: " + application.getGCFService().getDateStarted());
 			
 			// Sets the GCF Comm Version
 			EditTextPreference commPref = (EditTextPreference)gcfCategory.findPreference("gcf_comm");

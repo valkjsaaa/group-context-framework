@@ -1,6 +1,7 @@
 package com.adefreitas.groupcontextframework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -59,6 +60,7 @@ public abstract class ContextProvider
 		{
 			// Allows the Framework to Send the Message to the Desired Channel
 			// WARNING:  This can be problematic if two devices are connected to two different MQTT servers
+			System.out.println("Sending to Channel " + channel + ": " + Arrays.toString(destination));
 			this.getGroupContextManager().sendContext(channel, this.getContextType(), destination, context);
 		}
 		else

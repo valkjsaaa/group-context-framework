@@ -6,6 +6,9 @@ import com.adefreitas.messages.CommMessage;
 
 public abstract class CommThread extends Thread
 {		
+	// Constants
+	public static final String PUBLIC_CHANNEL = "cmu/gcf_framework";
+	
 	// Connection Settings
 	private CommManager commManager;
 	private String 		ipAddress;
@@ -157,7 +160,7 @@ public abstract class CommThread extends Thread
 	 */
 	public String getDefaultPublicChannel()
 	{
-		return "cmu/gcf_framework";
+		return PUBLIC_CHANNEL;
 	}
 	
 	/**
@@ -177,7 +180,7 @@ public abstract class CommThread extends Thread
 	{
 		if (!arp.contains(deviceID))
 		{
-			this.getCommManager().getGroupContextManager().log(GroupContextManager.LOG_COMMUNICATIONS, "Mapped " + deviceID + " to " + ipAddress + ":" + port);
+			this.getCommManager().getGroupContextManager().log(GroupContextManager.LOG_COMMUNICATIONS, "Associating " + deviceID + " with " + ipAddress + ":" + port);
 			arp.add(deviceID);
 		}
 	}
@@ -215,4 +218,5 @@ public abstract class CommThread extends Thread
 		
 		return String.valueOf(result).trim();
 	}
+
 }

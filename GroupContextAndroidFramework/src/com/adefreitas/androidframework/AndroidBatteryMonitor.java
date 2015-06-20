@@ -24,6 +24,11 @@ public class AndroidBatteryMonitor extends BatteryMonitor
 	// Android Mechanism for Listening to Battery Information
 	private BatteryBroadcastReceiver batteryInfoReceiver;
 	
+	
+	int level;
+    int plugged;
+    int scale;
+	
 	/**
 	 * Constructor
 	 * @param a - the Activity that created this object
@@ -58,9 +63,9 @@ public class AndroidBatteryMonitor extends BatteryMonitor
 		public void onReceive(Context context, Intent intent) 
         {
 			// Calculates Battery Stats
-			int     level	    = intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0);
-            int     plugged	    = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0);
-            int     scale	    = intent.getIntExtra(BatteryManager.EXTRA_SCALE,0);
+			level	= intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0);
+            plugged	= intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0);
+            scale	= intent.getIntExtra(BatteryManager.EXTRA_SCALE,0);
 
             // Extraneous Battery Options that COULD Be Downloaded
 			//int     health	    = intent.getIntExtra(BatteryManager.EXTRA_HEALTH,0);
@@ -100,5 +105,12 @@ public class AndroidBatteryMonitor extends BatteryMonitor
             	}
             }
         }	
+	}
+
+	
+	@Override
+	public boolean isCharging() 
+	{
+		return plugged != 0;
 	}	
 }

@@ -98,7 +98,7 @@ public class VideoProvider extends ContextProvider
 	@Override
 	public void sendContext() 
 	{
-		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { "recording=" + recording, "filename=" + filename, "battery=" + this.getGroupContextManager().getBatteryPercentage() });
+		this.getGroupContextManager().sendContext(this.getContextType(), new String[0], new String[] { "recording=" + recording, "filename=" + filename, "battery=" + this.getGroupContextManager().getBatteryMonitor().getBatteryPercent() });
 	}
 	
 	protected boolean prepareForVideoRecording() 
