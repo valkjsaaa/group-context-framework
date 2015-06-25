@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
+import com.adefreitas.desktopframework.toolkit.SQLToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
@@ -29,6 +30,9 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	
 	// Link to the Folder Where APP Data is Stored
 	private static String APP_DATA_FOLDER = "appData/liveOS/";
+	
+	// DEBUG:  Used to Log Important Events
+	private SQLToolkit sqlEventLogger;
 	
 	/**
 	 * Constructor
@@ -94,8 +98,11 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	{
 		super.onSubscription(newSubscription);
 		
+		// Logs the Event
+		log("APP_START", "Started by USER " + newSubscription.getDeviceID());
+		
 		// Sends the UI Immediately
-		sendContext();
+		//sendContext();
 		
 		// Determines Credentials
 		String username = CommMessage.getValue(newSubscription.getParameters(), "credentials");
@@ -113,30 +120,26 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
-		//System.out.println("Received Instruction: " + instruction.toString());
-		
-//		if (instruction.getCommand().equals("DEVICE_QUERY"))
-//		{			
-//			String deviceID = CommMessage.getValue(instruction.getParameters(), "DEVICE_ID");
-//			String context  = CommMessage.getValue(instruction.getParameters(), "CONTEXT");
-//			
-//			if (context != null && deviceID != null)
-//			{
-//				JSONContextParser parser     = new JSONContextParser(JSONContextParser.JSON_TEXT, context);
-//				boolean 		  shouldSend = this.sendAppData(context);
-//				
-//				if (shouldSend)
-//				{					
-//					getGroupContextManager().sendComputeInstruction("LOS_DNS", new String[] { "LOS_DNS" }, "SEND_ADVERTISEMENT", new String[] { "APP_ID=" + this.getAppID(), "DEVICE_ID=" + deviceID });
-//				}
-//			}
-//			else
-//			{
-//				System.out.println("CONTEXT OR DEVICE ID IS NULL");
-//			}
-//		}
+		// Do Nothing By Default!
 	}
 		
+	public void setSQLEventLogger(SQLToolkit toolkit)
+	{
+		this.sqlEventLogger = toolkit;
+	}
+	
+	public void log(String tag, String message)
+	{
+		if (sqlEventLogger != null)
+		{
+			String sql = String.format("INSERT INTO eventLog (date, app, tag, message) VALUES (now(), '%s', '%s', '%s')", 
+					this.appID, tag, message);
+			
+			// Updates the Database
+			sqlEventLogger.runUpdateQuery(sql);
+		}
+	}
+	
 	// HELPER METHODS ---------------------------------------------------------------------------------
 	/**
 	 * Retrieves the Java Robot, which can press keys/move the mosue

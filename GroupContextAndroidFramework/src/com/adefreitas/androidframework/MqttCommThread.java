@@ -462,7 +462,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 					while (!success)
 					{
 						// Makes Sure the Client it Good to Go Before Officially Subscribing
-						if (client != null && client.isConnected())
+						if (client != null && client.isConnected() && !channels.contains(channel))
 						{
 							Log.d(LOG_NAME, "ATTEMPT " + i + ":  MQTT subscribing to: " + channel);
 							channels.add(channel);

@@ -32,6 +32,8 @@ import com.adefreitas.androidframework.AndroidCommManager;
 import com.adefreitas.androidframework.AndroidGroupContextManager;
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.androidframework.toolkit.HttpToolkit;
+import com.adefreitas.androidframework.toolkit.SftpToolkit;
 import com.adefreitas.androidliveos.AndroidApplicationProvider;
 import com.adefreitas.androidproviders.BluewaveContextProvider;
 import com.adefreitas.beaconapps.App_GameConnectMeFactory;

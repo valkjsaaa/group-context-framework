@@ -280,7 +280,7 @@ public class MqttCommThread extends CommThread implements MqttCallback
 	{
 		try
 		{
-			if (client != null && client.isConnected())
+			if (client != null && client.isConnected() && !channels.contains(channel))
 			{
 				System.out.println("MQTT Subscribing to " + channel);
 				channels.add(channel);

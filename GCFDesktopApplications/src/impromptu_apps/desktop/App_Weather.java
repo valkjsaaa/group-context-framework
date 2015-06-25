@@ -55,8 +55,9 @@ public class App_Weather extends DesktopApplicationProvider
 		day = calendar.get(Calendar.DAY_OF_MONTH);
 		
 		// Populates coordinates
-		// NOTE:  I am using X, Y for Longitude, Latitude (the reverse of what you normally think)
 		coordinates.put("15221", new Point2D.Double(40.4338964, -79.8537098));
+		coordinates.put("17066", new Point2D.Double(40.3847, -77.8833));
+		coordinates.put("95351", new Point2D.Double(37.6614, -120.9944));
 	}
 	
 	@Override
@@ -130,7 +131,7 @@ public class App_Weather extends DesktopApplicationProvider
 		
 		// Only Lets you See the App ONCE per Day!
 		//f (this.hasEmailAddress(parser, "adrian.defreitas@gmail.com"))
-		if (calendar.get(Calendar.HOUR_OF_DAY) >= 6 && calendar.get(Calendar.HOUR_OF_DAY) <= 9 && !devicesAccessed.contains(deviceID))
+		if (bestDistance < 20.0 && calendar.get(Calendar.HOUR_OF_DAY) >= 5 && calendar.get(Calendar.HOUR_OF_DAY) <= 9 && !devicesAccessed.contains(deviceID))
 		{
 			return true;
 		}
@@ -171,7 +172,7 @@ public class App_Weather extends DesktopApplicationProvider
 	{
 		if (!history.containsKey(zipcode))
 		{
-			String weatherJSON = HttpToolkit.get("http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20location%3D%22" + 15221 + "%22&format=json");
+			String weatherJSON = HttpToolkit.get("http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20location%3D%22" + zipcode + "%22&format=json");
 			
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, weatherJSON);
 			
@@ -192,39 +193,40 @@ public class App_Weather extends DesktopApplicationProvider
 				
 				if (low < 60)
 				{
-					recommendedBottom = "wear pants";
+					recommendedBottom = "pants";
 				}
 				else
 				{
-					recommendedBottom = "wear shorts";
+					recommendedBottom = "shorts";
 				}
 				
-				if (low < 70)
-				{
-					if (high > 80)
-					{
-						recommendedTop = "bring a jacket";
-					}
-					else
-					{
-						recommendedTop = "wear a long sleeve shirt";
-					}
-				}
-				else
+				if (high > 85)
 				{
 					recommendedTop = "wear a short sleeve shirt";
 				}
+				else if (high > 70)
+				{
+					recommendedTop = "wear a long sleeve shirt";
+				}
+				else if (high > 60)
+				{
+					recommendedTop = "wear a light jacket";
+				}
+				else
+				{
+					recommendedTop = "wear a jacket";
+				}
 				
-				forecast = (text + " [" + low + "F -> " + high + "F]" + "\n\nSuggest that you " + recommendedTop + " and " + recommendedBottom);
+				forecast = (text + " [" + low + "F -> " + high + "F]" + "\n\nRecommend that you " + recommendedTop + " and " + recommendedBottom);
+				
+				// Downloads the Forecast
+				history.put(zipcode, forecast);
 			}
 			catch (Exception ex)
 			{
-				ex.printStackTrace();
-				forecast = ex.getMessage();
+				//ex.printStackTrace();
+				forecast = "The app cannot tell where you are located.";
 			}
-			
-			// Downloads the Forecast
-			history.put(zipcode, forecast);
 		}
 		else
 		{

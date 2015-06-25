@@ -46,6 +46,10 @@ public class Application implements EventReceiver
 	public FavorDispatcher f;
 	
 	// SQL Toolkit
+	public static final String SQL_SERVER   = "epiwork.hcii.cs.cmu.edu";
+	public static final String SQL_USERNAME = "adrian";
+	public static final String SQL_PASSWORD = "@dr1@n1234";
+	public static final String SQL_DB		= "gcf_impromptu";
 	public SQLToolkit sqlToolkit;
 	
 	/**
@@ -74,21 +78,24 @@ public class Application implements EventReceiver
 
 		// Initializes SQL Connection
 		//sqlToolkit = new SQLToolkit("citrus-acid.com", "citrusa_michael", "mysql1234", "citrusa_michael");
-		sqlToolkit = new SQLToolkit("epiwork.hcii.cs.cmu.edu", "adrian", "@dr1@n1234", "gcf_impromptu");
+		sqlToolkit = new SQLToolkit(SQL_SERVER, SQL_USERNAME, SQL_PASSWORD, SQL_DB);
 		
-		// Initializes Apps
+		// Creates the Individual Apps that this Application will Host
 		initializeApps();
 		
 		// Initializes Communications Channel
 		for (DesktopApplicationProvider app : appProviders)
 		{
+			app.setSQLEventLogger(sqlToolkit);
 			gcm.registerContextProvider(app);
 			gcm.subscribe(connectionKey, app.getContextType());
 			System.out.println("Application [" + app.toString() + "] Ready.");
 		}
 		
+		// Removes Public Channel (No Reason to Listen to It)
 		gcm.unsubscribe(connectionKey, CommThread.PUBLIC_CHANNEL);
 		
+		// And We're Done!
 		System.out.println(appProviders.size() + " App(s) Initialized!\n");
 	}
 
@@ -97,29 +104,29 @@ public class Application implements EventReceiver
 	 */
 	private void initializeApps()
 	{
-		// Standard Apps
+		// Standard Apps (IMPROMPTU_CORE)
 		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
  	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
- 	    //appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
-		//appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+//		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// CreationFest
 		//appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CreationFestSurvey(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CreationFestUninstaller(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		t = new TaskDispatcher(sqlToolkit, gcm);
+//		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestProblems(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestSurvey(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestUninstaller(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		t = new TaskDispatcher(sqlToolkit, gcm);
 		
 		// Favors
 		//f = new FavorDispatcher(sqlToolkit, gcm);

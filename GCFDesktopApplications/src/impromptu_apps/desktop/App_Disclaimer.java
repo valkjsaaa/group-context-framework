@@ -45,13 +45,18 @@ public class App_Disclaimer extends DesktopApplicationProvider
 		ui	      += "<p><input value=\"DISAGREE\" type=\"button\" height=\"150\" width=\"300\" onclick=\"device.finish();\"/></p>";
 								
 		// Delivers the UI Code, as Well as the Objects
-		return new String[] { "UI=" + ui };
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/disclaimer/disclaimer.php" };
 	}
 
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
 		super.onComputeInstruction(instruction);
+		
+		if (instruction.getCommand().equals("AGREE"))
+		{
+			this.log("DISCLAIMER_SIGNED", instruction.getDeviceID());
+		}
 	}
 
 	@Override

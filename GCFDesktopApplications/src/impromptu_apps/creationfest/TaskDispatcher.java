@@ -60,6 +60,15 @@ public class TaskDispatcher
 			if (!tasks.containsKey(id))
 			{		
 				App_Task newTask = new App_Task(id, this, timestamp, description, telephone, photo, latitude, longitude, status, tags, gcm, COMM_MODE, IP_ADDRESS, PORT);
+				newTask.setSQLEventLogger(toolkit);
+				
+				// Adds a Task (Assuming it has not already been created before)
+				ResultSet result = toolkit.runQuery("SELECT * FROM eventLog WHERE app='" + newTask.getAppID() + "' && tag='TASK_CREATED'");
+				if (!result.next())
+				{
+					newTask.log("TASK_CREATED", "TIMESTAMP=" + timestamp);	
+				}
+				
 				gcm.registerContextProvider(newTask);
 				tasks.put(id, newTask);
 				gcm.subscribe(connectionKey, newTask.getChannel());
@@ -85,7 +94,10 @@ public class TaskDispatcher
 		{
 			System.out.println("  Removing Task: " + id);
 			gcm.unregisterContextProvider(id);
-			gcm.unsubscribe(connectionKey, tasks.get(id).getChannel());
+			if (!tasks.get(id).getChannel().equals("TASK"))
+			{
+				gcm.unsubscribe(connectionKey, tasks.get(id).getChannel());
+			}
 			tasks.remove(id);
 		}
 	}

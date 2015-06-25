@@ -32,8 +32,9 @@ public class App_Task extends DesktopApplicationProvider
 	private TaskDispatcher dispatcher;
 	
 	// Use Metrics
-	private int     views;
-	private boolean completed;
+	ArrayList<String> deviceIDs;
+	private int       views;
+	private boolean   completed;
 	
 	/**
 	 * Constructor
@@ -45,7 +46,7 @@ public class App_Task extends DesktopApplicationProvider
 				id, 
 				"Task", 
 				"You are in range of a reported problem.  Click for more details.", 
-				"CREATIONFEST TASK",
+				"NEARBY PROBLEMS",
 				new String[] { }, 
 				new String[] { }, 
 				"https://cdn2.iconfinder.com/data/icons/ios-7-style-metro-ui-icons/128/Flurry_Google_Maps.png",
@@ -57,6 +58,8 @@ public class App_Task extends DesktopApplicationProvider
 		
 		this.dispatcher  = dispatcher;
 		this.completed   = false;
+		this.views 		 = 0;
+		this.deviceIDs   = new ArrayList<String>();
 		
 		update(id, timestamp, description, telephone, photoURL, latitude, longitude, status, tags);
 	}
@@ -77,8 +80,6 @@ public class App_Task extends DesktopApplicationProvider
 	public void onSubscription(ContextSubscriptionInfo newSubscription)
 	{
 		super.onSubscription(newSubscription);
-		
-		System.out.println(newSubscription.getDeviceID() + " has subscribed.");
 		
 		views++;
 	}
@@ -101,19 +102,23 @@ public class App_Task extends DesktopApplicationProvider
 	public boolean sendAppData(String bluewaveContext)
 	{        
 		JSONContextParser parser   = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
+		String			  deviceID = this.getDeviceID(parser);
 		double			  distance = this.getDistance(parser, latitude, longitude);
 		
 		boolean distanceCheck = distance < MIN_DISTANCE;
 		boolean roleCheck     = tagsMatch(bluewaveContext);
 		
-		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 20, 00, 00);
-		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
-		
 		// Debug Text
 		System.out.print("Distance: " + distanceCheck + "; " + "Role: " + roleCheck + "; ");
 		
-		return  !completed && roleCheck && distanceCheck && pastDate;
+		boolean send = !completed && roleCheck && distanceCheck;
+		
+		if (send && !deviceIDs.contains(deviceID))
+		{
+			deviceIDs.add(deviceID);
+		}
+		
+		return send;
 	}
 
 	/**
@@ -126,6 +131,7 @@ public class App_Task extends DesktopApplicationProvider
 		
 		if (instruction.getCommand().equalsIgnoreCase("COMPLETE_TASK"))
 		{
+			this.log("TASK_COMPLETE", "USER=" + instruction.getDeviceID() + ", VIEWS=" + views + ", UNIQUE_DEVICES=" + this.deviceIDs.size());
 			dispatcher.markComplete(timestamp);
 			completed = true;
 		}

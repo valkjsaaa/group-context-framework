@@ -2267,19 +2267,20 @@ containing a value of this type.
         public static final int abc_search_dropdown_item_icons_2line=0x7f030014;
         public static final int abc_search_view=0x7f030015;
         public static final int abc_simple_dropdown_hint=0x7f030016;
-        public static final int activity_in_out_board=0x7f030017;
-        public static final int activity_main=0x7f030018;
-        public static final int activity_sign=0x7f030019;
-        public static final int esm_checkbox=0x7f03001a;
-        public static final int esm_likert=0x7f03001b;
-        public static final int esm_quick=0x7f03001c;
-        public static final int esm_radio=0x7f03001d;
-        public static final int esm_text=0x7f03001e;
-        public static final int plugin_row=0x7f03001f;
-        public static final int plugins_manager=0x7f030020;
-        public static final int prompt_insert_manually=0x7f030021;
-        public static final int support_simple_spinner_dropdown_item=0x7f030022;
-        public static final int user_info_single=0x7f030023;
+        public static final int activity_creation_board=0x7f030017;
+        public static final int activity_in_out_board=0x7f030018;
+        public static final int activity_main=0x7f030019;
+        public static final int activity_sign=0x7f03001a;
+        public static final int esm_checkbox=0x7f03001b;
+        public static final int esm_likert=0x7f03001c;
+        public static final int esm_quick=0x7f03001d;
+        public static final int esm_radio=0x7f03001e;
+        public static final int esm_text=0x7f03001f;
+        public static final int plugin_row=0x7f030020;
+        public static final int plugins_manager=0x7f030021;
+        public static final int prompt_insert_manually=0x7f030022;
+        public static final int support_simple_spinner_dropdown_item=0x7f030023;
+        public static final int user_info_single=0x7f030024;
     }
     public static final class menu {
         public static final int in_out_board=0x7f0e0000;

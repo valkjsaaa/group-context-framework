@@ -49,12 +49,41 @@
 			    android:hint="Type a Description!"
 			    android:textColor="#333333" />
 			
-			<!-- Details -->
+			<!-- Location -->
 			<TextView
                 android:layout_width="fill_parent"
         		android:layout_height="wrap_content"
         		android:layout_marginTop="10dp"
-        		android:text="Step 2: Phone Number (Optional)"
+        		android:text="Step 2: Enter Your Location (Mandatory)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<EditText
+			    android:id="@+id/txtLocation"
+			    android:layout_width="fill_parent"
+			    android:layout_height="60dp"
+			    android:gravity="top"
+			    android:hint="Type Your Location"
+			    android:textColor="#333333" />
+			
+			<!-- Department -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Step 3: Department to Notify?"
+        		android:textColor="@color/custom_primary"/>
+			
+			<Spinner
+			    android:id="@+id/spinner"
+			    android:layout_width="fill_parent"
+			    android:layout_height="wrap_content" />
+			
+			<!-- Phone Number -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Step 4: Phone Number (Optional)"
         		android:textColor="@color/custom_primary"/>
 			
 			<EditText
@@ -70,7 +99,7 @@
                 android:layout_width="fill_parent"
         		android:layout_height="wrap_content"
         		android:layout_marginTop="10dp"
-        		android:text="Step 3: Photo (Optional)"
+        		android:text="Step 5: Photo (Optional)"
         		android:textColor="@color/custom_primary"/>
 			
 			<SurfaceView 

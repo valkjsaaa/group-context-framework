@@ -13,12 +13,12 @@ public class App_Feedback extends DesktopApplicationProvider
 {
 	public static final String   CONTEXT_TYPE  	      = "FEEDBACK";
 	public static final String   DEFAULT_TITLE 	      = "Feedback App";
-	public static final String   DEFAULT_DESCRIPTION  = "Allows you to provide me with CONSTRUCTIVE criticism.  Yes, I'm talking to you.";
-	public static final String   DEFAULT_CATEGORY     = "DEV TOOLS";
+	public static final String   DEFAULT_DESCRIPTION  = "Have an idea for a new app?  Let us know!";
+	public static final String   DEFAULT_CATEGORY     = "FEEDBACK";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
 	public static final String   LOGO_PATH			  = "http://m.wmhomecoming.com/wp-content/themes/Touch-child/images/icon-feedback-256x256.png";
-	public static final int      DEFAULT_LIFETIME	  = 120;
+	public static final int      DEFAULT_LIFETIME	  = 7200;
 	
 	public SQLToolkit sqlToolkit;
 	public int 		  numSubmissions;
@@ -61,17 +61,6 @@ public class App_Feedback extends DesktopApplicationProvider
 	@Override
 	public boolean sendAppData(String userContext)
 	{
-		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContext);
-		
-		double distanceFromPittsburgh = this.getDistance(parser, 40.4397, -79.9764);
-		
-		System.out.print("Distance = " + distanceFromPittsburgh + "km ");
-		
-		return distanceFromPittsburgh < 20.0;
-	}
-
-	public String getDescription(String json)
-	{
-		return "Gripes?  Complaints?  Recomendations?  Let us know (gulp)!";
+		return true;
 	}
 }

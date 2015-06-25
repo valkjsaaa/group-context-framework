@@ -2,19 +2,13 @@ package com.adefreitas.magicappserver;
 
 import java.util.Date;
 
-import org.json.JSONObject;
-
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -22,18 +16,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
 import com.adefreitas.androidbluewave.JSONContextParser;
 import com.adefreitas.androidframework.ContextReceiver;
+import com.adefreitas.creationboard.CreationBoard;
 import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.inoutboard.InOutBoard;
 import com.adefreitas.messages.ContextData;
 
 /**
@@ -126,7 +115,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_in_out_board)))
 	    {
-	    	Intent intent = new Intent(this, InOutBoard.class);
+	    	Intent intent = new Intent(this, CreationBoard.class);
 	    	this.startActivity(intent);
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_sign)))

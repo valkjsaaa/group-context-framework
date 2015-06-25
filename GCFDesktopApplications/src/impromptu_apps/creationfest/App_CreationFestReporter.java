@@ -63,8 +63,12 @@ public class App_CreationFestReporter extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
+		Calendar cal = Calendar.getInstance();
+		cal.set(2015, 5, 29, 00, 00);
+		boolean pastDate = cal.getTimeInMillis() < System.currentTimeMillis();
+		
 		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
 		
-		return this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) || distanceToFestival < 5.0;
+		return !pastDate;
 	}
 }

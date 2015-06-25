@@ -94,19 +94,25 @@ public class App_Listener extends DesktopApplicationProvider
 			log.put(deviceID, numEntries + 1);
 			
 			// Generates the Query
-			String updateQuery = String.format("INSERT INTO usercontext (deviceID, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
+			String historyQuery = 
+					String.format("INSERT INTO usercontext (deviceID, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
 					deviceID, time, latitude, longitude, activity, confidence);
 			
+			String realtimeQuery = 
+					String.format("INSERT INTO deviceDetails (deviceID, latitude, longitude) VALUES ('%s',%f,%f) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude)",
+					deviceID, latitude, longitude);
+					
 			//System.out.println(updateQuery);
 			
 			// Runs the SQL Query
-			sqlToolkit.runUpdateQuery(updateQuery);
-					
+			sqlToolkit.runUpdateQuery(historyQuery);
+			sqlToolkit.runUpdateQuery(realtimeQuery);
+			
 			// Increments the Counter
 			entriesRecorded++;
 			
 			// Remembers the Last Thing Output
-			lastOutput = updateQuery;
+			lastOutput = historyQuery + "\n\n" + realtimeQuery;
 		}
 		catch (Exception ex)
 		{

@@ -23,7 +23,7 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://icons.iconarchive.com/icons/double-j-design/origami-colored-pencil/256/blue-user-icon.png", // LOGO
-				300,
+				3600*24,
 				commMode,
 				ipAddress,
 				port);
@@ -47,29 +47,12 @@ public class App_CreationFestProfile extends DesktopApplicationProvider
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
 		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 20, 00, 00);
-		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
+		cal.set(2015, 5, 29, 00, 00);
+		boolean pastDate = cal.getTimeInMillis() < System.currentTimeMillis();
 		
 		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
 		
-		return (this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) && pastDate)  
-				|| (pastDate && distanceToFestival < 5.0);
-	}
-	
-	/**
-	 * OPTIONAL:  Allows you to Customize the Description of the App on a Per User Basis
-	 */
-	public String getDescription(String userContextJSON)
-	{
-		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
-		
-		if (parser.getJSONObject("preferences").has("roles"))
-		{
-			String roles = parser.getJSONObject("preferences").get("roles").toString();
-			return "Current Roles: " + roles + "\n\nClick to Modify these Settings.";
-		}
-		
-		return description;
+		return !pastDate;
 	}
 	
 }

@@ -199,17 +199,7 @@ public class JSInterface
 	{
 		return application.getPreference(key);
 	}
-	
-	@JavascriptInterface
-	public void takePhoto()
-	{
-		// Opens Up the Camera Application
-		Intent i = new Intent(application, CameraActivity.class);
-		i.putExtra("TakePhoto", true);
-		i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		application.startActivity(i);
-	}
-	
+		
 	@JavascriptInterface
 	public void removeApplicationFromCatalog()
 	{

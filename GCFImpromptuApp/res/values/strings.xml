@@ -17,4 +17,44 @@
     <string name="title_activity_show_web_view">ShowWebView</string>
     <string name="title_activity_problem_report">Problem Reporter</string>
 
+    <string-array name="departments">
+        <item>Public Safety</item>
+        <item>Medical</item>
+        <item>Arena Security</item>
+        <item>Artist Booth</item>
+        <item>Artist Merchandise</item>
+        <item>Back Gates</item>
+        <item>Children\'s Ministry</item>
+        <item>Creation T-Shirts</item>
+        <item>Deaf Ministry</item>
+        <item>Flex Crew</item>
+        <item>Fringe/HM Crew</item>
+        <item>Front Gates</item>
+        <item>Game Zone</item>
+        <item>Gates Traffic</item>
+        <item>Grocery Store</item>
+        <item>Grounds Traffic</item>
+        <item>Group Campsite Usher</item>
+        <item>Ham Radio</item>
+        <item>Hospitality</item>
+        <item>Ice Sales</item>
+        <item>Individual Campsite Usher</item>
+        <item>Kitchen</item>
+        <item>Lost and Found</item>
+        <item>Medical</item>
+        <item>Music Contest</item>
+        <item>Music Store</item>
+        <item>Office</item>
+        <item>Prayer Tent</item>
+        <item>Press</item>
+        <item>Public Safety</item>
+        <item>Setup</item>
+        <item>Staff Office</item>
+        <item>Stage Crew</item>
+        <item>Stage/Fringe Security</item>
+        <item>Tear-Down</item>
+        <item>Technical Service</item>
+        <item>Transportation</item>     
+    </string-array>
+    
 </resources>

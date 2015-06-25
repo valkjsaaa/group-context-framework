@@ -95,8 +95,7 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 		
 		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
 		
-		return (this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) && pastDate)  
-				|| (pastDate && distanceToFestival < 5.0);
+		return (pastDate);
 	}
 
 	/**

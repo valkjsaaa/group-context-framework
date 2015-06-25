@@ -123,14 +123,12 @@ public abstract class ApplicationProvider extends ContextProvider
 	public void onSubscription(ContextSubscriptionInfo newSubscription)
 	{
 		super.onSubscription(newSubscription);
-		
-		System.out.println("NEW SUB: " + newSubscription.toString());
-		
+				
 		// Sends the UI Immediately
-		sendContext();
+		//sendContext();
 		
 		// Stores Context
-		String context = CommMessage.getValue(newSubscription.getParameters(), "context");
+		//String context = CommMessage.getValue(newSubscription.getParameters(), "context");
 		
 		// Determines Credentials
 		//String username = CommMessage.getValue(newSubscription.getParameters(), "credentials");

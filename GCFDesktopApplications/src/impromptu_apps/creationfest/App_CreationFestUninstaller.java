@@ -15,12 +15,12 @@ public class App_CreationFestUninstaller extends DesktopApplicationProvider
 {	
 	public static final String   CONTEXT_TYPE  	      = "CF_UNINSTALL";
 	public static final String   DEFAULT_TITLE 	      = "Uninstall App";
-	public static final String   DEFAULT_DESCRIPTION  = "The study has ended. Click here to uninstall this app.";
+	public static final String   DEFAULT_DESCRIPTION  = "The CreationFest study has ended. Click here to uninstall this app.";
 	public static final String   DEFAULT_CATEGORY     = "CREATIONFEST 2015";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
 	public static final String   DEFAULT_LOGO_PATH    = "https://cdn4.iconfinder.com/data/icons/flat-docflow/512/trash-128.png";
-	public static final int      DEFAULT_LIFETIME	  = 3600;
+	public static final int      DEFAULT_LIFETIME	  = 3600 * 24;
 	
 	/**
 	 * Constructor
@@ -90,13 +90,12 @@ public class App_CreationFestUninstaller extends DesktopApplicationProvider
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
 		
 		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 20, 00, 00);
+		cal.set(2015, 5, 27, 00, 00);
 		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
 		
 		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
 		
-		return (this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "gcf.user.1@gmail.com" }) && pastDate)  
-				|| (pastDate && distanceToFestival < 5.0);
+		return pastDate;
 	}
 
 	/**

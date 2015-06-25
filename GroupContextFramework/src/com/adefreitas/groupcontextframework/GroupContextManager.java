@@ -965,6 +965,10 @@ public abstract class GroupContextManager
 					log(LOG_ERROR, "Unhandled Message Type:  " + message.getMessageType());
 				}		
 			}
+			else if (message instanceof ContextData && this.promiscuous)
+			{
+				onContextDataMessage((ContextData)message);
+			}
 		}
 		else
 		{
@@ -1006,14 +1010,20 @@ public abstract class GroupContextManager
 						else
 						{
 							// If Destination IS Specified, Check to Make Sure Device ID Matches
-							for (String destinationDeviceID : data.getDestination())
+							if (data.isDestination(deviceID))
 							{
-								if (destinationDeviceID.equals(deviceID))
-								{
-									onContextDataReceived(data, r);
-									break;
-								}
+								onContextDataReceived(data, r);
+								break;
 							}
+
+//							for (String destinationDeviceID : data.getDestination())
+//							{
+//								if (destinationDeviceID.equals(deviceID))
+//								{
+//									onContextDataReceived(data, r);
+//									break;
+//								}
+//							}
 						}
 						
 						break;
@@ -1030,6 +1040,7 @@ public abstract class GroupContextManager
 		// Still Forwards the Data to the Application if GCM is Set to Promiscuous
 		if (promiscuous && !requestMatch)
 		{
+			//System.out.println("Promiscuous Mode: " + data);
 			onContextDataReceived(data, null);
 		}	
 	}

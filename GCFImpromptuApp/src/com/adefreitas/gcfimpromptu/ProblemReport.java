@@ -30,8 +30,10 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +64,8 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 	private EditText txtDescription;
 	private EditText txtPhone;
 	private TextView txtCamera;
+	private TextView txtLocation;
+	private Spinner  spinner;
 	
 	// Camera Surface
 	private int			  cameraID       = -1;
@@ -95,6 +99,8 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		txtDescription = (EditText)this.findViewById(R.id.txtDescription);
 		txtPhone       = (EditText)this.findViewById(R.id.txtPhone);
 		txtCamera      = (TextView)this.findViewById(R.id.txt_camera);
+		txtLocation    = (TextView)this.findViewById(R.id.txtLocation);
+		spinner		   = (Spinner)this.findViewById(R.id.spinner);
 		
 		// Sets Up Event Handlers
 		txtPhone.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
@@ -106,6 +112,11 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		surfaceHolder = cameraSurface.getHolder();
 		surfaceHolder.addCallback(this);
 		surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		
+		// Initializes the Spinner
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.departments, android.R.layout.simple_spinner_item);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
 		
 		// Initializes Telephone Number
 		TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
@@ -237,6 +248,10 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		  	{
 		  		Toast.makeText(ProblemReport.this, "Cannot Submit Without a Description", Toast.LENGTH_LONG).show();
 		  	}
+		  	else if (txtLocation.getText().toString().trim().length() == 0)
+		  	{
+		  		Toast.makeText(ProblemReport.this, "Must Provide a Location", Toast.LENGTH_LONG).show();
+		  	}
 		  	else
 		  	{
 		  		LocationContextProvider locationProvider = (LocationContextProvider)application.getGroupContextManager().getContextProvider("LOC");
@@ -245,8 +260,10 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		  		String latitudeParam    = "latitude=" + locationProvider.getLatitude();
 		  		String longitudeParam   = "longitude=" + locationProvider.getLongitude();
 		  		String telephoneParam   = "telephone=" + Uri.encode(txtPhone.getText().toString());
+		  		String departmentParam  = "department=" + Uri.encode(spinner.getSelectedItem().toString());
+		  		String locationParam    = "location=" + Uri.encode(txtLocation.getText().toString());
 		  		
-				String url = String.format("%s?%s&%s&%s&%s", CLOUD_UPLOAD_URL, descriptionParam, latitudeParam, longitudeParam, telephoneParam);
+				String url = String.format("%s?%s&%s&%s&%s&%s&%s", CLOUD_UPLOAD_URL, descriptionParam, latitudeParam, longitudeParam, telephoneParam, departmentParam, locationParam);
 				System.out.println(url);
 				application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PROBLEM_SUBMITTED);
 		  		
