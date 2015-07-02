@@ -17,6 +17,8 @@ public final class R {
         public static final int abc_slide_out_top=0x7f040005;
     }
     public static final class array {
+        /**  CreationFest (Remove Someday) 
+         */
         public static final int departments=0x7f0e0000;
     }
     public static final class attr {
@@ -2125,15 +2127,15 @@ containing a value of this type.
         public static final int action_bar_subtitle=0x7f090034;
         public static final int action_bar_title=0x7f090033;
         public static final int action_context_bar=0x7f090047;
-        public static final int action_debug=0x7f090096;
+        public static final int action_debug=0x7f090098;
         public static final int action_menu_divider=0x7f09002f;
         public static final int action_menu_presenter=0x7f090030;
         public static final int action_mode_bar=0x7f090043;
         public static final int action_mode_bar_stub=0x7f090042;
         public static final int action_mode_close_button=0x7f090035;
-        public static final int action_refresh=0x7f090094;
-        public static final int action_settings=0x7f090095;
-        public static final int action_settings_quit=0x7f090097;
+        public static final int action_refresh=0x7f090096;
+        public static final int action_settings=0x7f090097;
+        public static final int action_settings_quit=0x7f090099;
         public static final int activity_chooser_view_content=0x7f090036;
         public static final int adjust_height=0x7f090002;
         public static final int adjust_width=0x7f090001;
@@ -2142,10 +2144,10 @@ containing a value of this type.
         public static final int book_now=0x7f090012;
         public static final int btnCamera=0x7f09006d;
         public static final int btnClearCache=0x7f09005d;
-        public static final int btnDownload=0x7f09007f;
-        public static final int btnExpand=0x7f090071;
+        public static final int btnDownload=0x7f090081;
+        public static final int btnExpand=0x7f090073;
         public static final int btnQuit=0x7f090059;
-        public static final int btnRun=0x7f090078;
+        public static final int btnRun=0x7f09007a;
         public static final int btnSubmit=0x7f09006e;
         public static final int buyButton=0x7f09000c;
         public static final int buy_now=0x7f090011;
@@ -2161,16 +2163,16 @@ containing a value of this type.
         public static final int dropdown=0x7f090026;
         public static final int edit_query=0x7f090048;
         public static final int end=0x7f090029;
-        public static final int esm_answers=0x7f090089;
-        public static final int esm_cancel=0x7f090084;
-        public static final int esm_checkboxes=0x7f090083;
-        public static final int esm_feedback=0x7f09008b;
-        public static final int esm_instructions=0x7f090082;
-        public static final int esm_likert=0x7f090086;
-        public static final int esm_max=0x7f090088;
-        public static final int esm_min=0x7f090087;
-        public static final int esm_radio=0x7f09008a;
-        public static final int esm_submit=0x7f090085;
+        public static final int esm_answers=0x7f09008b;
+        public static final int esm_cancel=0x7f090086;
+        public static final int esm_checkboxes=0x7f090085;
+        public static final int esm_feedback=0x7f09008d;
+        public static final int esm_instructions=0x7f090084;
+        public static final int esm_likert=0x7f090088;
+        public static final int esm_max=0x7f09008a;
+        public static final int esm_min=0x7f090089;
+        public static final int esm_radio=0x7f09008c;
+        public static final int esm_submit=0x7f090087;
         public static final int expand_activities_button=0x7f090037;
         public static final int expanded_menu=0x7f09003d;
         public static final int grayscale=0x7f090015;
@@ -2182,21 +2184,21 @@ containing a value of this type.
         public static final int icon=0x7f09003b;
         public static final int ifRoom=0x7f090021;
         public static final int image=0x7f090038;
-        public static final int imgAppLogo=0x7f090072;
+        public static final int imgAppLogo=0x7f090074;
         public static final int imgCameraBig=0x7f090063;
         public static final int imgCameraSmall=0x7f090066;
         public static final int imgPreview=0x7f09005b;
-        public static final int imgSplash=0x7f09006f;
-        public static final int layoutAppDetails=0x7f090073;
+        public static final int imgSplash=0x7f090071;
+        public static final int layoutAppDetails=0x7f090075;
         public static final int layoutApps=0x7f090060;
-        public static final int layoutCategory=0x7f090070;
-        public static final int layoutContexts=0x7f090079;
+        public static final int layoutCategory=0x7f090072;
+        public static final int layoutContexts=0x7f09007b;
         public static final int layoutFunctions=0x7f090056;
         public static final int layoutInstructions=0x7f090062;
-        public static final int layoutPreferences=0x7f09007b;
+        public static final int layoutPreferences=0x7f09007d;
         public static final int listMode=0x7f090018;
         public static final int list_item=0x7f09003a;
-        public static final int loading_addons=0x7f090092;
+        public static final int loading_addons=0x7f090094;
         public static final int lstApps=0x7f090061;
         public static final int match_parent=0x7f09000e;
         public static final int middle=0x7f090028;
@@ -2204,13 +2206,13 @@ containing a value of this type.
         public static final int never=0x7f090020;
         public static final int none=0x7f090000;
         public static final int normal=0x7f090003;
-        public static final int plugin_author=0x7f09008e;
-        public static final int plugin_list=0x7f090093;
-        public static final int plugin_name=0x7f09008c;
-        public static final int plugin_settings=0x7f09008f;
-        public static final int plugin_toggle=0x7f090090;
-        public static final int plugin_update_download=0x7f090091;
-        public static final int plugin_version=0x7f09008d;
+        public static final int plugin_author=0x7f090090;
+        public static final int plugin_list=0x7f090095;
+        public static final int plugin_name=0x7f09008e;
+        public static final int plugin_settings=0x7f090091;
+        public static final int plugin_toggle=0x7f090092;
+        public static final int plugin_update_download=0x7f090093;
+        public static final int plugin_version=0x7f09008f;
         public static final int production=0x7f090009;
         public static final int progressBar=0x7f090058;
         public static final int progress_circular=0x7f090031;
@@ -2245,25 +2247,27 @@ containing a value of this type.
         public static final int title=0x7f09003c;
         public static final int toolbar=0x7f090054;
         public static final int txtAppCatalog=0x7f09005c;
-        public static final int txtAppContexts=0x7f09007a;
-        public static final int txtAppDescription=0x7f090077;
-        public static final int txtAppName=0x7f090076;
-        public static final int txtAppPreferences=0x7f09007c;
+        public static final int txtAppContexts=0x7f09007c;
+        public static final int txtAppDescription=0x7f090079;
+        public static final int txtAppName=0x7f090078;
+        public static final int txtAppPreferences=0x7f09007e;
         public static final int txtBluewave=0x7f09005f;
-        public static final int txtCategory=0x7f090074;
+        public static final int txtCategory=0x7f090076;
         public static final int txtContextProviders=0x7f09005e;
         public static final int txtDescription=0x7f090067;
-        public static final int txtFileName=0x7f09007d;
-        public static final int txtFilePath=0x7f09007e;
-        public static final int txtFunctionDescription=0x7f090081;
-        public static final int txtFunctionName=0x7f090080;
+        public static final int txtFileName=0x7f09007f;
+        public static final int txtFilePath=0x7f090080;
+        public static final int txtFunctionDescription=0x7f090083;
+        public static final int txtFunctionName=0x7f090082;
         public static final int txtInstructionDescription=0x7f090065;
         public static final int txtInstructionTitle=0x7f090064;
         public static final int txtLocation=0x7f090068;
+        public static final int txtObject=0x7f09006f;
         public static final int txtPhone=0x7f09006a;
-        public static final int txtRunMessage=0x7f090075;
+        public static final int txtRunMessage=0x7f090077;
         public static final int txtTitle=0x7f09005a;
         public static final int txt_camera=0x7f09006b;
+        public static final int txt_compass=0x7f090070;
         public static final int up=0x7f09002b;
         public static final int useLogo=0x7f09001a;
         public static final int webViewPlaceholder=0x7f090057;
@@ -2325,20 +2329,21 @@ containing a value of this type.
         public static final int activity_debug=0x7f030019;
         public static final int activity_main=0x7f03001a;
         public static final int activity_problem_report=0x7f03001b;
-        public static final int activity_splashscreen=0x7f03001c;
-        public static final int app_category_info_single=0x7f03001d;
-        public static final int app_info_single=0x7f03001e;
-        public static final int dialog_app_alert=0x7f03001f;
-        public static final int dialog_download_alert=0x7f030020;
-        public static final int dialog_function_alert=0x7f030021;
-        public static final int esm_checkbox=0x7f030022;
-        public static final int esm_likert=0x7f030023;
-        public static final int esm_quick=0x7f030024;
-        public static final int esm_radio=0x7f030025;
-        public static final int esm_text=0x7f030026;
-        public static final int plugin_row=0x7f030027;
-        public static final int plugins_manager=0x7f030028;
-        public static final int support_simple_spinner_dropdown_item=0x7f030029;
+        public static final int activity_snap_to_it=0x7f03001c;
+        public static final int activity_splashscreen=0x7f03001d;
+        public static final int app_category_info_single=0x7f03001e;
+        public static final int app_info_single=0x7f03001f;
+        public static final int dialog_app_alert=0x7f030020;
+        public static final int dialog_download_alert=0x7f030021;
+        public static final int dialog_function_alert=0x7f030022;
+        public static final int esm_checkbox=0x7f030023;
+        public static final int esm_likert=0x7f030024;
+        public static final int esm_quick=0x7f030025;
+        public static final int esm_radio=0x7f030026;
+        public static final int esm_text=0x7f030027;
+        public static final int plugin_row=0x7f030028;
+        public static final int plugins_manager=0x7f030029;
+        public static final int support_simple_spinner_dropdown_item=0x7f03002a;
     }
     public static final class menu {
         public static final int app_engine=0x7f0f0000;
@@ -2347,6 +2352,7 @@ containing a value of this type.
         public static final int main=0x7f0f0003;
         public static final int problem_report=0x7f0f0004;
         public static final int show_web_view=0x7f0f0005;
+        public static final int snap_to_it=0x7f0f0006;
     }
     public static final class raw {
         public static final int gtm_analytics=0x7f060000;
@@ -2409,8 +2415,8 @@ containing a value of this type.
          */
         public static final int abc_toolbar_collapse_description=0x7f08002a;
         public static final int accept=0x7f080002;
-        public static final int action_refresh=0x7f080044;
-        public static final int action_settings=0x7f080043;
+        public static final int action_refresh=0x7f080045;
+        public static final int action_settings=0x7f080044;
         public static final int app_name=0x7f080036;
         public static final int aware_description=0x7f080037;
         public static final int aware_plugins=0x7f080038;
@@ -2525,23 +2531,28 @@ containing a value of this type.
         public static final int create_calendar_message=0x7f080005;
         public static final int create_calendar_title=0x7f080004;
         public static final int decline=0x7f080003;
-        public static final int hello_world=0x7f080045;
+        public static final int hello_world=0x7f08003d;
         public static final int key_lat=0x7f08003b;
         public static final int key_lon=0x7f08003c;
         public static final int read_permission=0x7f080039;
+        public static final int sti_camera=0x7f08004d;
+        public static final int sti_instruction=0x7f08004c;
         public static final int store_picture_message=0x7f080001;
         public static final int store_picture_title=0x7f080000;
-        public static final int title_activity_appEngine=0x7f080040;
+        public static final int title_activity_appEngine=0x7f080041;
         public static final int title_activity_camera=0x7f080046;
         public static final int title_activity_debug=0x7f080048;
         public static final int title_activity_problem_report=0x7f08004a;
-        public static final int title_activity_quit=0x7f08003e;
-        public static final int title_activity_settings=0x7f08003d;
+        public static final int title_activity_quit=0x7f08003f;
+        public static final int title_activity_settings=0x7f08003e;
         public static final int title_activity_show_web_view=0x7f080049;
+        /**  Snap-To-It 
+         */
+        public static final int title_activity_snap_to_it=0x7f08004b;
         public static final int title_activity_splashscreen=0x7f080047;
-        public static final int title_activity_test=0x7f08003f;
-        public static final int title_clear_cache=0x7f080041;
-        public static final int title_debug=0x7f080042;
+        public static final int title_activity_test=0x7f080040;
+        public static final int title_clear_cache=0x7f080042;
+        public static final int title_debug=0x7f080043;
         /**  Text on a placeholder buy button when Google Play services is not
          available or up-to-date 
          */

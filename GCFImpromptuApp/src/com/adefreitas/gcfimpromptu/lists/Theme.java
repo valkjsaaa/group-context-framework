@@ -24,9 +24,13 @@ public class Theme
 		{
 			return 0xFF993399;
 		}
+		else if (categoryName.equalsIgnoreCase("snap-to-it"))
+		{
+			return 0xFFDBA616;
+		}
 		
 		// Default Color
-		return 0xFF336699;
+		return 0xFF333333;
 	}
 
 	public static String getRunMessage(String categoryName)
@@ -38,6 +42,10 @@ public class Theme
 		else if (categoryName.equalsIgnoreCase("task"))
 		{
 			return "View Details";
+		}
+		else if (categoryName.equalsIgnoreCase("snap-to-it"))
+		{
+			return "Connect to Device";
 		}
 		
 		// Default Message

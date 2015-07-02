@@ -5,8 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import com.aware.Bluetooth;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -16,7 +14,6 @@ import android.content.IntentFilter;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * This class is responsible for performing continuous Bluetooth Discovery
@@ -357,7 +354,11 @@ public class BluetoothScanner
 				}
 				
 	        	// Restarts Bluetooth Discovery
-	        	BluetoothScanner.this.start(scanInterval);
+				Log.d(LOG_NAME, "Keep Scanning: " + BluetoothScanner.this.bluewaveManager.keepScanning());
+				if (BluetoothScanner.this.bluewaveManager.keepScanning())
+				{
+					BluetoothScanner.this.start(scanInterval);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -387,18 +388,15 @@ public class BluetoothScanner
 			running = true;
 			Log.i(LOG_NAME, "Clock Thread [" + id + "] Started");
 			
-			while (running)
+			while (BluetoothScanner.this.bluewaveManager.keepScanning())
 			{
 				try
 				{
 					Log.i(LOG_NAME, "Clock Thread [" + id + "] Tick");
 					sleep(scanInterval);
 										
-					if (running)
-					{
-						// Restarts Bluetooth Discovery
-			        	BluetoothScanner.this.start(scanInterval);	
-					}
+					// Restarts Bluetooth Discovery
+			        BluetoothScanner.this.start(scanInterval);	
 				}
 				catch (Exception ex)
 				{
@@ -407,16 +405,12 @@ public class BluetoothScanner
 			}
 			
 			Log.i(LOG_NAME, "Clock Thread [" + id + "] Terminated");
+			running = false;
 		}
 		
 		public boolean isRunning()
 		{
 			return running;
-		}
-		
-		public void kill()
-		{
-			running = false;
 		}
 	}
 	

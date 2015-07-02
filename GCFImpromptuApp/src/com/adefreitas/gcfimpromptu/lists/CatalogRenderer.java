@@ -96,7 +96,7 @@ public class CatalogRenderer
 		
 		// Creates a Little Breating Room on the Bottom
 		LinearLayout bottomBuffer = new LinearLayout(context);
-		bottomBuffer.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 100));
+		bottomBuffer.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 500));
 		bottomBuffer.setOrientation(LinearLayout.VERTICAL);
 		layout.addView(bottomBuffer);
 		

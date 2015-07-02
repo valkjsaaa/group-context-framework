@@ -140,7 +140,7 @@ public class JSInterface
 		try
 		{	
 			// Allows User to Select a File and Upload it via SCP
-			UploadFileDialog fd = new UploadFileDialog(context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, application.getCloudToolkit(), GCFApplication.UPLOAD_SFTP_PATH, "UPLOAD_COMPLETE");
+			UploadFileDialog fd = new UploadFileDialog(application, context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, "UPLOAD_COMPLETE");
 			
 			this.callbackCommand = callbackCommand;
 		}

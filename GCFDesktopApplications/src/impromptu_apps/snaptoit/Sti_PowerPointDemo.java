@@ -1,6 +1,5 @@
 package impromptu_apps.snaptoit;
 
-import impromptu_apps.SnapToItApplicationProvider;
 
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
@@ -30,8 +29,6 @@ public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 	public static String PRESENTATION_LOCATION = "";	// The Path to the File (ON THE COMPUTER)
 	public static String UPLOAD_FOLDER         = "/var/www/html/gcf/universalremote/Server/";	// The Folder Containing the Presentation (ON SERVER)
 	
-	private  CloudStorageToolkit cloudToolkit;
-	
 	public Sti_PowerPointDemo(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
@@ -47,11 +44,10 @@ public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 				ipAddress,
 				port);
 		
-		cloudToolkit = new SftpToolkit();
+		this.setDebugMode(false);
 		
-		this.setDebugMode(true);
-		
-		this.enableScreenshots(300000, 1);
+//		this.enableScreenshots(300000, 1);
+		this.enableRealtimeScreenshots();
 	}
 
 	@Override
@@ -206,7 +202,6 @@ public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 	
 	    // TODO:  Experimental . . .
 	    File screenshot = ScreenshotToolkit.takeScreenshot(320, 240, this.getLocalStorageFolder() + "screen");
-	    cloudToolkit.uploadFile(UPLOAD_FOLDER, screenshot);
 	    
 	    System.out.println("Uploaded New Screenshot");
 	    this.sendContext();

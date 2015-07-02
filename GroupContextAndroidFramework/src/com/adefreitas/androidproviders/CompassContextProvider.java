@@ -86,7 +86,10 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 	{
 		this.getGroupContextManager().sendContext(this.getContextType(), 
 				this.getSubscriptionDeviceIDs(), 
-				new String[] { "AZIMUTH=" + azimuth, "PITCH=" + pitch, "ROLL=" + roll});
+				new String[] { "AZIMUTH=" + String.format("%1.1f", azimuth), 
+			   				   "PITCH=" + String.format("%1.1f", roll), 
+			   				   "ROLL=" + String.format("%1.1f", roll), 
+			   				   "ACCURACY=" + String.format("%1.1f", accuracy) });
 	}
 
 	@Override
@@ -113,9 +116,9 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 		    {
 		    	float orientation[] = new float[3];
 		        SensorManager.getOrientation(R, orientation);
-		        azimuth = orientation[0];
-		        pitch   = orientation[1];
-		        roll    = orientation[2];
+		        azimuth = normalizeAngle(orientation[0]);
+		        pitch   = normalizeAngle(orientation[1]);
+		        roll    = normalizeAngle(orientation[2]);
 		    }
 		}
 	}
@@ -123,6 +126,29 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) 
 	{
+		/**
+		 * SENSOR_STATUS_ACCURACY_HIGH = 3
+		   SENSOR_STATUS_ACCURACY_MEDIUM = 2
+		   SENSOR_STATUS_ACCURACY_LOW = 1
+		   SENSOR_STATUS_UNRELIABLE = 0
+		 */
+		
 		this.accuracy = accuracy;
+	}
+
+	private double normalizeAngle(double angleInRadians)
+	{
+	    double newAngle = Math.toDegrees(angleInRadians);
+	    
+	    if (newAngle < 0) 
+	    {
+	    	newAngle += 360;
+	    }
+	    else if (newAngle > 360) 
+	    {
+	    	newAngle -= 360;
+	    }
+	    
+	    return newAngle;
 	}
 }

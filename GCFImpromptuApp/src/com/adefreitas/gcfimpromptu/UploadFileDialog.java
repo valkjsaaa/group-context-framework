@@ -1,6 +1,9 @@
 package com.adefreitas.gcfimpromptu;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 
 import android.app.AlertDialog;
@@ -8,20 +11,28 @@ import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap.CompressFormat;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
+import com.adefreitas.androidframework.toolkit.ImageToolkit;
 
 public class UploadFileDialog 
 {
+	public static final String LOG_NAME				  = "UPLOAD_FILE_DIALOG";
 	public static final String REMOTE_UPLOAD_COMPLETE = "APP_UPLOAD";
+	public static final String CLOUD_UPLOAD_URL       = "http://gcf.cmu-tbank.com/snaptoit/upload_file.php";
 	
-	private Context 	   		context;
-	private CloudStorageToolkit cloudToolkit;
-	private String 		   		cloudDestinationFolder;
-	private String 				callbackCommand;
+	private GCFApplication application;
+	private Context		   context;
+	private String 		   callbackCommand;
 	
 	// In an Activity
 	private String			 dialogMessage;
@@ -31,13 +42,12 @@ public class UploadFileDialog
 	private String[] 		 filetypes;   
 	private static final int DIALOG_LOAD_FILE = 1000;
 
-	public UploadFileDialog(Context context, String dialogMessage, String startingFolder, String[] filetypes, CloudStorageToolkit cloudToolkit, String cloudDestinationFolder, String callbackCommand)
+	public UploadFileDialog(GCFApplication application, Context context, String dialogMessage, String startingFolder, String[] filetypes, String callbackCommand)
 	{
-		this.context       		  	= context;
+		this.application       		= application;
+		this.context				= context;
 		this.dialogMessage			= dialogMessage;
 		this.callbackCommand		= callbackCommand;
-		this.cloudToolkit 		  	= cloudToolkit;
-		this.cloudDestinationFolder = cloudDestinationFolder;
 		this.filetypes 		        = filetypes;
 		mPath 		        		= new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + startingFolder);
 		
@@ -99,6 +109,47 @@ public class UploadFileDialog
 		return callbackCommand;
 	}
 	
+	/**
+	 * Asynchronous Task to Encode a File to a String
+	 * @param byteArray
+	 */
+	private void encodeFile(final String filename, final byte[] byteArray)
+	{
+		new AsyncTask<Void, Void, String>()
+		{
+			String encodedString = "";
+			
+			protected void onPreExecute()
+			{
+				
+			}
+
+			@Override
+			protected String doInBackground(Void... params) 
+			{
+				long startTime = System.currentTimeMillis();
+				
+				encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+				
+				encodedString = Uri.encode(encodedString);
+				
+				long timeElapsed = System.currentTimeMillis() - startTime;
+				
+				Log.d(LOG_NAME, "Encoded " + encodedString.length() + " Bytes in " + timeElapsed + "ms");
+				return "";
+			}
+			
+			protected void onPostExecute(String msg)
+			{
+				String url = CLOUD_UPLOAD_URL 
+						+ "?deviceID=" + Uri.encode(application.getGroupContextManager().getDeviceID()) 
+						+ "&filename=" + Uri.encode(filename);
+				
+				application.getHttpToolkit().post(url, "data=" + encodedString, REMOTE_UPLOAD_COMPLETE);
+			}
+		}.execute(null, null, null);
+	}
+	
 	protected Dialog onCreateDialog(int id) 
 	{
 	    Dialog dialog = null;
@@ -125,8 +176,22 @@ public class UploadFileDialog
 	                    // Only Uploads if the File is Valid
 	                    if (file.isFile())
 	                    {
-	                    	Toast.makeText(context, "Uploading " + file.getName() + " to " + cloudDestinationFolder, Toast.LENGTH_SHORT).show();
-	                    	cloudToolkit.uploadFile(cloudDestinationFolder, file, REMOTE_UPLOAD_COMPLETE);
+	                    	Toast.makeText(application, "Uploading " + file.getName() + " to " + CLOUD_UPLOAD_URL, Toast.LENGTH_SHORT).show();
+	                    	
+	                    	try 
+	                    	{
+	                    		byte[] bytes = new byte[(int)file.length()];
+	                    	    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+	                    	    buf.read(bytes, 0, bytes.length);
+	                    	    buf.close();
+	                    	    
+		                    	encodeFile(file.getName(), bytes);
+	                    	} 
+	                    	catch (Exception ex)
+	                    	{
+	                    	    // TODO Auto-generated catch block
+	                    	    ex.printStackTrace();
+	                    	}
 	                    }
 	                }
 	            });

@@ -354,46 +354,6 @@ public abstract class GroupContextManager
 	protected void sendSubscription(ContextSubscription.SubscriptionUpdateType updateType, ContextRequest request, ContextCapability capability)
 	{			
 		sendSubscriptions(updateType, request, new ContextCapability[] { capability });
-		
-//		if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Subscribe))
-//		{	
-//			// Creates the List if it does not already exist
-//			if (!subscribedCapabilities.containsKey(request))
-//			{
-//				subscribedCapabilities.put(request, new ArrayList<ContextCapability>());
-//			}
-//			
-//			// Adds the Capability to the List of Subscribed Capabilities
-//			subscribedCapabilities.get(request).add(capability);
-//				
-//			// Remembers when the message was sent for timeout purposes
-//			ContextReliabilityInfo cri = reliabilityInfo.get(capability.getDeviceID());
-//			cri.setSubscriptionStartDate(capability.getContextType());
-//						
-//			log(LOG_SUBSCRIPTION, "Subscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
-//			onCapabilitySubscribe(capability);
-//		}
-//		else if (updateType.equals(ContextSubscription.SubscriptionUpdateType.Unsubscribe))
-//		{
-//			if (subscribedCapabilities.containsKey(request))
-//			{
-//				// Removes this Capability to the List of Subscribed Capabilities
-//				subscribedCapabilities.get(request).remove(capability);
-//					
-//				// Removes the List Entirely if it is Empty
-//				if (subscribedCapabilities.get(request).size() == 0)
-//				{
-//					subscribedCapabilities.remove(request);
-//				}
-//			}
-//			
-//			log(LOG_SUBSCRIPTION, "Unsubscribing to " + capability.getDeviceID() + "'s " + request.getContextType() + " provider.");
-//			onCapabilityUnsubscribe(capability);
-//		}
-//		
-//		// Creates and Sends the Subscription Message
-//		ContextSubscription subscriptionUpdate = new ContextSubscription(updateType, deviceID, new String[] { capability.getDeviceID() }, capability.getContextType(), request.getRefreshRate(), capability.getHeartbeatRate(), request.getPayload());
-//		commManager.send(subscriptionUpdate);
 	}
 	
 	protected void sendSubscriptions(ContextSubscription.SubscriptionUpdateType updateType, ContextRequest request, ContextCapability[] capabilities)

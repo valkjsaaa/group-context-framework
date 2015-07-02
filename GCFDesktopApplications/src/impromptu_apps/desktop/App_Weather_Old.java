@@ -18,7 +18,7 @@ import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class App_Weather extends DesktopApplicationProvider
+public class App_Weather_Old extends DesktopApplicationProvider
 {	
 	// Stores Coordinates
 	private HashMap<String, Point2D.Double> coordinates     = new HashMap<String, Point2D.Double>();
@@ -35,7 +35,7 @@ public class App_Weather extends DesktopApplicationProvider
 	 * @param ipAddress
 	 * @param port
 	 */
-	public App_Weather(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	public App_Weather_Old(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"PNP_WEATHER",
@@ -77,7 +77,15 @@ public class App_Weather extends DesktopApplicationProvider
 		String  		  context 		  = CommMessage.getValue(subscription.getParameters(), "context");
 		JSONContextParser parser  		  = new JSONContextParser(JSONContextParser.JSON_TEXT, context);
 		
-		return new String[] { "WEBSITE=" + "http://forecast.weather.gov/MapClick.php?lat=" + this.getLatitude(parser) + "&lon=" + this.getLongitude(parser) + "&FcstType=dwml" };
+		String html = "<html><title>Simple Weather App</title><img src=\"http://l.yimg.com/a/i/us/we/52/33.gif\"/>" +
+				"<br /> " +
+				"<b>Current Conditions:</b><br /> " +
+				"Fair, 71 F<BR /> <BR /><b>Forecast:</b><BR /> Wed - Thunderstorms. High: 85 Low: 62<br /> " +
+				"Thu - Partly Cloudy. High: 85 Low: 61<br /> Fri - PM Thunderstorms. High: 89 Low: 66<br /> " +
+				"Sat - Scattered Thunderstorms. High: 88 Low: 59<br /> Sun - Showers. High: 67 Low: 56<br /> <br /> " +
+				"<a href=\"http://us.rd.yahoo.com/dailynews/rss/weather/Pittsburgh__PA/*http://weather.yahoo.com/forecast/USPA1290_f.html\">Full Forecast at Yahoo! Weather</a><BR/><BR/> (provided by <a href=\"http://www.weather.com\" >The Weather Channel</a>)<br/></html>";
+				
+		return new String[] { "WEBSITE=" + "http://weather.yahoo.com/forecast/USPA1290_f.html" };
 	}
 	
 	@Override

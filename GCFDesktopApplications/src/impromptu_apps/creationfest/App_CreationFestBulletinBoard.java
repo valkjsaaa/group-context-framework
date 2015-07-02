@@ -11,16 +11,16 @@ import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.messages.ComputeInstruction;
 
-public class App_CreationFestSurvey extends DesktopApplicationProvider
+public class App_CreationFestBulletinBoard extends DesktopApplicationProvider
 {	
-	public static final String   CONTEXT_TYPE  	      = "CF_SURVEY";
-	public static final String   DEFAULT_TITLE 	      = "Survey App";
-	public static final String   DEFAULT_DESCRIPTION  = "Last chance to fill out the survey!  Thanks in advance!";
+	public static final String   CONTEXT_TYPE  	      = "CF_BB";
+	public static final String   DEFAULT_TITLE 	      = "Please Read";
+	public static final String   DEFAULT_DESCRIPTION  = "Learn how to make our app use less power!";
 	public static final String   DEFAULT_CATEGORY     = "CREATIONFEST 2015";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
-	public static final String   DEFAULT_LOGO_PATH    = "https://panorama-www.s3.amazonaws.com/sites/53d29249e511304c2f000002/theme/images/icon-admin.png";
-	public static final int      DEFAULT_LIFETIME	  = 3600;
+	public static final String   DEFAULT_LOGO_PATH    = "http://www.bentley.edu/offices/sites/www.bentley.edu.offices/files/electricity-md_0.png";
+	public static final int      DEFAULT_LIFETIME	  = 3600 * 24;
 	
 	/**
 	 * Constructor
@@ -36,7 +36,7 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 	 * @param ipAddress
 	 * @param port
 	 */
-	public App_CreationFestSurvey(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	public App_CreationFestBulletinBoard(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				CONTEXT_TYPE, 
@@ -56,7 +56,7 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		return new String[] { "WEBSITE=https://docs.google.com/forms/d/1rkyUJRTTX7pM_-GpoDJVdjwPvtDK1FuqzVzV1GUzIL4/viewform" };
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/creationfest/bulletinBoard.htm" };
 	}
 
 	/**
@@ -90,12 +90,10 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
 		
 		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 27, 00, 00);
+		cal.set(2015, 5, 30, 00, 00);
 		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
 		
-		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
-		
-		return (pastDate);
+		return !pastDate;
 	}
 
 	/**

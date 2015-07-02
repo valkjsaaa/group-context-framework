@@ -61,15 +61,16 @@ public class GCFDesktopApplication implements EventReceiver
 
 		// GCM Settings
 		gcm.registerEventReceiver(this);
-		gcm.setDebugMode(false);
+		gcm.setDebugMode(true);
 			
 		// Requests Context
 		//gcm.sendRequest("PCP", ContextRequest.SINGLE_SOURCE, new String[0], 60000, new String[] { "CHANNEL=TEST_CHANNEL" });
 		//gcm.sendRequest("ACT", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 120000, new String[] { "CHANNEL=dev/" + deviceID});
-		//gcm.sendRequest("LOC_GPS", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=TEST_CHANNEL"});
-		//gcm.sendRequest("BLU", ContextRequest.MULTIPLE_SOURCE, new String[] { "Nexus 5-A" }, 60000, new String[] { "CHANNEL=dev/" + deviceID, "TARGET=ZTE-3"});
+		//gcm.sendRequest("LOC_GPS", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 30000, new String[] { "CHANNEL=TEST_CHANNEL"});
+		//gcm.sendRequest("BLU", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=TEST_CHANNEL", "TARGET=ZTE-3"});
 		//gcm.sendRequest("LOC", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=dev/" + deviceID, "TARGET=ZTE-3"});
-		//gcm.sendRequest("AUD", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=dev/" + deviceID});
+		//gcm.sendRequest("AUD", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000000, new String[] { "CHANNEL=TEST_CHANNEL" });
+		gcm.sendRequest("COMPASS", ContextRequest.MULTIPLE_SOURCE, new String[] { "Nexus 5-A" }, 1000, new String[] { "CHANNEL=TEST_CHANNEL" });
 		
 		// Sets Up Keyboard Press Monitoring
 		setupKeypress();
@@ -77,9 +78,11 @@ public class GCFDesktopApplication implements EventReceiver
 		// Cancels All Existing
 		for (ContextRequest r : gcm.getRequests())
 		{
+			System.out.println("Canceling Request for " + r.getContextType());
 			gcm.cancelRequest(r.getContextType());
 		}
-		System.out.println("Program Terminated");
+		
+		System.out.println("Program Complete.  You may terminate the program.");
 	}
 	
 	/**
@@ -101,25 +104,34 @@ public class GCFDesktopApplication implements EventReceiver
 	{
 		String  event    = "DEFAULT";
 		String  input    = "";
+		
 		Scanner keyboard = new Scanner(System.in);
 		do
 		{
-		   input = keyboard.nextLine().trim();
+		   input 			= keyboard.nextLine().trim();
+		   ContextData data = null;
 		   
 		   if (input.length() == 0)
 		   {
 			   System.out.println(new Date() + ":\n" + "LOGGING EVENT: " + event);
+			   data = new ContextData(event, gcm.getDeviceID(), new String[] { "TIMESTAMP=" + System.currentTimeMillis() });
 		   }
-		   else
+		   else if (!input.equalsIgnoreCase("EXIT"))
 		   {
 			   System.out.println("Setting EVENT to '" + input + "'");
 			   event = input;
+			   
+			   data = new ContextData(event, gcm.getDeviceID(), new String[] { "TIMESTAMP=" + System.currentTimeMillis() });
 		   }
 		   
-		   ContextData data = new ContextData(event, gcm.getDeviceID(), new String[] { "TIMESTAMP=" + System.currentTimeMillis() });
-		   write(data);
+		   if (data != null)
+		   {
+			   write(data);
+		   }
 		} 
-		while (!input.equalsIgnoreCase("END") || !input.equalsIgnoreCase("EXIT"));
+		while (!input.equalsIgnoreCase("EXIT"));
+		
+		keyboard.close();
 	}
 	
 	// Data Logging Service	

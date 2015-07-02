@@ -1,6 +1,5 @@
 package impromptu_apps.snaptoit;
 
-import impromptu_apps.SnapToItApplicationProvider;
 
 import java.awt.MouseInfo;
 import java.awt.Point;

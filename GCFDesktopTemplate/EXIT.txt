@@ -1,1 +1,0 @@
-{"timestamp":1435263882006,"currentDate":"Jun 25, 2015 4:24:42 PM","data":{"contextType":"EXIT","messageType":"D","version":1,"deviceID":"MACBOOK_PRO_TEMPLATE","destination":[],"payload":["TIMESTAMP\u003d1435263882005"]}}

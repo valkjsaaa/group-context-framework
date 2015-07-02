@@ -90,7 +90,7 @@ public class App_CreationFestUninstaller extends DesktopApplicationProvider
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
 		
 		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 27, 00, 00);
+		cal.set(2015, 5, 28, 00, 00);
 		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
 		
 		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);

@@ -1,6 +1,5 @@
 package impromptu_apps.snaptoit;
 
-import impromptu_apps.SnapToItApplicationProvider;
 
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
@@ -30,28 +29,27 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 	public static String PRESENTATION_LOCATION = "";	// The Path to the File (ON THE COMPUTER)
 	public static String UPLOAD_FOLDER         = "/var/www/html/gcf/universalremote/Server/";	// The Folder Containing the Presentation (ON SERVER)
 	
-	private  CloudStorageToolkit cloudToolkit;
-	
 	public Sti_PowerPoint(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"STI_POWERPOINT",
-				"PointPoint App",
-				"PowerPoint Application",
+				"Digital Projector",
+				"Lets you upload PowerPoint presentations and control them on this digital projector.",
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"",				   // LOGO
+				"http://png-4.findicons.com/files/icons/2711/free_icons_for_windows8_metro/128/video_projector.png",				   // LOGO
 				30,
 				commMode,
 				ipAddress,
 				port);
 		
-		cloudToolkit = new SftpToolkit();
+		this.addPhoto(this.getLocalStorageFolder() + "projector_0.jpeg", false, false, -59.407585211991055,-67.29113298599235,172.58450960820852);
+		this.addPhoto(this.getLocalStorageFolder() + "projector_1.jpeg", false, false, -44.74326127152747,-69.58374745260966,179.79022257878856);
+		this.addPhoto(this.getLocalStorageFolder() + "projector_2.jpeg", false, false, -62.8690158003268,-70.71701243969817,175.43584037912203);
 		
-		this.enableScreenshots(5000, 1);
-		
-		setDebugMode(true);
+		// Takes a Photo At the Moment a New Photo Comes In
+		//this.enableRealtimeScreenshots();
 	}
 
 	@Override
@@ -63,6 +61,8 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 		{
 			ui += "<div><input value=\"Upload Presentation\" type=\"button\" style=\"height:50px; width:300px; font-size:25px\" onclick=\"device.uploadFile('PP_UPLOADED', 'Pick Your Presentation', ['.pptx']);\"/></div>";
 			ui += "</html>";
+			
+			return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/powerpoint/upload_presentation.html"};
 		}
 		else
 		{
@@ -74,6 +74,8 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 					  "<div><h4>When You Are Finished . . .</h4>" +
 					  "<input value=\"Quit Presentation\" type=\"button\" style=\"height:50px; font-size:25px\" onclick=\"device.sendComputeInstruction('QUIT', []);\"/></div>" +
 					  "</html>";
+				
+				return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/powerpoint/control_presentation.html"};
 			}
 			else
 			{
@@ -130,7 +132,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 				PRESENTATION_LOCATION = destination;
 				
 				// Uploads the Presentation to Dropbox
-				cloudToolkit.uploadFile(UPLOAD_FOLDER, new File(PRESENTATION_LOCATION));
+				//cloudToolkit.uploadFile(UPLOAD_FOLDER, new File(PRESENTATION_LOCATION));
 								
 				this.sendContext();
 				
@@ -174,25 +176,25 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 			{
 				PRESENTATION_FILE = "";
 				
-				Robot robot = this.getRobot();
-				
-				robot.keyPress(KeyEvent.VK_ESCAPE);
-				robot.delay(40);
-				robot.keyRelease(KeyEvent.VK_ESCAPE);
-				robot.delay(1000);
-				
-				robot.keyPress(KeyEvent.VK_META);
-				robot.delay(40);
-				robot.keyPress(KeyEvent.VK_Q);
-				robot.delay(40);
-				robot.keyRelease(KeyEvent.VK_META);
-				robot.delay(40);
-				robot.keyRelease(KeyEvent.VK_Q);
-				robot.delay(1000);
+//				Robot robot = this.getRobot();
+//				
+//				robot.keyPress(KeyEvent.VK_ESCAPE);
+//				robot.delay(40);
+//				robot.keyRelease(KeyEvent.VK_ESCAPE);
+//				robot.delay(1000);
+//				
+//				robot.keyPress(KeyEvent.VK_META);
+//				robot.delay(40);
+//				robot.keyPress(KeyEvent.VK_Q);
+//				robot.delay(40);
+//				robot.keyRelease(KeyEvent.VK_META);
+//				robot.delay(40);
+//				robot.keyRelease(KeyEvent.VK_Q);
+//				robot.delay(1000);
 			}
 		}
 		
-		this.getGroupContextManager().cancelRequest("ACC", subscription.getDeviceID());
+		//this.getGroupContextManager().cancelRequest("ACC", subscription.getDeviceID());
 		
 		sendContext();
 	}
@@ -269,11 +271,11 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 	    robot.delay(20);
 	    robot.keyRelease(keycode);
 	
-	    // TODO:  Experimental . . .
-	    File screenshot = ScreenshotToolkit.takeScreenshot(320, 240, this.getLocalStorageFolder() + "screen");
-	    cloudToolkit.uploadFile(UPLOAD_FOLDER, screenshot);
-	    
-	    System.out.println("Uploaded New Screenshot");
-	    this.sendContext();
+//	    // TODO:  Experimental . . .
+//	    File screenshot = ScreenshotToolkit.takeScreenshot(320, 240, this.getLocalStorageFolder() + "screen");
+//	    cloudToolkit.uploadFile(UPLOAD_FOLDER, screenshot);
+//	    
+//	    System.out.println("Uploaded New Screenshot");
+//	    this.sendContext();
 	}
 }

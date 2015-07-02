@@ -96,9 +96,9 @@ public class BluewaveManager
 	 */
 	public void startScan(int scanInterval)
 	{
-		this.bluetoothScanner.start(scanInterval);
-		
 		keepScanning = true;
+		
+		this.bluetoothScanner.start(scanInterval);
 	}
 	
 	/**
@@ -106,9 +106,9 @@ public class BluewaveManager
 	 */
 	public void stopScan()
 	{
-		bluetoothScanner.stop();
-		
 		keepScanning = false;
+		
+		bluetoothScanner.stop();
 	}
 	
 	/**
@@ -144,8 +144,6 @@ public class BluewaveManager
 	
 	/**
 	 * Disables Specific Bluewave Functionality
-	 * @param keepScanning
-	 * @param isStillDiscoverable
 	 */
 	public void setDiscoverable(boolean value)
 	{

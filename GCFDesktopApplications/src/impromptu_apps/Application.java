@@ -3,6 +3,7 @@ package impromptu_apps;
 import impromptu_apps.creationfest.*;
 import impromptu_apps.desktop.*;
 import impromptu_apps.favors.*;
+import impromptu_apps.snaptoit.*;
 
 import java.util.ArrayList;
 
@@ -105,12 +106,13 @@ public class Application implements EventReceiver
 	private void initializeApps()
 	{
 		// Standard Apps (IMPROMPTU_CORE)
-		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
- 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+//		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
+// 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
 //		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -126,6 +128,7 @@ public class Application implements EventReceiver
 //		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_CreationFestSurvey(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_CreationFestUninstaller(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestBulletinBoard(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		t = new TaskDispatcher(sqlToolkit, gcm);
 		
 		// Favors
@@ -133,20 +136,27 @@ public class Application implements EventReceiver
 		
 		// Snap-To-It Apps
 		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_PowerPointDemo(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 				
+		appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
+		
+//		appProviders.add(new App_Printer(gcm, "ZIRCON", COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Printer(gcm, "NSH COLOR", COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Printer(gcm, "NSH COPY 1", COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Printer(gcm, "NSH FAX", COMM_MODE, IP_ADDRESS, PORT));
+		
 		// Misc Impromptu Apps
 		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Hershey(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_CHI2014(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Printer(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Game_PiratePig(gcm, COMM_MODE, IP_ADDRESS, PORT));

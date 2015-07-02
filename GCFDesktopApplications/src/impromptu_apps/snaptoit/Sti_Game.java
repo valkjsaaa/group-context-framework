@@ -1,6 +1,5 @@
 package impromptu_apps.snaptoit;
 
-import impromptu_apps.SnapToItApplicationProvider;
 
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
@@ -19,7 +18,7 @@ import com.google.gson.JsonParser;
 public class Sti_Game extends SnapToItApplicationProvider
 {		
 	// Provider Specific Variables Go Here
-	private final String WEBSITE_URL_1 = "http://74.111.161.92/gcf/universalremote/Websites/controller.html";
+	private final String WEBSITE_URL = "http://gcf.cmu-tbank.com/apps/gamecontroller/index.html";
 	
 	public Sti_Game(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
@@ -30,13 +29,15 @@ public class Sti_Game extends SnapToItApplicationProvider
 				"DEBUG",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"",				   // LOGO
+				"http://inwallspeakers1.com/wp-content/uploads/2014/06/gaming-controller-icon.png",				   // LOGO
 				30,
 				commMode,
 				ipAddress,
 				port);
 		
-		this.enableScreenshots(5000, 3);
+		//this.enableScreenshots(5000, 3);
+		// Takes a Photo At the Moment a New Photo Comes In
+		this.enableRealtimeScreenshots();
 	}
 
 	@Override
@@ -46,7 +47,7 @@ public class Sti_Game extends SnapToItApplicationProvider
 		String contextTxt = CommMessage.getValue(subscription.getParameters(), "context");
 		System.out.println("CONTEXT: " + contextTxt);
 
-		return new String[] { "WEBSITE=" + WEBSITE_URL_1 };
+		return new String[] { "WEBSITE=" + WEBSITE_URL };
 	}
 
 	@Override

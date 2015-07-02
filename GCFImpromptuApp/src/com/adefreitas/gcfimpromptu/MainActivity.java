@@ -569,7 +569,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		public void onClick(View v) 
 		{
 		  	// Opens Up the Camera Application
-			Intent i = new Intent(application, CameraActivity.class);
+			Intent i = new Intent(application, SnapToItActivity.class);
 			i.putExtra("SnapToIt", true);
     		startActivity(i); 
 		}
@@ -580,7 +580,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		@Override
 		public void onClick(View v) 
 		{
-			GCFApplication.sendQuery(application, true);
+			GCFApplication.sendQuery(application, null, 0.0, 0.0, 0.0, true);
 		}
     };
 	

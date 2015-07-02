@@ -1,0 +1,88 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:focusableInTouchMode="true"
+    tools:context="com.adefreitas.gcfimpromptu.SnapToItActivity" >
+
+    <!-- TOOLBAR -->
+	<android.support.v7.widget.Toolbar
+	    xmlns:app="http://schemas.android.com/apk/res-auto"
+	    android:id="@+id/toolbar"
+	    android:layout_height="wrap_content"
+	    android:layout_width="match_parent"
+	    app:theme="@style/Theme.MyTheme"
+	    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+	    android:background="#FFFFFF"/>
+	
+	<View 
+		android:layout_width="fill_parent" 
+		android:layout_height="2dp" 
+		android:background="#333333" />
+    
+    <!-- CAMERA -->
+	<ScrollView
+	    android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        
+	    <LinearLayout
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+	        android:orientation="vertical">
+	        
+	        <!-- Object Name (Used for Onboarding New Devices) -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:text="Object Name (Administrator Only)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<EditText
+			    android:id="@+id/txtObject"
+			    android:layout_width="fill_parent"
+			    android:layout_height="wrap_content"
+			    android:gravity="top"
+			    android:textColor="#333333" />
+	        
+			<TextView
+			    android:id="@+id/txt_camera"
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:text="@string/sti_instruction"
+        		android:textColor="@color/custom_primary"/>
+			
+			<TextView
+			    android:id="@+id/txt_compass"
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+				android:layout_marginTop="10dp"
+				android:padding="5dp"
+        		android:gravity="center"
+        		android:background="#336699"
+        		android:textColor="#FFFFFF"/>
+			
+			<SurfaceView 
+			    android:id="@+id/surface_camera"
+				android:layout_width="fill_parent" 
+				android:layout_height="200dp"/>
+				
+			<Button
+		    	android:id="@+id/btnCamera"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:theme="@style/ThemeOverlay.AppCompat.Light"
+				android:layout_margin="10dp"
+		        android:text="@string/sti_camera"
+		        android:background="#339966"
+		        android:textColor="#FFFFFF"/>    
+		        
+		        
+	    </LinearLayout>
+	    
+	</ScrollView>
+	
+</LinearLayout>

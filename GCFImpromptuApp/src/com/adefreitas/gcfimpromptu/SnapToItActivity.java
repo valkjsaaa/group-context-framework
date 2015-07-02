@@ -1,15 +1,15 @@
 package com.adefreitas.gcfimpromptu;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
@@ -17,11 +17,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.PhoneNumberFormattingTextWatcher;
-import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -29,26 +26,26 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.AndroidCommManager;
+import com.adefreitas.androidframework.AndroidGroupContextManager;
 import com.adefreitas.androidframework.toolkit.HttpToolkit;
 import com.adefreitas.androidframework.toolkit.ImageToolkit;
-import com.adefreitas.androidproviders.LocationContextProvider;
 import com.adefreitas.gcfmagicapp.R;
+import com.adefreitas.messages.ContextData;
+import com.adefreitas.messages.ContextRequest;
 
-public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Callback 
-{
+public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder.Callback  {
+
 	// Constants
-	private static final String LOG_NAME		 	     = "ProblemReport";
-	public  static final String CLOUD_UPLOAD_URL 	     = "http://gcf.cmu-tbank.com/snaptoit/upload_image.php";
-	public  static final String ACTION_PROBLEM_SUBMITTED = "Photo Submitted";
+	private static final String LOG_NAME		 	   = "SnapToIt";
+	public  static final String CLOUD_UPLOAD_URL 	   = "http://gcf.cmu-tbank.com/snaptoit/upload_image.php";
+	public  static final String ACTION_PHOTO_SUBMITTED = "STI Photo Submitted";
+	public  static final int    IMAGE_WIDTH			   = 640;
+	public  static final int    IMAGE_HEIGHT		   = 480;
 	
 	// Application Link
 	private GCFApplication application;
@@ -60,52 +57,43 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 	// Controls
 	private Toolbar  toolbar;
 	private Button	 btnCamera;
-	private Button	 btnSubmit;
-	private EditText txtDescription;
-	private EditText txtPhone;
-	private TextView txtCamera;
-	private TextView txtLocation;
-	private Spinner  spinner;
+	private EditText txtObject;
+	private TextView txtCompass;
+	
+	// Camera Orientation
+	private double azimuth;
+	private double pitch;
+	private double roll;
+	private double accuracy;
 	
 	// Camera Surface
+	private Camera        camera;
 	private int			  cameraID       = -1;
 	private String		  encodedString  = "";
 	private boolean		  previewRunning = false;
-	private Camera        camera;
 	private SurfaceView   cameraSurface;
 	private SurfaceHolder surfaceHolder;
-
+	
 	/**
-	 * Android Method:  Used when the Activity is Created
+	 * Android Method:  Used when an Activity is Created
 	 */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_problem_report);
+		setContentView(R.layout.activity_snap_to_it);
 		
 		// Saves a Link to the Application
 		application = (GCFApplication)this.getApplication();
 		
-		// Create Intent Filter and Receiver
-		// Receivers are Set in onResume() and Removed on onPause()
-		this.receiver     = new IntentReceiver();
-		this.intentFilter = new IntentFilter();
-		this.intentFilter.addAction(ACTION_PROBLEM_SUBMITTED);
-				
 		// Gets Controls
 		toolbar  	   = (Toolbar)this.findViewById(R.id.toolbar);
 		btnCamera 	   = (Button)this.findViewById(R.id.btnCamera);
-		btnSubmit 	   = (Button)this.findViewById(R.id.btnSubmit);
-		txtDescription = (EditText)this.findViewById(R.id.txtDescription);
-		txtPhone       = (EditText)this.findViewById(R.id.txtPhone);
-		txtCamera      = (TextView)this.findViewById(R.id.txt_camera);
-		txtLocation    = (TextView)this.findViewById(R.id.txtLocation);
-		spinner		   = (Spinner)this.findViewById(R.id.spinner);
+		txtObject	   = (EditText)this.findViewById(R.id.txtObject);
+		txtCompass	   = (TextView)this.findViewById(R.id.txt_compass);
 		
-		// Sets Up Event Handlers
-		txtPhone.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
-		btnCamera.setOnClickListener(onCameraClickListener);
-		btnSubmit.setOnClickListener(onSubmitClickListener);
+		// Sets Up the Toolbar
+		this.setSupportActionBar(toolbar);
+		this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
 		// Initializes Camera Surface
 		cameraSurface = (SurfaceView)findViewById(R.id.surface_camera);
@@ -113,21 +101,15 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		surfaceHolder.addCallback(this);
 		surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		
-		// Initializes the Spinner
-		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.departments, android.R.layout.simple_spinner_item);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinner.setAdapter(adapter);
+		// Create Intent Filter and Receiver
+		// Receivers are Set in onResume() and Removed on onPause()
+		this.receiver     = new IntentReceiver();
+		this.intentFilter = new IntentFilter();
+		this.intentFilter.addAction(ACTION_PHOTO_SUBMITTED);
+		this.intentFilter.addAction(AndroidGroupContextManager.ACTION_GCF_DATA_RECEIVED);
 		
-		// Initializes Telephone Number
-		TelephonyManager tMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-		if (tMgr.getLine1Number() != null)
-		{
-			txtPhone.setText(tMgr.getLine1Number());
-		}
-		
-		// Sets Up the Toolbar
-		this.setSupportActionBar(toolbar);
-		this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		// Sets Up Event Handlers
+		btnCamera.setOnClickListener(onCameraClickListener);
 	}
 
 	/**
@@ -140,6 +122,8 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		
 		// Notifies the Application to Forward GCF Message to this View
 		this.application.setInForeground(true);
+		
+		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 250, new String[0]);
 	}
 	
 	/**
@@ -151,34 +135,29 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 	    super.onPause();
 	    this.application.setInForeground(false);
 	    this.unregisterReceiver(receiver);
+	    
+	    application.getGroupContextManager().cancelRequest("COMPASS");
 	}
-
-	/**
-	 * Android Method:  Used when the Menu is Created
-	 */
+	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
-	{
+	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.problem_report, menu);
+		getMenuInflater().inflate(R.menu.snap_to_it, menu);
 		return true;
 	}
 
-	/**
-	 * Android Method:  Used when a Menu Item is Selected
-	 */
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) 
-	{
-		if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_settings)))
-	    {
-	    	Intent intent = new Intent(this, SettingsActivity.class);
-	    	this.startActivity(intent);
-	    }
-		
-		return false;
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
-	
+
 	// CAMERA METHODS -----------------------------------------------------------------------------	
 	@SuppressWarnings("deprecation")
 	Camera.PictureCallback pictureCallback = new Camera.PictureCallback() 
@@ -210,68 +189,6 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 	    return cameraId;
 	  }
 	
-	// EVENT HANDLERS -----------------------------------------------------------------------------
-	final OnClickListener onCameraClickListener = new OnClickListener() 
-    {
-		@Override
-		public void onClick(View v) 
-		{			
-			if (camera != null && encodedString.length() == 0)
-		  	{
-				try
-				{
-					camera.takePicture(null, null, pictureCallback);
-					btnCamera.setText("Retake");
-				}
-		  		catch (Exception ex)
-		  		{
-		  			Toast.makeText(ProblemReport.this, "Picture Failed!", Toast.LENGTH_SHORT).show();
-		  		}
-		  	}
-		  	else if (camera != null)
-		  	{
-		  		previewRunning = false;
-		  		encodedString = "";
-		  		camera.stopPreview();
-		  		camera.startPreview();
-		  		btnCamera.setText("Take Picture");
-		  	}
-		}
-    };
-    
-    final OnClickListener onSubmitClickListener = new OnClickListener() 
-    {
-		@Override
-		public void onClick(View v) 
-		{			
-		  	if (txtDescription.getText().toString().trim().length() == 0)
-		  	{
-		  		Toast.makeText(ProblemReport.this, "Cannot Submit Without a Description", Toast.LENGTH_LONG).show();
-		  	}
-		  	else if (txtLocation.getText().toString().trim().length() == 0)
-		  	{
-		  		Toast.makeText(ProblemReport.this, "Must Provide a Location", Toast.LENGTH_LONG).show();
-		  	}
-		  	else
-		  	{
-		  		LocationContextProvider locationProvider = (LocationContextProvider)application.getGroupContextManager().getContextProvider("LOC");
-		  		
-		  		String descriptionParam = "description=" + Uri.encode(txtDescription.getText().toString());
-		  		String latitudeParam    = "latitude=" + locationProvider.getLatitude();
-		  		String longitudeParam   = "longitude=" + locationProvider.getLongitude();
-		  		String telephoneParam   = "telephone=" + Uri.encode(txtPhone.getText().toString());
-		  		String departmentParam  = "department=" + Uri.encode(spinner.getSelectedItem().toString());
-		  		String locationParam    = "location=" + Uri.encode(txtLocation.getText().toString());
-		  		
-				String url = String.format("%s?%s&%s&%s&%s&%s&%s", CLOUD_UPLOAD_URL, descriptionParam, latitudeParam, longitudeParam, telephoneParam, departmentParam, locationParam);
-				System.out.println(url);
-				application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PROBLEM_SUBMITTED);
-		  		
-				Toast.makeText(ProblemReport.this, "Sending . . . Please Wait!", Toast.LENGTH_LONG).show();
-		  	}
-		}
-    };
-	
 	// SURFACE METHODS ----------------------------------------------------------------------------
 	@SuppressWarnings("deprecation")
 	@Override
@@ -287,9 +204,7 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		catch (Exception ex)
 		{
 			Toast.makeText(this, "Camera Failed: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
-			cameraSurface.setVisibility(View.GONE);
-			btnCamera.setVisibility(View.GONE);
-			txtCamera.setVisibility(View.GONE);
+			finish();
 		}
 	}
 
@@ -357,8 +272,35 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 			camera.release();	
 		}
 	}
+
+	// EVENT HANDLERS -----------------------------------------------------------------------------
+	final OnClickListener onCameraClickListener = new OnClickListener() 
+    {
+		@Override
+		public void onClick(View v) 
+		{			
+			if (camera != null && encodedString.length() == 0)
+		  	{
+				try
+				{
+					camera.takePicture(null, null, pictureCallback);
+				}
+		  		catch (Exception ex)
+		  		{
+		  			Toast.makeText(SnapToItActivity.this, "Picture Failed: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+		  		}
+		  	}
+			else
+			{
+				Toast.makeText(SnapToItActivity.this, "Picture Failed!", Toast.LENGTH_SHORT).show();
+			}
+		}
+    };
 	
-	// Async Task to Encode JPEG Image to a String
+	/**
+	 * Asynchronous Task to Encode an Image to a String
+	 * @param byteArray
+	 */
 	private void encodeImageToString(final byte[] byteArray)
 	{
 		new AsyncTask<Void, Void, String>()
@@ -374,7 +316,7 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 				long startTime = System.currentTimeMillis();
 				
 				Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray , 0, byteArray.length);
-				Bitmap resizedBitmap = ImageToolkit.resizeImage(bitmap, 640, 480);
+				Bitmap resizedBitmap = ImageToolkit.resizeImage(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT);
 				
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();
 				resizedBitmap.compress(CompressFormat.JPEG, 100, stream);
@@ -391,8 +333,15 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 			
 			protected void onPostExecute(String msg)
 			{
-//				String url = CLOUD_UPLOAD_URL + "?timestamp=" + System.currentTimeMillis();
-//				application.getHttpToolkit().post(url, "jpeg=" + encodedString, GCFApplication.ACTION_IMAGE_UPLOADED);
+				String url = CLOUD_UPLOAD_URL 
+						+ "?deviceID=" + Uri.encode(application.getGroupContextManager().getDeviceID()) 
+						+ "&timestamp=" + System.currentTimeMillis() 
+						+ "&azimuth=" + azimuth
+						+ "&pitch=" + pitch
+						+ "&roll=" + roll
+						+ "&object=" + Uri.encode(txtObject.getText().toString());
+				
+				application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PHOTO_SUBMITTED);
 			}
 		}.execute(null, null, null);
 	}
@@ -406,16 +355,62 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		@Override
 		public void onReceive(Context context, Intent intent) 
 		{				
-			if (intent.getAction().equals(ACTION_PROBLEM_SUBMITTED))
+			if (intent.getAction().equals(ACTION_PHOTO_SUBMITTED))
 			{
-				Toast.makeText(context, intent.getStringExtra(HttpToolkit.HTTP_RESPONSE), Toast.LENGTH_SHORT).show();
-				finish();
+				onPhotoSubmitted(context, intent);
+			}
+			else if (intent.getAction().equals(AndroidGroupContextManager.ACTION_GCF_DATA_RECEIVED))
+			{
+				onContextDataReceived(context, intent);
 			}
 			else
 			{
 				Log.e(LOG_NAME, "Unexpected Intent (Action: " + intent.getAction() + ")");	
 			}
 		}
+		
+		private void onPhotoSubmitted(Context context, Intent intent)
+		{				
+				if (txtObject.getText().length() == 0)
+				{
+					Intent i = new Intent(GCFApplication.ACTION_IMAGE_UPLOADED);
+					i.putExtra("UPLOAD_PATH", "http://gcf.cmu-tbank.com/snaptoit/photos/" + Uri.encode(application.getGroupContextManager().getDeviceID()) + ".jpeg");
+					i.putExtra("AZIMUTH", azimuth);
+					i.putExtra("PITCH", pitch);
+					i.putExtra("ROLL", roll);
+					application.sendBroadcast(i);
+					
+					finish();
+				}
+				else
+				{
+			  		previewRunning = false;
+			  		encodedString = "";
+			  		camera.stopPreview();
+			  		camera.startPreview();
+				}
+		}
+		
+		private void onContextDataReceived(Context context, Intent intent)
+		{
+			// Extracts the values from the intent
+			String   contextType = intent.getStringExtra(ContextData.CONTEXT_TYPE);
+			String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
+			String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
+						
+			ContextData data = new ContextData(contextType, deviceID, values);
+			
+			// Forwards Values to the ContextReceiver for Processing
+			if (contextType.equals("COMPASS"))
+			{
+				azimuth  = (Double.valueOf(data.getPayload("AZIMUTH")));
+				pitch    = (Double.valueOf(data.getPayload("PITCH")));
+				roll     = (Double.valueOf(data.getPayload("ROLL")));
+				accuracy = (Double.valueOf(data.getPayload("ACCURACY")));
+				txtCompass.setText(String.format("AZ=%1.1f, PIT=%1.1f, ROLL=%1.1f, ACC=%1.1f", azimuth, pitch, roll, accuracy));
+			}
+		}
 	}
 
+	
 }

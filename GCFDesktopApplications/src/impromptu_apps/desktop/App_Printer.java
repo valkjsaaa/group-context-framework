@@ -23,6 +23,7 @@ public class App_Printer extends DesktopApplicationProvider
 {
 	// Busy Flag
 	private boolean busy;
+	private String  printerName;
 	
 	/**
 	 * Constructor
@@ -31,13 +32,13 @@ public class App_Printer extends DesktopApplicationProvider
 	 * @param ipAddress
 	 * @param port
 	 */
-	public App_Printer(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	public App_Printer(GroupContextManager groupContextManager, String printerName, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"PRINT_ZIRCON",
-				"Printer App",
-				"This application lets you print documents to the HP 9050N printer known as ZIRCON.",
-				"AUTOMATION",
+				"PRINT_" + printerName,
+				"Printer Controls (" + printerName + ")",
+				"This application lets you print documents to " + printerName,
+				"DEVICES",
 				new String[] { },
 				new String[] { },
 				"http://icons.iconarchive.com/icons/awicons/vista-artistic/96/2-Hot-Printer-icon.png",
@@ -45,42 +46,44 @@ public class App_Printer extends DesktopApplicationProvider
 				commMode,
 				ipAddress,
 				port);
+		
+		this.printerName = printerName;
 	}
 
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		// Retreives Preferences
-		String contextTxt = CommMessage.getValue(subscription.getParameters(), "context");
-		System.out.println("CONTEXT: " + contextTxt);
-		
-		String ui = "<html><title>Printer Controls</title>" + 
-				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"150\" height=\"150\" alt=\"Printer\"></div>" +
-//				"<div>You are connected to: Pewter</div>" +
-				((busy) ? 
-						"<p style=\"color:white; background-color:red\">Status: PRINTING</p>" :
-							"<p style=\"color:white; background-color:green\">Status: READY</p>");
-				
-		if (contextTxt != null && contextTxt.length() >= 0)
-		{
-			JsonParser parser 		  = new JsonParser();
-			JsonObject obj    		  = (JsonObject)parser.parse(contextTxt);
-			JsonObject interactionObj = obj.getAsJsonObject("interaction");
-			String     url    		  = (interactionObj == null) ? "" : interactionObj.get("url").getAsString();
-			
-			if (url.length() > 0)
-			{
-				ui += "<h4>PRINT THE FOLLOWING RECENT DOCUMENT</h4>";	
-				ui += "<div><input value=\"Print " + url + "\" type=\"button\"  height=\"100\" onclick=\"device.sendComputeInstruction('PRINT', ['FILE=" + url + "']);\"/></div>";
-				ui += "<h4>PRINT ANOTHER DOCUMENT</h4>";
-			}
-		}
-	
-		ui += "<div><input value=\"Print File\" type=\"button\"  height=\"100\" onclick=\"device.uploadFile('UPLOAD_PRINT', 'What do you want to print?', ['.docx', '.pdf']);\"/></div>";	
-		ui += "</html>";
-		
-		return new String[] { "UI=" + ui };
-		//return new String[] { "WEBSITE=http://www.google.com" };
+//		// Retreives Preferences
+//		String contextTxt = CommMessage.getValue(subscription.getParameters(), "context");
+//		System.out.println("CONTEXT: " + contextTxt);
+//		
+//		String ui = "<html><title>Printer Controls</title>" + 
+//				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"150\" height=\"150\" alt=\"Printer\"></div>" +
+////				"<div>You are connected to: Pewter</div>" +
+//				((busy) ? 
+//						"<p style=\"color:white; background-color:red\">Status: PRINTING</p>" :
+//							"<p style=\"color:white; background-color:green\">Status: READY</p>");
+//				
+//		if (contextTxt != null && contextTxt.length() >= 0)
+//		{
+//			JsonParser parser 		  = new JsonParser();
+//			JsonObject obj    		  = (JsonObject)parser.parse(contextTxt);
+//			JsonObject interactionObj = obj.getAsJsonObject("interaction");
+//			String     url    		  = (interactionObj == null) ? "" : interactionObj.get("url").getAsString();
+//			
+//			if (url.length() > 0)
+//			{
+//				ui += "<h4>PRINT THE FOLLOWING RECENT DOCUMENT</h4>";	
+//				ui += "<div><input value=\"Print " + url + "\" type=\"button\"  height=\"100\" onclick=\"device.sendComputeInstruction('PRINT', ['FILE=" + url + "']);\"/></div>";
+//				ui += "<h4>PRINT ANOTHER DOCUMENT</h4>";
+//			}
+//		}
+//	
+//		ui += "<div><input value=\"Print File\" type=\"button\"  height=\"100\" onclick=\"device.uploadFile('UPLOAD_PRINT', 'What do you want to print?', ['.docx', '.pdf']);\"/></div>";	
+//		ui += "</html>";
+//		
+//		return new String[] { "UI=" + ui };
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/printer/print.php?printer=" + printerName };
 	}
 
 	public String getFunctions()

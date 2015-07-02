@@ -196,7 +196,7 @@ public class GCFApplication extends Application
 		this.registerReceiver(intentReceiver, filter);
 		
 		// Performs an Initial Context Update
-		setPersonalContext(null);
+		setPersonalContext(null, 0.0, 0.0, 0.0);
 		
 		// Loads App Directory from Memory
 		if (appSharedPreferences.contains(PREFERENCE_APP_CATALOG))
@@ -438,7 +438,12 @@ public class GCFApplication extends Application
 	}
 	
 	// Context Update Methods -------------------------------------------------------------
-	private void setPersonalContext(String photoFilePath)
+	private void setPersonalContext()
+	{
+		setPersonalContext(null, 0.0, 0.0, 0.0);
+	}
+	
+	private void setPersonalContext(String photoFilePath, double azimuth, double pitch, double roll)
 	{		
 		try
 		{			
@@ -449,7 +454,7 @@ public class GCFApplication extends Application
 				getBluewaveManager().getPersonalContextProvider().setContext(LOCATION_CONTEXT_TAG, getLocationContext());
 				getBluewaveManager().getPersonalContextProvider().setContext(TIME_CONTEXT_TAG, getTimeContext());
 				getBluewaveManager().getPersonalContextProvider().setContext(ACTIVITY_CONTEXT_TAG, getActivityContext());
-				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath));
+				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath, azimuth, pitch, roll));
 				getBluewaveManager().getPersonalContextProvider().setContext(PREFERENCES_TAG, getPreferences());
 				
 				// PUBLISHES THE CHANGES AT ONCE
@@ -589,30 +594,30 @@ public class GCFApplication extends Application
 		return time;
 	}
 	
-	private JSONObject getSnapToItContext(String photoFilePath)
+	private JSONObject getSnapToItContext(String photoFilePath, double azimuth, double pitch, double roll)
 	{
 		JSONObject snaptoit = new JSONObject();
-		
-		if (appSharedPreferences.getBoolean("BLUEWAVE_snap-to-it", true))
+		System.out.println("Snap To It: " + photoFilePath);
+		try
 		{
-			try
-			{
-				// Sets Snap To It Value
-		        if (photoFilePath != null)
-		        {
-		        	snaptoit.put("PHOTO", photoFilePath);
-		        	snaptoit.put("TIMESTAMP", this.getLastPhotoTimestamp().getTime());
-		        }
-		        else
-		        {
-		        	getBluewaveManager().getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
-		        }
-			}
-			catch (Exception ex)
-			{
-				Toast.makeText(this, "Could not write snap-to-it context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
-			}	
+			// Sets Snap To It Value
+	        if (photoFilePath != null)
+	        {
+	        	snaptoit.put("PHOTO", photoFilePath);
+	        	snaptoit.put("TIMESTAMP", System.currentTimeMillis());
+	        	snaptoit.put("AZIMUTH", azimuth);
+	        	snaptoit.put("PITCH", pitch);
+	        	snaptoit.put("ROLL", roll);
+	        }
+	        else
+	        {
+	        	getBluewaveManager().getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
+	        }
 		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write snap-to-it context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}	
 		
 		return snaptoit;
 	}
@@ -684,7 +689,7 @@ public class GCFApplication extends Application
 		savePreferences();
 		
 		// Allows the Device's Personal Context
-		setPersonalContext(null);
+		setPersonalContext();
 	}
 	
 	public String getPreference(String name)
@@ -897,7 +902,7 @@ public class GCFApplication extends Application
 	
 	public void clearSnapToItHistory()
 	{
-		setPersonalContext(null);
+		setPersonalContext();
 	}
 		
 	public void setPhotoTaken()
@@ -1167,17 +1172,30 @@ public class GCFApplication extends Application
 	
 		private void onSnapToItUploadComplete(Context context, Intent intent)
 		{
-			String response = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
-			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + response, Toast.LENGTH_SHORT).show();
+			String uploadPath = intent.getStringExtra("UPLOAD_PATH");
+			double azimuth    = intent.getDoubleExtra("AZIMUTH", 0.0);
+			double pitch      = intent.getDoubleExtra("PITCH", 0.0);
+			double roll       = intent.getDoubleExtra("ROLL", 0.0);
+			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
 			
 //		    // Makes the File Visible!
 //		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
 //			
 //			// Updates Context with the New Upload Path
-//			setPersonalContext(uploadPath);		
+			//setPersonalContext(uploadPath);		
+			
+			// Removes the App
+			for (AppCategoryInfo category : appCatalog)
+			{
+				if (category.getName().equalsIgnoreCase("Snap-To-It"))
+				{
+					appCatalog.remove(category);
+					break;
+				}
+			}
 //			
 //			// Sends a New Query!
-//			sendQuery(GCFApplication.this, true);
+			sendQuery(GCFApplication.this, uploadPath, azimuth, pitch, roll, true);
 		}
 	
 		private void onLogoDownloaded(Context context, Intent intent)
@@ -1216,10 +1234,9 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	public static void sendQuery(GCFApplication application, boolean force)
+	public static void sendQuery(GCFApplication application, String snapToItPhoto, double azimuth, double pitch, double roll, boolean force)
 	{
 		boolean sendUpdate = application.appSharedPreferences.getBoolean("impromptu_send", true) || application.getGroupContextManager().getBatteryMonitor().isCharging();
-		//Toast.makeText(application, "Send Update = " + sendUpdate, Toast.LENGTH_SHORT).show();
 		
 		if (application.getGCFService() != null)
 		{
@@ -1236,7 +1253,7 @@ public class GCFApplication extends Application
 				if (sendUpdate || force)
 				{
 					// Updates the Device's Personal Context
-					application.setPersonalContext(null);
+					application.setPersonalContext(snapToItPhoto, azimuth, pitch, roll);
 					
 					// Sends the Context to the Application Directory
 					application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
@@ -1290,7 +1307,7 @@ public class GCFApplication extends Application
 							new Date(System.currentTimeMillis() + 2 * UPDATE_SECONDS * 1000);
 					
 					// Sends the Context to the Application Directory
-					sendQuery(app, false);
+					sendQuery(app, null, 0.0, 0.0, 0.0, false);
 					
 					// Removes Any Existing Callbacks
 					removeCallbacks(this);

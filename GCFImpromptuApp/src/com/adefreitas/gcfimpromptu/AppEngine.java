@@ -878,28 +878,46 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		}
 		
 		private void onUploadComplete(Context context, Intent intent)
-		{
-			// This is the FULL link to the file being uploaded
-			String sourcePath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_SOURCE);
-			String filename   = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
-			
-			// This is the Link to the CLOUD LOCATION where the above file was uploaded
-			String destinationFolder = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
-						
+		{	
 			if (application != null)
-			{
-				// This retrieves any commands associated with the uploaded file folder
-				String callbackCommand = jsInterface.getUploadCallbackCommand();
-				
-				Toast.makeText(application, "File Uploaded: " + destinationFolder + "; UPLOAD COMMAND = " + callbackCommand, Toast.LENGTH_SHORT).show();
-				
-				// Sends a Callback (if one is specified)
-				if (callbackCommand != null && callbackCommand.length() > 0)
 				{
-					application.getGroupContextManager().sendComputeInstruction(app.getAppContextType(), callbackCommand, 
-							new String[] { "uploadPath=" + GCFApplication.UPLOAD_WEB_PATH + filename});
+					// This retrieves any commands associated with the uploaded file folder
+					String callbackCommand = jsInterface.getUploadCallbackCommand();
+					String uploadPath      = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+					
+					Toast.makeText(application, "File Uploaded: " + uploadPath + "; UPLOAD COMMAND = " + callbackCommand, Toast.LENGTH_SHORT).show();
+					
+					// Sends a Callback (if one is specified)
+					if (callbackCommand != null && callbackCommand.length() > 0)
+					{
+						application.getGroupContextManager().sendComputeInstruction(app.getAppContextType(), 
+								callbackCommand, 
+								new String[] { "uploadPath=" + uploadPath });
+					}
 				}
-			}
+			
+//			// This is the FULL link to the file being uploaded
+//			String sourcePath = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_SOURCE);
+//			String filename   = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
+//			
+//			// This is the Link to the CLOUD LOCATION where the above file was uploaded
+//			String destinationFolder = intent.getStringExtra(CloudStorageToolkit.CLOUD_UPLOAD_PATH);
+//						
+//			if (application != null)
+//			{
+//				// This retrieves any commands associated with the uploaded file folder
+//				String callbackCommand = jsInterface.getUploadCallbackCommand();
+//				
+//				Toast.makeText(application, "File Uploaded: " + destinationFolder + "; UPLOAD COMMAND = " + callbackCommand, Toast.LENGTH_SHORT).show();
+//				
+//				// Sends a Callback (if one is specified)
+//				if (callbackCommand != null && callbackCommand.length() > 0)
+//				{
+//					application.getGroupContextManager().sendComputeInstruction(app.getAppContextType(), 
+//							callbackCommand, 
+//							new String[] { "uploadPath=" + GCFApplication.UPLOAD_WEB_PATH + filename});
+//				}
+//			}
 		}
 		
 		private void onHTMLDownloadComplete(Context context, Intent intent)

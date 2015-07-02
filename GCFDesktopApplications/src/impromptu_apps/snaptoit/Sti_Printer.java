@@ -1,10 +1,11 @@
 package impromptu_apps.snaptoit;
 
-import impromptu_apps.SnapToItApplicationProvider;
 
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
+
+import org.apache.commons.vfs2.provider.UriParser;
 
 import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
@@ -19,58 +20,37 @@ public class Sti_Printer extends SnapToItApplicationProvider
 {	
 	// Busy Flag
 	private boolean busy;
+	private String  printerName;
+	private String  pictureURL;
 	
-	public Sti_Printer(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	public Sti_Printer(GroupContextManager groupContextManager, String printerName, String pictureURL, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"STI_PRINTER",
-				"Printer App",
-				"Controls the Printer Pewter.  Powered by Snap-To-It!",
-				"DEBUG",
+				"Printer Controls",
+				"Controls the Printer " + printerName + ".  Powered by Snap-To-It!",
+				"Snap-To-It",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"",				   // LOGO
-				30,
+				60,
 				commMode,
 				ipAddress,
 				port);
 		
-		this.addPhoto(this.getLocalStorageFolder() + "Pewter1.jpeg");
-		this.addPhoto(this.getLocalStorageFolder() + "Pewter2.jpeg");
-		this.addPhoto(this.getLocalStorageFolder() + "Pewter3.jpeg");
+		this.busy 		 = false;
+		this.printerName = printerName;
+		this.pictureURL  = pictureURL;
 		
-		this.busy = false;
+		this.addPhoto(this.getLocalStorageFolder() + "zircon_0.jpeg", false, false, -96.7897637847936,-56.72318767948723,3.9806380902648395);
+		this.addPhoto(this.getLocalStorageFolder() + "zircon_1.jpeg", false, false, -37.776738110586685,-62.589223931166394,7.596522734509842);
+		this.addPhoto(this.getLocalStorageFolder() + "zircon_2.jpeg", false, false, -6.997916844800285,-60.86758595840547,1.7737423910094836);
 	}
 
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
-	{
-		// Retreives Preferences
-		String contextTxt = CommMessage.getValue(subscription.getParameters(), "context");
-		System.out.println("CONTEXT: " + contextTxt);
-		
-		String ui = "<html><title>Printer Controls</title>" + 
-				"<div><img src=\"http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg\" width=\"200\" height=\"200\" alt=\"Printer\"></div>";
-				
-		if (contextTxt != null && contextTxt.length() >= 0)
-		{
-			JsonParser parser 		  = new JsonParser();
-			JsonObject obj    		  = (JsonObject)parser.parse(contextTxt);
-			JsonObject interactionObj = obj.getAsJsonObject("interaction");
-			String     url    		  = (interactionObj == null) ? "" : interactionObj.get("url").getAsString();
-			
-//			if (url.length() > 0)
-//			{
-//				ui += "<h4>PRINT THE FOLLOWING RECENT DOCUMENT</h4>";	
-//				ui += "<div><input value=\"Print " + url + "\" type=\"button\"  height=\"100\" onclick=\"device.sendComputeInstruction('PRINT', ['FILE=" + url + "']);\"/></div>";
-//				ui += "<h4>PRINT ANOTHER DOCUMENT</h4>";
-//			}
-		}
-	
-		ui += "<div><input value=\"Print File\" type=\"button\" width-\"400\" height=\"200\" style=\"height:80px; font-size:50px\" onclick=\"device.uploadFile('UPLOAD_PRINT', 'What do you want to print?', ['.docx', '.pdf']);\"/></div>";	
-		ui += "</html>";
-
-		return new String[] { "UI=" + ui };
+	{	
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/printer/print.php?printer=" + this.printerName };
 	}
 
 	@Override
@@ -104,6 +84,14 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		{
 			System.out.println("*** I got remotely told to print something. ***");
 		}
+	}
+	
+	/**
+	 * OPTIONAL:  Allows you to Customize the Name of the App on a Per User Basis
+	 */
+	public String getName(String userContextJSON)
+	{
+		return name + " (" + printerName.toUpperCase() + ")";
 	}
 	
 	/**

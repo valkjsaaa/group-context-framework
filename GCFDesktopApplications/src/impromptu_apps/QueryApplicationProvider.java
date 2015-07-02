@@ -1,6 +1,8 @@
 package impromptu_apps;
 
 
+import impromptu_apps.snaptoit.SnapToItApplicationProvider;
+
 import java.util.ArrayList;
 import java.util.Date;
 

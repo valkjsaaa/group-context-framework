@@ -23,6 +23,7 @@ import com.adefreitas.androidbluewave.JSONContextParser;
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.creationboard.CreationBoard;
 import com.adefreitas.groupcontextframework.ContextProvider;
+import com.adefreitas.inoutboard.InOutBoard;
 import com.adefreitas.messages.ContextData;
 
 /**
@@ -115,7 +116,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_in_out_board)))
 	    {
-	    	Intent intent = new Intent(this, CreationBoard.class);
+	    	Intent intent = new Intent(this, InOutBoard.class);
 	    	this.startActivity(intent);
 	    }
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_sign)))
