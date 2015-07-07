@@ -144,6 +144,7 @@ public class InOutBoard extends ActionBarActivity implements ContextReceiver
 		{
 			p.clear();
 			updateView();
+			Toast.makeText(application, "List Cleared", Toast.LENGTH_SHORT).show();
 		}
 		else if (id == R.id.action_identify)
 		{

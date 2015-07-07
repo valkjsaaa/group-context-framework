@@ -33,28 +33,7 @@
 	        android:layout_marginLeft="10dp"
 			android:layout_marginRight="10dp"
 	        android:orientation="vertical">
-	        
-	        <!-- Object Name (Used for Onboarding New Devices) -->
-			<TextView
-                android:layout_width="fill_parent"
-        		android:layout_height="wrap_content"
-        		android:text="Object Name (Administrator Only)"
-        		android:textColor="@color/custom_primary"/>
-			
-			<EditText
-			    android:id="@+id/txtObject"
-			    android:layout_width="fill_parent"
-			    android:layout_height="wrap_content"
-			    android:gravity="top"
-			    android:textColor="#333333" />
-	        
-			<TextView
-			    android:id="@+id/txt_camera"
-                android:layout_width="fill_parent"
-        		android:layout_height="wrap_content"
-        		android:text="@string/sti_instruction"
-        		android:textColor="@color/custom_primary"/>
-			
+	        	        
 			<TextView
 			    android:id="@+id/txt_compass"
                 android:layout_width="fill_parent"
@@ -65,11 +44,27 @@
         		android:background="#336699"
         		android:textColor="#FFFFFF"/>
 			
+			<!-- This is the Actual Camera! -->
 			<SurfaceView 
 			    android:id="@+id/surface_camera"
 				android:layout_width="fill_parent" 
 				android:layout_height="200dp"/>
 				
+			<!-- Object Name (Used for Onboarding New Devices) -->
+			<TextView
+                android:layout_width="fill_parent"
+        		android:layout_height="wrap_content"
+        		android:layout_marginTop="10dp"
+        		android:text="Object Name (For Onboarding Only)"
+        		android:textColor="@color/custom_primary"/>
+			
+			<EditText
+			    android:id="@+id/txtObject"
+			    android:layout_width="fill_parent"
+			    android:layout_height="wrap_content"
+			    android:gravity="top"
+			    android:textColor="#333333" />
+			
 			<Button
 		    	android:id="@+id/btnCamera"
 		        android:layout_width="fill_parent"
@@ -79,10 +74,19 @@
 		        android:text="@string/sti_camera"
 		        android:background="#339966"
 		        android:textColor="#FFFFFF"/>    
-		        
-		        
-	    </LinearLayout>
 	    
+	        <LinearLayout
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentRight="true"
+			    android:layout_margin="15dp"
+			    android:elevation="5dp"
+		        android:orientation="horizontal">
+		    </LinearLayout>
+	    
+	    </LinearLayout>
+	   
 	</ScrollView>
 	
 </LinearLayout>

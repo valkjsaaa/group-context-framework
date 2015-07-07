@@ -603,12 +603,12 @@ int id txtFunctionName 0x7f090082
 int id txtInstructionDescription 0x7f090065
 int id txtInstructionTitle 0x7f090064
 int id txtLocation 0x7f090068
-int id txtObject 0x7f09006f
+int id txtObject 0x7f090070
 int id txtPhone 0x7f09006a
 int id txtRunMessage 0x7f090077
 int id txtTitle 0x7f09005a
 int id txt_camera 0x7f09006b
-int id txt_compass 0x7f090070
+int id txt_compass 0x7f09006f
 int id up 0x7f09002b
 int id useLogo 0x7f09001a
 int id webViewPlaceholder 0x7f090057

@@ -256,7 +256,7 @@ public class GCFApplication extends Application
 	{
 		if (gcfService == null)
 		{
-			Log.d(LOG_NAME, "Starting GCF Service");
+			Log.d(LOG_NAME, "Impromptu Starting GCF Service");
 			
 			// Creates Service for GCF
 			Intent i = new Intent(this, GCFService.class);

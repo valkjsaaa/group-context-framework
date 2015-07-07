@@ -86,10 +86,10 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		application = (GCFApplication)this.getApplication();
 		
 		// Gets Controls
-		toolbar  	   = (Toolbar)this.findViewById(R.id.toolbar);
-		btnCamera 	   = (Button)this.findViewById(R.id.btnCamera);
-		txtObject	   = (EditText)this.findViewById(R.id.txtObject);
-		txtCompass	   = (TextView)this.findViewById(R.id.txt_compass);
+		toolbar    = (Toolbar)this.findViewById(R.id.toolbar);
+		btnCamera  = (Button)this.findViewById(R.id.btnCamera);
+		txtObject  = (EditText)this.findViewById(R.id.txtObject);
+		txtCompass = (TextView)this.findViewById(R.id.txt_compass);
 		
 		// Sets Up the Toolbar
 		this.setSupportActionBar(toolbar);
@@ -123,7 +123,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		// Notifies the Application to Forward GCF Message to this View
 		this.application.setInForeground(true);
 		
-		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 250, new String[0]);
+		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 500, new String[0]);
 	}
 	
 	/**
@@ -408,6 +408,21 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 				roll     = (Double.valueOf(data.getPayload("ROLL")));
 				accuracy = (Double.valueOf(data.getPayload("ACCURACY")));
 				txtCompass.setText(String.format("AZ=%1.1f, PIT=%1.1f, ROLL=%1.1f, ACC=%1.1f", azimuth, pitch, roll, accuracy));
+				
+				if (accuracy < 3.0)
+				{
+					btnCamera.setEnabled(false);
+					btnCamera.setBackgroundColor(0xFF333333);
+					btnCamera.setText("Compass Needs Calibration");
+					txtCompass.setBackgroundColor(0xFF993333);
+				}
+				else
+				{
+					btnCamera.setEnabled(true);
+					btnCamera.setBackgroundColor(0xFF339966);
+					btnCamera.setText("Take Photo");
+					txtCompass.setBackgroundColor(0xFF339966);
+				}
 			}
 		}
 	}

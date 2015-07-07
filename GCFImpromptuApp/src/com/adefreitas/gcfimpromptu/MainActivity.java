@@ -407,20 +407,14 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		layoutApps.removeAllViews();
 		
 		// Determines What Icon to Display
-		if (availableApps.size() == 0 || connectionProblems)
+		if (connectionProblems)
 		{
 			imgCameraSmall.setVisibility(View.GONE);
 			lstApps.setVisibility(View.GONE);
 			layoutInstructions.setVisibility(View.VISIBLE);
 		}
 		else
-		{
-			// Runs a Process to Auto Launch the Best App
-			runAutoLaunch();
-			
-			// Rendering Custom UI
-			layoutApps.addView(CatalogRenderer.renderCatalog(this, application.getCatalog()));
-			
+		{			
 			// Displays the Snap-To-It Control (Assuming that the Feature is Enabled in Settings)
 			if (PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getBoolean("sti_enabled", false))
 			{
@@ -430,9 +424,24 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			{
 				imgCameraSmall.setVisibility(View.GONE);
 			}
-			
-			lstApps.setVisibility(View.VISIBLE);
-			layoutInstructions.setVisibility(View.GONE);
+		
+			// Determines Whether to Show the App Tray, or a Friendly Message
+			if (availableApps.size() == 0)
+			{
+				lstApps.setVisibility(View.GONE);
+				layoutInstructions.setVisibility(View.VISIBLE);
+			}
+			else
+			{
+				// Runs a Process to Auto Launch the Best App
+				runAutoLaunch();
+				
+				// Rendering Custom UI
+				layoutApps.addView(CatalogRenderer.renderCatalog(this, application.getCatalog()));
+				
+				lstApps.setVisibility(View.VISIBLE);
+				layoutInstructions.setVisibility(View.GONE);	
+			}
 		}
 		
 		if (!connectionProblems)

@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Scanner;
 
 import openimaj.OpenimajToolkit;
 
@@ -66,13 +67,14 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		photos   	      = new HashMap<String, PhotoInfo>();
 		openimaj 	      = new OpenimajToolkit();
 		comparisonHistory = new HashMap<String, CompareInfo>();
-		
-		//debugMode = true;
-		
+				
 		// Generates the Local Storage Folder on Initialization
 		this.getLocalStorageFolder();
 	}
 	
+	/**
+	 * GCF Method:  Occurs when a Device Subscribes to this Provider
+	 */
 	@Override
 	public void onSubscription(ContextSubscriptionInfo newSubscription)
 	{
@@ -117,18 +119,32 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			}
 		}
 	}
-		
+	
+	/**
+	 * GCF Method:  Returns the Most Recent Comparison Result
+	 */
 	@Override
 	public double getFitness(String[] parameters) 
 	{
 		// Extracts the Parameters from the Request Message
-		String deviceID       = CommMessage.getValue(parameters, "deviceID"); 					  // The Device Sending this Request
-		String cloudPhotoPath = CommMessage.getValue(parameters, "photo");	  					  // Cloud Location
-		//Long   timestamp      = Long.parseLong(CommMessage.getValue(parameters, "timestamp"));	  // Timestamp when photo was taken
+		String deviceID = CommMessage.getValue(parameters, "deviceID");
 		
-		return processPhoto(deviceID, cloudPhotoPath, 0, 0, 0, 0);
+		// Returns the Most Recent Comparison Result
+		if (comparisonHistory.containsKey(deviceID))
+		{
+			return comparisonHistory.get(deviceID).getBestMatch();
+		}
+		else
+		{
+			return 0.0;
+		}
 	}
 	
+	/**
+	 * Impromptu Method:  Returns the Fitness
+	 * @param json
+	 * @return
+	 */
 	public double getFitness(String json)
 	{
 		JSONContextParser parser   = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
@@ -148,6 +164,9 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		}
 	}
 	
+	/**
+	 * Impromptu Method:  Returns TRUE if the app should respond; FALSE otherwise
+	 */
 	@Override
 	public boolean sendAppData(String json)
 	{
@@ -175,7 +194,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			{
 				if (snapToItObject == null)
 				{
-					System.out.println("Missing Snap-To-It in Context");
+					System.out.println("Missing Snap-To-It JSON Element in Context");
 				}
 				else if (!snapToItObject.has("PHOTO"))
 				{
@@ -317,28 +336,11 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					for (PhotoInfo photo : photos.values())
 					{
 						if (photo.isCloseEnough(azimuth, pitch, roll))
-						{
-//							if (bestPhoto == null || bestDifference > photo.getAngleDifference(azimuth, pitch, roll))
-//							{
-//								bestPhoto 	   = photo;
-//								bestDifference = photo.getAngleDifference(azimuth, pitch, roll);
-//							}
-//							else if (photo.isScreenshot)
-//							{
-//								comparePhotos.add(photo);
-//								System.out.println("  **Adding Screenshot: " + photo.getPhotoPath());
-//							}
-							
+						{							
 							comparePhotos.add(photo);
 							System.out.println("  **Adding Photo: " + photo.getPhotoPath());
 						}
 					}
-					
-//					if (bestPhoto != null)
-//					{
-//						comparePhotos.add(bestPhoto);
-//						System.out.println("  **Adding Photo: " + bestPhoto.getPhotoPath() + " Difference = " + bestPhoto.getAngleDifference(azimuth, pitch, roll));
-//					}
 					
 					// Compares Device Photo to Pictures on Record
 					for (PhotoInfo photo : comparePhotos)
@@ -365,7 +367,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			System.out.println("Avg Comparison Time:  " + ((double)totalCompareTime / (double)photos.size()) + "ms");
 			System.out.println("-----------------------------");
 			
-			// Makes Sure that there
+			// Returns the Results of the Comparison
 			if (comparisonHistory.containsKey(deviceID))
 			{
 				return comparisonHistory.get(deviceID).getBestMatch();
@@ -399,13 +401,72 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	}
 	
 	// HELPER METHODS ---------------------------------------------------------------------------------
+	public void addPhotoFromWeb(String[] urls)
+	{
+		ArrayList<String> metadataFiles    = new ArrayList<String>();
+		ArrayList<String> photosDownloaded = new ArrayList<String>();
+		
+		// Step 1:  Get Photos
+		for (String url : urls)
+		{
+			String filename    	  = url.substring(url.lastIndexOf("/") + 1); 	// Just the Filename
+			String folder    	  = url.substring(0, url.lastIndexOf("/") + 1); // Just the Folder
+			String metadataFile   = folder + "metadata.txt";
+			String localPhotoPath = this.getLocalStorageFolder() + filename;	// Local Location
+			
+			// Looks for the Metadata folders
+			if (!metadataFiles.contains(metadataFile))
+			{
+				metadataFiles.add(metadataFile);
+			}
+			
+			// Downloads the File
+			HttpToolkit.downloadFile(url, localPhotoPath);
+			
+			if (!photosDownloaded.contains(filename))
+			{
+				photosDownloaded.add(filename);	
+			}
+		}
+		
+		// Step 2:  Get Metadata
+		for (String metadataFileURL : metadataFiles)
+		{
+			String  metadata = HttpToolkit.get(metadataFileURL);
+			Scanner s 		 = new Scanner(metadata);
+			
+			while (s.hasNext())
+			{
+				String   line  = s.nextLine();
+				System.out.println(line);
+				
+				String[] entry = line.split(",");
+				
+				if (entry.length >= 4)
+				{
+					String name    = entry[0];
+					double azimuth = Double.parseDouble(entry[1]);
+					double roll    = Double.parseDouble(entry[2]);
+					double pitch   = Double.parseDouble(entry[3]); 
+					
+					if (photosDownloaded.contains(name))
+					{
+						addPhoto(this.getLocalStorageFolder() + name, true, false, azimuth, pitch, roll);
+					}	
+				}
+			}
+			
+			s.close();
+		}
+	}
+	
 	/**
 	 * Associates a Photograph with this Application Service
 	 * @param photoPath
 	 */
 	public void addPhoto(String photoPath, boolean isDefault, boolean isScreenshot, double azimuth, double pitch, double roll)
 	{
-		System.out.print("Adding Photograph: " + photoPath + " . . . ");
+		System.out.printf("Adding %s [default=%s, screenshot=%s, azimuth=%1.1f, pitch=%1.1f, roll=%1.1f] . . . ", photoPath, isDefault, isScreenshot, azimuth, pitch, roll);
 		
 		if (!photos.containsKey(photoPath))
 		{
@@ -570,7 +631,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		}
 	}
 		
-	// RESEARCH METHODS -----------------------------------------------------------------------------------
+	// RESEARCH EXPERIMENT METHODS ---------------------------------------------------------------------
 	public String getDebugDescription()
 	{
 		String result = "";

@@ -108,6 +108,11 @@ public class GCFService extends Service
 		else
 		{
 			Log.d(LOG_NAME, "OnStartCommand: Using Existing GCM");
+			
+			if (intent != null && intent.hasExtra("name"))
+			{
+				Log.d(LOG_NAME, "  " + intent.getStringExtra("name"));
+			}
 		}
 		
 		// Creates an Intent to Let Everyone Know the Service has Started
@@ -146,7 +151,7 @@ public class GCFService extends Service
 		}
 		
 	    // TODO Auto-generated method stub
-		if (storedPreferences.getBoolean(ALLOW_RESTART, true))
+		if (storedPreferences.getBoolean(ALLOW_RESTART, false))
 		{
 			Log.d(LOG_NAME, "Restarting Service");
 			

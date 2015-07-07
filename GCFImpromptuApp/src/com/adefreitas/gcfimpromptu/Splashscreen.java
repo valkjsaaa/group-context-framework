@@ -27,7 +27,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 public class Splashscreen extends Activity 
 {
     // Splash screen timer
-    private static int SPLASH_TIME_OUT = 2000;
+    private static int SPLASH_TIME_OUT = 1000;
 	
 	// Intent Receiver
 	private IntentFilter   filter;

@@ -106,10 +106,10 @@ public class Application implements EventReceiver
 	private void initializeApps()
 	{
 		// Standard Apps (IMPROMPTU_CORE)
-//		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
 // 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
@@ -120,9 +120,10 @@ public class Application implements EventReceiver
 //		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// CreationFest
-		//appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_CreationFestProblems(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -133,7 +134,7 @@ public class Application implements EventReceiver
 		
 		// Favors
 		//appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		//appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
 		//appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//f = new FavorDispatcher(sqlToolkit, gcm);
@@ -141,15 +142,13 @@ public class Application implements EventReceiver
 		// Snap-To-It Apps
 		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_PowerPointDemo(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 				
 		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
-		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-		//appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
 		
 //		appProviders.add(new App_Printer(gcm, "ZIRCON", COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Printer(gcm, "NSH COLOR", COMM_MODE, IP_ADDRESS, PORT));

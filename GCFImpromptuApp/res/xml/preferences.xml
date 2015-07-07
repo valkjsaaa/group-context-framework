@@ -72,15 +72,9 @@
             android:key="sti_enabled"/>
         
         <CheckBoxPreference
-            android:title="Capture Mode"
-            android:summary="If enabled, device will convert and save images, but NOT run Snap-To-It"
-            android:defaultValue="false"
-            android:key="sti_capture"/>
-        
-        <CheckBoxPreference
             android:title="Auto Start"
             android:summary="If enabled, device will automatically connect if a device reports high # of matches"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="sti_auto"/>
     </PreferenceCategory>
         

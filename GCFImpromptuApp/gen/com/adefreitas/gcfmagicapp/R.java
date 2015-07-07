@@ -2262,12 +2262,12 @@ containing a value of this type.
         public static final int txtInstructionDescription=0x7f090065;
         public static final int txtInstructionTitle=0x7f090064;
         public static final int txtLocation=0x7f090068;
-        public static final int txtObject=0x7f09006f;
+        public static final int txtObject=0x7f090070;
         public static final int txtPhone=0x7f09006a;
         public static final int txtRunMessage=0x7f090077;
         public static final int txtTitle=0x7f09005a;
         public static final int txt_camera=0x7f09006b;
-        public static final int txt_compass=0x7f090070;
+        public static final int txt_compass=0x7f09006f;
         public static final int up=0x7f09002b;
         public static final int useLogo=0x7f09001a;
         public static final int webViewPlaceholder=0x7f090057;

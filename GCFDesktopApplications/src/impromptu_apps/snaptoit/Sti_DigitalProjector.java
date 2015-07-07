@@ -21,7 +21,7 @@ import com.adefreitas.messages.ComputeInstruction;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class Sti_PowerPoint extends SnapToItApplicationProvider
+public class Sti_DigitalProjector extends SnapToItApplicationProvider
 {		
 	// Provider Specific Variables Go Here
 	public		  String PRIMARY_DEVICE		   = "";
@@ -29,7 +29,7 @@ public class Sti_PowerPoint extends SnapToItApplicationProvider
 	public static String PRESENTATION_LOCATION = "";	// The Path to the File (ON THE COMPUTER)
 	public static String UPLOAD_FOLDER         = "/var/www/html/gcf/universalremote/Server/";	// The Folder Containing the Presentation (ON SERVER)
 	
-	public Sti_PowerPoint(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
+	public Sti_DigitalProjector(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"STI_POWERPOINT",

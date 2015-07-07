@@ -55,7 +55,7 @@ public class HttpToolkit
 	         
 	         while ((line = rd.readLine()) != null) 
 	         {
-	            result += line;
+	            result += line + "\n";
 	         }
 	         
 	         rd.close();

@@ -42,9 +42,11 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		this.printerName = printerName;
 		this.pictureURL  = pictureURL;
 		
-		this.addPhoto(this.getLocalStorageFolder() + "zircon_0.jpeg", false, false, -96.7897637847936,-56.72318767948723,3.9806380902648395);
-		this.addPhoto(this.getLocalStorageFolder() + "zircon_1.jpeg", false, false, -37.776738110586685,-62.589223931166394,7.596522734509842);
-		this.addPhoto(this.getLocalStorageFolder() + "zircon_2.jpeg", false, false, -6.997916844800285,-60.86758595840547,1.7737423910094836);
+		this.addPhotoFromWeb(new String[] {
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_0.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_1.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_2.jpeg"
+				});
 	}
 
 	@Override
