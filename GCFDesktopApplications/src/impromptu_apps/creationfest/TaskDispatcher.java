@@ -94,7 +94,7 @@ public class TaskDispatcher
 		{
 			System.out.println("  Removing Task: " + id);
 			gcm.unregisterContextProvider(id);
-			if (!tasks.get(id).getChannel().equals("TASK"))
+			if (!tasks.get(id).getChannel().equals("FAVOR"))
 			{
 				gcm.unsubscribe(connectionKey, tasks.get(id).getChannel());
 			}

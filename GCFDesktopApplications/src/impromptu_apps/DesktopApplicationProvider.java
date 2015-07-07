@@ -132,8 +132,8 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	{
 		if (sqlEventLogger != null)
 		{
-			String sql = String.format("INSERT INTO eventLog (date, app, tag, message) VALUES (now(), '%s', '%s', '%s')", 
-					this.appID, tag, message);
+			// Generates the Update Query
+			String sql = String.format("INSERT INTO impromptu_eventLog (date, app, tag, message) VALUES (now(), '%s', '%s', '%s')", this.appID, tag, message);
 			
 			// Updates the Database
 			sqlEventLogger.runUpdateQuery(sql);

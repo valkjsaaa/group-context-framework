@@ -220,7 +220,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		{
 			if (p.isSharable())
 			{
-				providers += "[" + p.getContextType() + "]\n";
+				providers += "[" + p.getContextType() + "]";
+				providers += (p.getNumSubscriptions() > 0) ? " (" + p.getNumSubscriptions() + " subs)\n" : "\n";
 			}
 		}
 		

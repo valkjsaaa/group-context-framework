@@ -6,9 +6,9 @@ import java.util.HashMap;
 
 import com.adefreitas.desktopframework.toolkit.SQLToolkit;
 import com.adefreitas.groupcontextframework.CommManager;
+import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.messages.ContextRequest;
 
 public class FavorDispatcher 
@@ -23,9 +23,10 @@ public class FavorDispatcher
 	
 	// GCF
 	private GroupContextManager gcm;
+	private String 				connectionKey;
 	
 	// Record of all Active Tasks
-	private HashMap<String, App_Favor> tasks = new HashMap<String, App_Favor>();
+	private HashMap<String, App_Favor> favors = new HashMap<String, App_Favor>();
 	
 	/**
 	 * Constructor
@@ -34,10 +35,11 @@ public class FavorDispatcher
 	 */
 	public FavorDispatcher(SQLToolkit toolkit, GroupContextManager gcm)
 	{
-		this.toolkit = toolkit;
-		this.gcm 	 = gcm;
+		this.toolkit 	   = toolkit;
+		this.gcm 	 	   = gcm;
+		this.connectionKey = this.gcm.getConnectionKey(COMM_MODE, IP_ADDRESS, PORT);
 		
-		gcm.sendRequest("BLUEWAVE", ContextRequest.MULTIPLE_SOURCE, 300000, new String[0]);
+		gcm.sendRequest("BLUEWAVE", ContextRequest.MULTIPLE_SOURCE, 60000, new String[] { "CHANNEL=dev/" + gcm.getDeviceID() });
 	}
 	
 	/**
@@ -45,23 +47,41 @@ public class FavorDispatcher
 	 * @param id
 	 * @param resultSet
 	 */
-	public void createTask(String id, ResultSet resultSet)
+	public void createOrUpdateTask(String id, ResultSet resultSet)
 	{		
 		try
 		{
 			int    timestamp   = resultSet.getInt("timestamp");
-			String description = resultSet.getString("desc");
-			String photo       = resultSet.getString("photo");
+			String deviceID	   = resultSet.getString("device_id");
+			String userName    = resultSet.getString("userName");
+			String desc 	   = resultSet.getString("desc");
+			String desc_perf   = resultSet.getString("desc_performance_location");
+			String desc_turnin = resultSet.getString("desc_turnin_location");
 			double latitude    = resultSet.getDouble("latitude");
 			double longitude   = resultSet.getDouble("longitude");
-			String status	   = resultSet.getString("status");
 			String[] tags	   = resultSet.getString("tags").split(",");
+			String[] sensors   = resultSet.getString("sensors").split(",");
+			String status	   = resultSet.getString("status");			
 			
-			if (!tasks.containsKey(id))
+			if (!favors.containsKey(id))
 			{		
-				App_Favor newFavor = new App_Favor(id, this, timestamp, description, photo, latitude, longitude, status, tags, gcm, COMM_MODE, IP_ADDRESS, PORT, toolkit);
+				App_Favor newFavor = new App_Favor(id, this, timestamp, deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status, gcm, COMM_MODE, IP_ADDRESS, PORT, toolkit);
+				newFavor.setSQLEventLogger(toolkit);
+				
+				// Adds a Task (Assuming it has not already been created before)
+				ResultSet result = toolkit.runQuery("SELECT * FROM impromptu_eventLog WHERE app='" + newFavor.getAppID() + "' && tag='TASK_CREATED'");
+				if (!result.next())
+				{
+					newFavor.log("FAVOR_CREATED", "TIMESTAMP=" + timestamp);	
+				}
+				
 				gcm.registerContextProvider(newFavor);
-				tasks.put(id, newFavor);
+				favors.put(id, newFavor);
+				gcm.subscribe(connectionKey, newFavor.getChannel());
+			}
+			else
+			{
+				favors.get(id).update(deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status);
 			}
 		}
 		catch (Exception ex)
@@ -80,7 +100,7 @@ public class FavorDispatcher
 		{
 			System.out.println("  Removing Task: " + id);
 			gcm.unregisterContextProvider(id);
-			tasks.remove(id);
+			favors.remove(id);
 		}
 	}
 
@@ -90,8 +110,9 @@ public class FavorDispatcher
 	 */
 	public void markComplete(int timestamp)
 	{
-		String    query  = "UPDATE problems SET status = \"completed\" WHERE timestamp=" + timestamp;
-		toolkit.runUpdateQuery(query);
+		// Query 1:  Update Favor in Database
+		String    query  = "UPDATE favors_submitted SET status = \"completed\" WHERE timestamp=" + timestamp;
+		toolkit.runUpdateQuery(query);		
 	}
 	
 	/**
@@ -103,34 +124,40 @@ public class FavorDispatcher
 		{
 			System.out.println("Favor Dispatcher Running . . . ");
 			
-			String    query  = "SELECT * FROM favors WHERE status = \"active\" && CHAR_LENGTH(tags)>0";
+			String    query  = "SELECT favors_submitted.timestamp, " +
+									"favors_submitted.device_id, " +
+									"favors_submitted.desc, " +
+									"favors_submitted.desc_performance_location, " +
+									"favors_submitted.desc_turnin_location, " +
+									"favors_submitted.latitude, " +
+									"favors_submitted.longitude, " +
+									"favors_submitted.tags, " +
+									"favors_submitted.sensors, " +
+									"favors_submitted.status, " +
+									"favors_profile.userName, " +
+									"favors_profile.telephone " +
+							   "FROM favors_submitted INNER JOIN favors_profile on favors_submitted.device_id = favors_profile.deviceID " +
+							   "WHERE status = \"active\" && CHAR_LENGTH(favors_submitted.tags)>0";
 			ResultSet result = toolkit.runQuery(query);
 			
-			ArrayList<String> tasksUpdated = new ArrayList<String>();
+			ArrayList<String> favorsUpdated = new ArrayList<String>();
 			
 			while (result.next())
 			{
 				Integer timestamp = result.getInt("timestamp");
-				String  status    = result.getString("status");
 				String  id		  = "FAVOR_" + timestamp;
 				
 				// Keeps a Log of Apps that are Considered ACTIVE
-				tasksUpdated.add(id);
+				favorsUpdated.add(id);
 				
-				if (!tasks.containsKey(id))
-				{
-					createTask(id, result);
-				}
-				else
-				{
-					// TODO: Updates a Task
-					//tasks.get(id).update();
-				}
+				// Creates or Updates a Task
+				createOrUpdateTask(id, result);
 			}
 			
-			for (String generatedTaskID : tasks.keySet().toArray(new String[0]))
+			// Removes all Inactive Favors
+			for (String generatedTaskID : favors.keySet().toArray(new String[0]))
 			{
-				if (!tasksUpdated.contains(generatedTaskID))
+				if (!favorsUpdated.contains(generatedTaskID))
 				{
 					removeTask(generatedTaskID);
 				}

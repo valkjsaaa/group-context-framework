@@ -94,7 +94,7 @@ public class Application implements EventReceiver
 		}
 		
 		// Removes Public Channel (No Reason to Listen to It)
-		gcm.unsubscribe(connectionKey, CommThread.PUBLIC_CHANNEL);
+		//gcm.unsubscribe(connectionKey, CommThread.PUBLIC_CHANNEL);
 		
 		// And We're Done!
 		System.out.println(appProviders.size() + " App(s) Initialized!\n");
@@ -132,6 +132,10 @@ public class Application implements EventReceiver
 //		t = new TaskDispatcher(sqlToolkit, gcm);
 		
 		// Favors
+		//appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		//appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//f = new FavorDispatcher(sqlToolkit, gcm);
 		
 		// Snap-To-It Apps
@@ -141,11 +145,11 @@ public class Application implements EventReceiver
 		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 				
-		appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
-		appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
-		appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
 		
 //		appProviders.add(new App_Printer(gcm, "ZIRCON", COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Printer(gcm, "NSH COLOR", COMM_MODE, IP_ADDRESS, PORT));

@@ -110,9 +110,15 @@ public class App_Task extends DesktopApplicationProvider
 		
 		// Debug Text
 		System.out.print("Distance: " + distanceCheck + "; " + "Role: " + roleCheck + "; ");
+
+		// TODO:  Your Code Goes Here
+		
+		
+		
 		
 		boolean send = !completed && roleCheck && distanceCheck;
 		
+		// Keeps track of which devices this task has been offered to
 		if (send && !deviceIDs.contains(deviceID))
 		{
 			deviceIDs.add(deviceID);

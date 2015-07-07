@@ -169,6 +169,12 @@ public class JSInterface
 	}
 	
 	@JavascriptInterface
+	public String getDeviceID()
+	{
+		return application.getGroupContextManager().getDeviceID();
+	}
+	
+	@JavascriptInterface
 	public String getUserContext()
 	{
 		return application.getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext().toString();

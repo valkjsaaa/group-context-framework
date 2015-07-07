@@ -18,7 +18,7 @@ public class App_Feedback extends DesktopApplicationProvider
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
 	public static final String   LOGO_PATH			  = "http://m.wmhomecoming.com/wp-content/themes/Touch-child/images/icon-feedback-256x256.png";
-	public static final int      DEFAULT_LIFETIME	  = 7200;
+	public static final int      DEFAULT_LIFETIME	  = 3600;
 	
 	public SQLToolkit sqlToolkit;
 	public int 		  numSubmissions;
@@ -53,7 +53,7 @@ public class App_Feedback extends DesktopApplicationProvider
 		
 		if (instruction.getCommand().equals("FEEDBACK"))
 		{
-			String query = "INSERT INTO feedback (deviceID, comment) VALUES ('" + instruction.getDeviceID() + "', '" + instruction.getPayload(0) + "');";
+			String query = "INSERT INTO impromptu_feedback (deviceID, comment) VALUES ('" + instruction.getDeviceID() + "', '" + instruction.getPayload(0) + "');";
 			sqlToolkit.runUpdateQuery(query);
 		}
 	}
