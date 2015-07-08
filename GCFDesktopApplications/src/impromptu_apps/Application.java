@@ -124,7 +124,19 @@ public class Application implements EventReceiver
 		// Convenience Apps
 		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		// Location Specific Apps
+		App_LocationWebsite cmuApp = new App_LocationWebsite(gcm, 
+				"CMU Campus Map", 
+				"http://www.cmu.edu/about/visit/campus-map-interactive/", 
+				"An interactive map of the CMU campus.", 
+				"NAVIGATION", 
+				"http://icons.iconarchive.com/icons/igh0zt/ios7-style-metro-ui/512/MetroUI-Google-Maps-icon.png", 
+				1.0, 
+				COMM_MODE, IP_ADDRESS, PORT);
+		cmuApp.addLocation("Campus Center", 40.4433, -79.9436);
+		appProviders.add(cmuApp);
+		
 		
 		// Favors
 //		appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));

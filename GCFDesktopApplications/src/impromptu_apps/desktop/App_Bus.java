@@ -30,7 +30,7 @@ public class App_Bus extends DesktopApplicationProvider
 	{
 		super(groupContextManager, 
 				"BUSSTOP",
-				"Bus Stop Application",
+				"Bus Stop App",
 				"Gives you relevant bus stop information given your current location.",
 				"TRANSPORTATION",
 				new String[] { },  // Contexts
