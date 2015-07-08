@@ -108,86 +108,36 @@ public class Application implements EventReceiver
 		// Standard Apps (IMPROMPTU_CORE)
 		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
+		// Impromptu
+		initializeImpromptuApps();
+		
 		// Snap-To-It
 		//initializeSnapToItApps();
+	}
+	
+	private void initializeImpromptuApps()
+	{
+		// Impromptu Core
+		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
 		
-//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
-// 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
-//		appProviders.add(new App_Michaels(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_HalfPriceBooks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Target(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Starbucks(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_BestBuy(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_HomeLights(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_HomeNest(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-		// CreationFest
-//		appProviders.add(new App_CreationFestAlert(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestReporter(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestProblems(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestSurvey(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestUninstaller(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CreationFestBulletinBoard(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		t = new TaskDispatcher(sqlToolkit, gcm);
+		// Convenience Apps
+		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Favors
-		//appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
-		//appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//f = new FavorDispatcher(sqlToolkit, gcm);
-		
-		// Misc Impromptu Apps
-		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Hershey(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_CHI2014(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PowerPoint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayFeedly(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Away(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Game_PiratePig(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Flickr(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_Game_Simon(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayGmail(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new App_QuickTask(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-		// Snap-To-It Apps
-		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-//		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
-
-//		appProviders.add(new Sti_GenericDevice(gcm, "Extinguisher (NSH)", 
-//				new String[] { 
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_0.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_1.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_2.jpeg"}, 
-//				COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new Sti_GenericDevice(gcm, "Ubicomp Lab Sign", 
-//				new String[] { 
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_0.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_1.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_2.jpeg"}, 
-//				COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+//		appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		f = new FavorDispatcher(sqlToolkit, gcm);
 		
 		// This is Used by the Dispatchers!
 		updateThread = new UpdateThread();
 		updateThread.start();
 	}
-		
+	
 	private void initializeSnapToItApps()
 	{
 		appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -198,6 +148,19 @@ public class Application implements EventReceiver
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_5.jpeg"
 				},
 			    COMM_MODE, IP_ADDRESS, PORT));
+		
+//		appProviders.add(new Sti_GenericDevice(gcm, "Extinguisher (NSH)", 
+//		new String[] { 
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_0.jpeg",
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_1.jpeg",
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_2.jpeg"}, 
+//		COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "Ubicomp Lab Sign", 
+//		new String[] { 
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_0.jpeg",
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_1.jpeg",
+//			"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_2.jpeg"}, 
+//		COMM_MODE, IP_ADDRESS, PORT));
 	}
 	
 	/**

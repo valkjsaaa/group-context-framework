@@ -3,6 +3,7 @@ package impromptu_apps.desktop;
 import impromptu_apps.DesktopApplicationProvider;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
@@ -101,7 +102,11 @@ public class App_Bus extends DesktopApplicationProvider
 		JSONContextParser parser 		  = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		Location 		  nearestLocation = getNearestLocation(parser, MIN_DISTANCE_IN_KM);
 		
-		return nearestLocation != null;
+		// Gets the Time of Day
+		Calendar calendar = Calendar.getInstance();
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		
+		return nearestLocation != null && (hour < 9 || hour > 16);
 	}
 	
 	public String getDescription(String userContextJSON)
