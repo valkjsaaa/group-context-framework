@@ -107,9 +107,13 @@ public class Application implements EventReceiver
 	{
 		// Standard Apps (IMPROMPTU_CORE)
 		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		// Snap-To-It
+		//initializeSnapToItApps();
+		
+//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
 // 	    appProviders.add(new App_BluewaveDebug(gcm, COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new App_Listener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
@@ -139,22 +143,6 @@ public class Application implements EventReceiver
 		//appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//f = new FavorDispatcher(sqlToolkit, gcm);
 		
-		// Snap-To-It Apps
-		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
-				
-		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		
-		//appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new Sti_Printer(gcm, "ZIRCON", "http://www.blankdvdmedia.com/product/laser-printers/hp/images/hp-laserjet-9050dn-laser-toner-cartridge.jpg", COMM_MODE, IP_ADDRESS, PORT));
-		
-//		appProviders.add(new App_Printer(gcm, "ZIRCON", COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Printer(gcm, "NSH COLOR", COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Printer(gcm, "NSH COPY 1", COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_Printer(gcm, "NSH FAX", COMM_MODE, IP_ADDRESS, PORT));
-		
 		// Misc Impromptu Apps
 		//appProviders.add(new App_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Hershey(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -169,11 +157,49 @@ public class Application implements EventReceiver
 		//appProviders.add(new App_PlayAngryBirds(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_QuickTask(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
+		// Snap-To-It Apps
+		//appProviders.add(new Sti_Diagnostics(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Map(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_DoorPlate(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new Sti_Paint(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+//		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_CMU(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		//appProviders.add(new Sti_Game(gcm, COMM_MODE, IP_ADDRESS, PORT));
+
+//		appProviders.add(new Sti_GenericDevice(gcm, "Extinguisher (NSH)", 
+//				new String[] { 
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_2.jpeg"}, 
+//				COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "Ubicomp Lab Sign", 
+//				new String[] { 
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_2.jpeg"}, 
+//				COMM_MODE, IP_ADDRESS, PORT));
+		
 		// This is Used by the Dispatchers!
 		updateThread = new UpdateThread();
 		updateThread.start();
 	}
 		
+	private void initializeSnapToItApps()
+	{
+		appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new Sti_Printer(gcm, "ZIRCON", 
+				new String[] {
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_3.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_4.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_5.jpeg"
+				},
+			    COMM_MODE, IP_ADDRESS, PORT));
+	}
+	
 	/**
 	 * This Method gets Called when the Device Receives Context Data
 	 */

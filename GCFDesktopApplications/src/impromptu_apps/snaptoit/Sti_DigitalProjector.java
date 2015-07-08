@@ -44,9 +44,11 @@ public class Sti_DigitalProjector extends SnapToItApplicationProvider
 				ipAddress,
 				port);
 		
-		this.addPhoto(this.getLocalStorageFolder() + "projector_0.jpeg", false, false, -59.407585211991055,-67.29113298599235,172.58450960820852);
-		this.addPhoto(this.getLocalStorageFolder() + "projector_1.jpeg", false, false, -44.74326127152747,-69.58374745260966,179.79022257878856);
-		this.addPhoto(this.getLocalStorageFolder() + "projector_2.jpeg", false, false, -62.8690158003268,-70.71701243969817,175.43584037912203);
+		this.addPhotoFromWeb(new String[] {
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_3.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_4.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_5.jpeg"
+				});
 		
 		// Takes a Photo At the Moment a New Photo Comes In
 		//this.enableRealtimeScreenshots();

@@ -326,7 +326,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 				}
 				else
 				{	
-					System.out.println("  Comparing Image Against " + photos.size() + " Photographs.");
+					System.out.println("  [" + this.getContextType() + "] Comparing Image Against " + photos.size() + " Photographs.");
 					
 					ArrayList<PhotoInfo> comparePhotos = new ArrayList<PhotoInfo>(); 
 					PhotoInfo bestPhoto      = null;
@@ -438,8 +438,6 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			while (s.hasNext())
 			{
 				String   line  = s.nextLine();
-				System.out.println(line);
-				
 				String[] entry = line.split(",");
 				
 				if (entry.length >= 4)
@@ -938,7 +936,9 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 
 		public boolean isCloseEnough(double azimuth, double pitch, double roll)
 		{			
-			double difference = getAngleDifference(azimuth, pitch, roll);
+			double difference = 180 - Math.abs(Math.abs(azimuth - this.azimuth) - 180);
+					
+					// getAngleDifference(azimuth, pitch, roll);
 			
 			System.out.printf(" Difference: U:%1.1f P:%1.1f = %1.1f\n", azimuth, this.azimuth, difference);
 			
@@ -946,13 +946,13 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			{
 				return true;
 			}
-			else if (difference < 20.0)
+			else if (difference < 45.0)
 			{
 				return true;
 			}
 			else
 			{
-				return true;
+				return false;
 			}
 		}
 		

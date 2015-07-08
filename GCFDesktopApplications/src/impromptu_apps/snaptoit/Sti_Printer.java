@@ -21,18 +21,17 @@ public class Sti_Printer extends SnapToItApplicationProvider
 	// Busy Flag
 	private boolean busy;
 	private String  printerName;
-	private String  pictureURL;
 	
-	public Sti_Printer(GroupContextManager groupContextManager, String printerName, String pictureURL, CommMode commMode, String ipAddress, int port)
+	public Sti_Printer(GroupContextManager groupContextManager, String printerName, String[] photos, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"STI_PRINTER",
-				"Printer Controls",
+				"STI_PRINTER_" + printerName,
+				"Printer Controls (" + printerName,
 				"Controls the Printer " + printerName + ".  Powered by Snap-To-It!",
 				"Snap-To-It",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"",				   // LOGO
+				"http://icons.iconarchive.com/icons/iconshock/real-vista-computer-gadgets/256/multifunction-printer-icon.png", // LOGO
 				60,
 				commMode,
 				ipAddress,
@@ -40,13 +39,9 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		
 		this.busy 		 = false;
 		this.printerName = printerName;
-		this.pictureURL  = pictureURL;
 		
-		this.addPhotoFromWeb(new String[] {
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_0.jpeg",
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_1.jpeg",
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_2.jpeg"
-				});
+		// Adds Photos
+		this.addPhotoFromWeb(photos);
 	}
 
 	@Override

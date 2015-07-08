@@ -25,28 +25,17 @@ import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidBatteryMonitor;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidframework.toolkit.SftpToolkit;
-import com.adefreitas.androidliveos.AndroidApplicationProvider;
-import com.adefreitas.androidproviders.BluewaveContextProvider;
-import com.adefreitas.beaconapps.App_GameConnectMeFactory;
-import com.adefreitas.beaconapps.App_TestApp;
+import com.adefreitas.androidbluewave.*;
+import com.adefreitas.androidframework.*;
+import com.adefreitas.androidframework.toolkit.*;
+import com.adefreitas.androidliveos.*;
+import com.adefreitas.androidproviders.*;
+import com.adefreitas.beaconapps.*;
+import com.adefreitas.groupcontextframework.*;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.ContextType;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.inoutboard.App_InOutBoardIdentity;
-import com.adefreitas.inoutboard.UserIdentityContextProvider;
-import com.adefreitas.liveos.ApplicationProvider;
-import com.adefreitas.liveos.ApplicationSettings;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.inoutboard.*;
+import com.adefreitas.liveos.*;
+import com.adefreitas.messages.*;
 import com.google.gson.Gson;
 
 public class GCFApplication extends Application
@@ -196,6 +185,7 @@ public class GCFApplication extends Application
 		
 		// Registers the Provider(s)
 		groupContextManager.registerContextProvider(identityProvider);
+		groupContextManager.registerContextProvider(new TemperatureContextProvider(groupContextManager, this));
 	}
 	
 	/**
@@ -207,7 +197,9 @@ public class GCFApplication extends Application
 		apps = new ArrayList<ApplicationProvider>();
 		
 		// Creates Application Providers
-		apps.add(new App_InOutBoardIdentity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
+		apps.add(new App_NSHMap(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
+		apps.add(new App_RoomSensors(this, groupContextManager, "HCI Commons", COMM_MODE, IP_ADDRESS, PORT));
+		//apps.add(new App_InOutBoardIdentity(this, identityProvider, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_ContactCard(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_HomeLights(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));
 		//apps.add(new App_GameConnectMeFactory(this, groupContextManager, COMM_MODE, IP_ADDRESS, PORT));

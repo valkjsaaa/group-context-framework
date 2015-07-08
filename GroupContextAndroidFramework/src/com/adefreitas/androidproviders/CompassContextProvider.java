@@ -1,5 +1,7 @@
 package com.adefreitas.androidproviders;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -37,10 +39,11 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
     private Sensor        magnetometer;
     
     // Values
-    double  accuracy;
-    double  azimuth;
-    double  pitch;
-    double  roll;
+    final int maxEntries = 5;
+    ArrayList<Double> accuracy;
+    ArrayList<Double> azimuth;
+    ArrayList<Double> pitch;
+    ArrayList<Double> roll;
     float[] mGravity;
     float[] mGeomagnetic;
 	
@@ -53,10 +56,10 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer  = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
       
-        azimuth  = 0.0;
-        pitch    = 0.0;
-        roll     = 0.0;
-        accuracy = 0.0;
+        azimuth  = new ArrayList<Double>();
+        pitch    = new ArrayList<Double>();
+        roll     = new ArrayList<Double>();
+        accuracy = new ArrayList<Double>();
 	}
 
 	@Override
@@ -84,12 +87,13 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 	@Override
 	public void sendContext() 
 	{
+		
 		this.getGroupContextManager().sendContext(this.getContextType(), 
 				this.getSubscriptionDeviceIDs(), 
-				new String[] { "AZIMUTH=" + String.format("%1.1f", azimuth), 
-			   				   "PITCH=" + String.format("%1.1f", roll), 
-			   				   "ROLL=" + String.format("%1.1f", roll), 
-			   				   "ACCURACY=" + String.format("%1.1f", accuracy) });
+				new String[] { "AZIMUTH=" + String.format("%1.1f", getAverage(azimuth)), 
+			   				   "PITCH=" + String.format("%1.1f", getAverage(pitch)), 
+			   				   "ROLL=" + String.format("%1.1f", getAverage(roll)), 
+			   				   "ACCURACY=" + String.format("%1.1f", getAverage(accuracy)) });
 	}
 
 	@Override
@@ -116,9 +120,17 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 		    {
 		    	float orientation[] = new float[3];
 		        SensorManager.getOrientation(R, orientation);
-		        azimuth = normalizeAngle(orientation[0]);
-		        pitch   = normalizeAngle(orientation[1]);
-		        roll    = normalizeAngle(orientation[2]);
+		        
+		        azimuth.add(normalizeAngle(orientation[0]));
+		        pitch.add(normalizeAngle(orientation[1]));
+		        roll.add(normalizeAngle(orientation[2]));
+		        
+		        if (azimuth.size() > maxEntries)
+		        {
+		        	azimuth.remove(0);
+		        	pitch.remove(0);
+		        	roll.remove(0);
+		        }
 		    }
 		}
 	}
@@ -133,7 +145,12 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 		   SENSOR_STATUS_UNRELIABLE = 0
 		 */
 		
-		this.accuracy = accuracy;
+		this.accuracy.add((double)accuracy);
+		
+		if (this.accuracy.size() > maxEntries)
+		{
+			this.accuracy.remove(0);
+		}
 	}
 
 	private double normalizeAngle(double angleInRadians)
@@ -150,5 +167,26 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 	    }
 	    
 	    return newAngle;
+	}
+
+	private double getAverage(ArrayList<Double> values)
+	{
+		double sum = 0.0;
+		double count = 0;
+		
+		for (double value : values)
+		{
+			sum += value;
+			count++;
+		}
+		
+		if (count > 0.0)
+		{
+			return sum / count;
+		}
+		else
+		{
+			return 0.0;
+		}
 	}
 }
