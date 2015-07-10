@@ -10,6 +10,10 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
@@ -28,6 +32,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,10 +66,13 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 	private TextView txtCompass;
 	
 	// Camera Orientation
-	private double azimuth;
-	private double pitch;
-	private double roll;
-	private double accuracy;
+	private double photoAzimuth;
+	private double photoPitch;
+	private double photoRoll;
+	private double currentAzimuth;
+	private double currentPitch;
+	private double currentRoll;
+	private double currentAccuracy;
 	
 	// Camera Surface
 	private Camera        camera;
@@ -101,6 +109,11 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		surfaceHolder.addCallback(this);
 		surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		
+		// Initializes Orientation
+		photoAzimuth = Double.NaN;
+		photoPitch   = Double.NaN;
+		photoRoll    = Double.NaN;
+		
 		// Create Intent Filter and Receiver
 		// Receivers are Set in onResume() and Removed on onPause()
 		this.receiver     = new IntentReceiver();
@@ -125,6 +138,26 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		
 		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 500, new String[0]);
 	}
+	
+	private void draw()
+	{
+		RelativeLayout layoutCamera = (RelativeLayout)this.findViewById(R.id.layoutCamera);
+		layoutCamera.addView(new Rectangle(this));
+	}
+	
+	private class Rectangle extends View{
+	    Paint paint = new Paint();
+
+	    public Rectangle(Context context) {
+	        super(context);
+	    }
+	    @Override
+	    public void onDraw(Canvas canvas) {
+	        paint.setColor(Color.GREEN);
+	        Rect rect = new Rect(20, 56, 200, 112);
+	        canvas.drawRect(rect, paint );
+	    }
+	 }
 	
 	/**
 	 * Android Method:  Used when an Activity is Paused
@@ -164,6 +197,9 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 	{
 		public void onPictureTaken(byte[] imageData, Camera c) 
 		{
+			photoAzimuth = currentAzimuth;
+			photoPitch   = currentPitch;
+			photoRoll    = currentRoll;
 			encodeImageToString(imageData);
 		}
 	};
@@ -336,9 +372,9 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 				String url = CLOUD_UPLOAD_URL 
 						+ "?deviceID=" + Uri.encode(application.getGroupContextManager().getDeviceID()) 
 						+ "&timestamp=" + System.currentTimeMillis() 
-						+ "&azimuth=" + azimuth
-						+ "&pitch=" + pitch
-						+ "&roll=" + roll
+						+ "&azimuth=" + currentAzimuth
+						+ "&pitch=" + currentPitch
+						+ "&roll=" + currentRoll
 						+ "&object=" + Uri.encode(txtObject.getText().toString());
 				
 				application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PHOTO_SUBMITTED);
@@ -370,25 +406,41 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		}
 		
 		private void onPhotoSubmitted(Context context, Intent intent)
-		{				
-				if (txtObject.getText().length() == 0)
-				{
-					Intent i = new Intent(GCFApplication.ACTION_IMAGE_UPLOADED);
-					i.putExtra("UPLOAD_PATH", "http://gcf.cmu-tbank.com/snaptoit/photos/" + Uri.encode(application.getGroupContextManager().getDeviceID()) + ".jpeg");
-					i.putExtra("AZIMUTH", azimuth);
-					i.putExtra("PITCH", pitch);
-					i.putExtra("ROLL", roll);
-					application.sendBroadcast(i);
-					
-					finish();
-				}
-				else
-				{
-			  		previewRunning = false;
-			  		encodedString = "";
-			  		camera.stopPreview();
-			  		camera.startPreview();
-				}
+		{		
+			String photoURL = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE).replace(" ", "%20");
+			Log.d("ASDF", "Response: " + photoURL);
+			
+			double azimuth  = (photoAzimuth != Double.NaN) ? photoAzimuth : currentAzimuth;
+			double pitch    = (photoPitch   != Double.NaN) ? photoPitch   : currentAzimuth;
+			double roll     = (photoRoll    != Double.NaN) ? photoRoll    : currentAzimuth;
+			
+			Intent i = new Intent(GCFApplication.ACTION_IMAGE_UPLOADED);
+			i.putExtra("UPLOAD_PATH", photoURL);
+			i.putExtra("AZIMUTH", azimuth);
+			i.putExtra("PITCH", pitch);
+			i.putExtra("ROLL", roll);
+			i.putExtra("APPLIANCE_NAME", txtObject.getText().toString().trim());
+			
+			photoAzimuth = Double.NaN;
+			photoPitch   = Double.NaN;
+			photoRoll    = Double.NaN;			
+			
+			if (txtObject.getText().length() == 0)
+			{
+				finish();
+			}
+			else
+			{
+				//i.putExtra("UPLOAD_PATH", photoURL);//"http://gcf.cmu-tbank.com/snaptoit/photos/" + Uri.encode(application.getGroupContextManager().getDeviceID()) + ".jpeg");
+		  		previewRunning = false;
+		  		encodedString = "";
+		  		camera.stopPreview();
+		  		camera.startPreview();
+			}
+			
+			// Sends the Broadcast
+			Log.d("IMPROMPTU", "Sending " + GCFApplication.ACTION_IMAGE_UPLOADED);
+			application.sendBroadcast(i);
 		}
 		
 		private void onContextDataReceived(Context context, Intent intent)
@@ -403,13 +455,13 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 			// Forwards Values to the ContextReceiver for Processing
 			if (contextType.equals("COMPASS"))
 			{
-				azimuth  = (Double.valueOf(data.getPayload("AZIMUTH")));
-				pitch    = (Double.valueOf(data.getPayload("PITCH")));
-				roll     = (Double.valueOf(data.getPayload("ROLL")));
-				accuracy = (Double.valueOf(data.getPayload("ACCURACY")));
-				txtCompass.setText(String.format("AZ=%1.1f, PIT=%1.1f, ROLL=%1.1f, ACC=%1.1f", azimuth, pitch, roll, accuracy));
+				currentAzimuth  = (Double.valueOf(data.getPayload("AZIMUTH")));
+				currentPitch    = (Double.valueOf(data.getPayload("PITCH")));
+				currentRoll     = (Double.valueOf(data.getPayload("ROLL")));
+				currentAccuracy = (Double.valueOf(data.getPayload("ACCURACY")));
+				txtCompass.setText(String.format("AZ=%1.1f, PIT=%1.1f, ROLL=%1.1f, ACC=%1.1f", currentAzimuth, currentPitch, currentRoll, currentAccuracy));
 				
-				if (accuracy < 3.0)
+				if (currentAccuracy < 3.0)
 				{
 					btnCamera.setEnabled(false);
 					btnCamera.setBackgroundColor(0xFF333333);

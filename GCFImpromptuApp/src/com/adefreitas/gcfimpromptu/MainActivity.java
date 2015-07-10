@@ -589,7 +589,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		@Override
 		public void onClick(View v) 
 		{
-			GCFApplication.sendQuery(application, null, 0.0, 0.0, 0.0, true);
+			GCFApplication.sendQuery(application, null, null, 0.0, 0.0, 0.0, true);
 		}
     };
 	

@@ -4,22 +4,14 @@ package impromptu_apps.snaptoit;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 
-import toolkits.ScreenshotToolkit;
-
-import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.desktopframework.toolkit.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.ScreenshotToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 {		

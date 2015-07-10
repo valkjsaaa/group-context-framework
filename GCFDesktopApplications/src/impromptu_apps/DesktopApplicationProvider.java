@@ -29,7 +29,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 	private Robot robot;
 	
 	// Link to the Folder Where APP Data is Stored
-	private static String APP_DATA_FOLDER = "appData/liveOS/";
+	public static String APP_DATA_FOLDER = "appData/liveOS/";
 	
 	// DEBUG:  Used to Log Important Events
 	private SQLToolkit sqlEventLogger;
@@ -133,7 +133,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		if (sqlEventLogger != null)
 		{
 			// Generates the Update Query
-			String sql = String.format("INSERT INTO impromptu_eventLog (date, app, tag, message) VALUES (now(), '%s', '%s', '%s')", this.appID, tag, message);
+			String sql = String.format("INSERT INTO impromptu_eventLog (date, timestamp, app, tag, message) VALUES (now(), CURRENT_TIMESTAMP, '%s', '%s', '%s')", this.appID, tag, message);
 			
 			// Updates the Database
 			sqlEventLogger.runUpdateQuery(sql);

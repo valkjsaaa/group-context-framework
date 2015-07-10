@@ -4,22 +4,14 @@ package impromptu_apps.snaptoit;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 
-import toolkits.ScreenshotToolkit;
-
-import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
 import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.desktopframework.toolkit.SftpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
 import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class Sti_DigitalProjector extends SnapToItApplicationProvider
 {		
@@ -44,7 +36,7 @@ public class Sti_DigitalProjector extends SnapToItApplicationProvider
 				ipAddress,
 				port);
 		
-		this.addPhotoFromWeb(new String[] {
+		this.addAppliancePhotoFromURL(new String[] {
 				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_3.jpeg",
 				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_4.jpeg",
 				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_5.jpeg"

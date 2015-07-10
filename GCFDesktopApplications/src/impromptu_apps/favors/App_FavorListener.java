@@ -97,15 +97,15 @@ public class App_FavorListener extends DesktopApplicationProvider
 			
 			// Generates the History Query
 			String historyQuery = 
-					String.format("INSERT INTO impromptu_usercontext (deviceID, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
+					String.format("INSERT INTO impromptu_usercontext (device_id, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
 					deviceID, time, latitude, longitude, activity, confidence);
 			
 			// Generates the Real Time Query
 			String realtimeQuery = (parser.getJSONObject("location").has("SENSOR")) ?
 					// This query occurs if there is a sensor
-					String.format("INSERT INTO favors_profile (deviceID, latitude, longitude, lastSensor, lastSensorDate, activity, confidence, lastUpdate) VALUES ('%s',%f,%f,'%s',CURRENT_TIMESTAMP,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), lastSensor=VALUES(lastSensor), lastSensorDate=VALUES(lastSensorDate), activity=VALUES(activity), confidence=VALUES(confidence), lastUpdate=VALUES(lastUpdate)", 
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, last_sensor, last_sensor_date, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',CURRENT_TIMESTAMP,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), last_sensor=VALUES(lastSensor), last_sensor_date=VALUES(last_sensor_date), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
 							deviceID, latitude, longitude, parser.getJSONObject("location").get("SENSOR").getAsString(), activity, (double)confidence) :
-					String.format("INSERT INTO favors_profile (deviceID, latitude, longitude, activity, confidence, lastUpdate) VALUES ('%s',%f,%f,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), lastUpdate=VALUES(lastUpdate)", 
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
 							deviceID, latitude, longitude, activity, (double)confidence);
 					
 			// Runs the SQL Queries

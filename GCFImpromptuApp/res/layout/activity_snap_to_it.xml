@@ -45,10 +45,15 @@
         		android:textColor="#FFFFFF"/>
 			
 			<!-- This is the Actual Camera! -->
-			<SurfaceView 
-			    android:id="@+id/surface_camera"
-				android:layout_width="fill_parent" 
-				android:layout_height="200dp"/>
+			<RelativeLayout
+			    android:id="@+id/layoutCamera"
+			    android:layout_width="fill_parent"
+	        	android:layout_height="wrap_content">
+			    <SurfaceView 
+				    android:id="@+id/surface_camera"
+					android:layout_width="fill_parent" 
+					android:layout_height="200dp"/>
+			</RelativeLayout>
 				
 			<!-- Object Name (Used for Onboarding New Devices) -->
 			<TextView

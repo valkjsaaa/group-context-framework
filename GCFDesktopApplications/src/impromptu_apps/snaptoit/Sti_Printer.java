@@ -5,16 +5,11 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import org.apache.commons.vfs2.provider.UriParser;
-
 import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class Sti_Printer extends SnapToItApplicationProvider
 {	
@@ -26,7 +21,7 @@ public class Sti_Printer extends SnapToItApplicationProvider
 	{
 		super(groupContextManager, 
 				"STI_PRINTER_" + printerName,
-				"Printer Controls (" + printerName,
+				"Printer Controls (" + printerName + ")",
 				"Controls the Printer " + printerName + ".  Powered by Snap-To-It!",
 				"Snap-To-It",
 				new String[] { },  // Contexts
@@ -41,7 +36,7 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		this.printerName = printerName;
 		
 		// Adds Photos
-		this.addPhotoFromWeb(photos);
+		this.addAppliancePhotoFromURL(photos);
 	}
 
 	@Override
@@ -81,14 +76,6 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		{
 			System.out.println("*** I got remotely told to print something. ***");
 		}
-	}
-	
-	/**
-	 * OPTIONAL:  Allows you to Customize the Name of the App on a Per User Basis
-	 */
-	public String getName(String userContextJSON)
-	{
-		return name + " (" + printerName.toUpperCase() + ")";
 	}
 	
 	/**

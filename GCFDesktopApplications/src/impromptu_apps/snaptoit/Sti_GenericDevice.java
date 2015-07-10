@@ -1,20 +1,10 @@
 package impromptu_apps.snaptoit;
 
 
-import java.awt.Robot;
-import java.awt.event.KeyEvent;
-import java.io.File;
-
-import org.apache.commons.vfs2.provider.UriParser;
-
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
 import com.adefreitas.messages.ComputeInstruction;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class Sti_GenericDevice extends SnapToItApplicationProvider
 {	
@@ -37,7 +27,7 @@ public class Sti_GenericDevice extends SnapToItApplicationProvider
 		
 		this.name = name;
 		this.urls = urls;
-		this.addPhotoFromWeb(urls);
+		this.addAppliancePhotoFromURL(urls);
 	}
 
 	@Override

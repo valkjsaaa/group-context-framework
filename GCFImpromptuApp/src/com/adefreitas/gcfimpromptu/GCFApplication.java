@@ -196,7 +196,7 @@ public class GCFApplication extends Application
 		this.registerReceiver(intentReceiver, filter);
 		
 		// Performs an Initial Context Update
-		setPersonalContext(null, 0.0, 0.0, 0.0);
+		setPersonalContext();
 		
 		// Loads App Directory from Memory
 		if (appSharedPreferences.contains(PREFERENCE_APP_CATALOG))
@@ -440,10 +440,10 @@ public class GCFApplication extends Application
 	// Context Update Methods -------------------------------------------------------------
 	private void setPersonalContext()
 	{
-		setPersonalContext(null, 0.0, 0.0, 0.0);
+		setPersonalContext(null, null, 0.0, 0.0, 0.0);
 	}
 	
-	private void setPersonalContext(String photoFilePath, double azimuth, double pitch, double roll)
+	private void setPersonalContext(String photoFilePath, String applianceName, double azimuth, double pitch, double roll)
 	{		
 		try
 		{			
@@ -454,7 +454,7 @@ public class GCFApplication extends Application
 				getBluewaveManager().getPersonalContextProvider().setContext(LOCATION_CONTEXT_TAG, getLocationContext());
 				getBluewaveManager().getPersonalContextProvider().setContext(TIME_CONTEXT_TAG, getTimeContext());
 				getBluewaveManager().getPersonalContextProvider().setContext(ACTIVITY_CONTEXT_TAG, getActivityContext());
-				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath, azimuth, pitch, roll));
+				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(photoFilePath, applianceName, azimuth, pitch, roll));
 				getBluewaveManager().getPersonalContextProvider().setContext(PREFERENCES_TAG, getPreferences());
 				
 				// PUBLISHES THE CHANGES AT ONCE
@@ -594,10 +594,10 @@ public class GCFApplication extends Application
 		return time;
 	}
 	
-	private JSONObject getSnapToItContext(String photoFilePath, double azimuth, double pitch, double roll)
+	private JSONObject getSnapToItContext(String photoFilePath, String applianceName, double azimuth, double pitch, double roll)
 	{
 		JSONObject snaptoit = new JSONObject();
-		System.out.println("Snap To It: " + photoFilePath);
+		
 		try
 		{
 			// Sets Snap To It Value
@@ -608,6 +608,7 @@ public class GCFApplication extends Application
 	        	snaptoit.put("AZIMUTH", azimuth);
 	        	snaptoit.put("PITCH", pitch);
 	        	snaptoit.put("ROLL", roll);
+	        	snaptoit.put("APPLIANCE_NAME", applianceName);
 	        }
 	        else
 	        {
@@ -996,6 +997,8 @@ public class GCFApplication extends Application
 				GPSContextProvider		 gpsProvider	   = new GPSContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				CompassContextProvider   compassProvider   = new CompassContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
 				
+				gcfService.getGroupContextManager().setDebug(false);
+				
 				// Registers Context Providers
 				gcfService.getGroupContextManager().registerContextProvider(calendarProvider);
 				//gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
@@ -1026,7 +1029,7 @@ public class GCFApplication extends Application
 			String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
 			String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
 						
-			Log.d(LOG_NAME, "Received [" + contextType + "]: " + Arrays.toString(values));
+			//Log.d(LOG_NAME, "Received [" + contextType + "]: " + Arrays.toString(values));
 			
 			// Forwards Values to the ContextReceiver for Processing
 			if (contextReceiver != null)
@@ -1173,16 +1176,12 @@ public class GCFApplication extends Application
 		private void onSnapToItUploadComplete(Context context, Intent intent)
 		{
 			String uploadPath = intent.getStringExtra("UPLOAD_PATH");
+			String applianceName = intent.getStringExtra("APPLIANCE_NAME");
 			double azimuth    = intent.getDoubleExtra("AZIMUTH", 0.0);
 			double pitch      = intent.getDoubleExtra("PITCH", 0.0);
 			double roll       = intent.getDoubleExtra("ROLL", 0.0);
-			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
 			
-//		    // Makes the File Visible!
-//		    MediaScannerConnection.scanFile(GCFApplication.this, new String[] { uploadPath }, null, null);
-//			
-//			// Updates Context with the New Upload Path
-			//setPersonalContext(uploadPath);		
+			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
 			
 			// Removes the App
 			for (AppCategoryInfo category : appCatalog)
@@ -1193,9 +1192,9 @@ public class GCFApplication extends Application
 					break;
 				}
 			}
-//			
-//			// Sends a New Query!
-			sendQuery(GCFApplication.this, uploadPath, azimuth, pitch, roll, true);
+			
+			// Sends a New Query!
+			sendQuery(GCFApplication.this, uploadPath, applianceName, azimuth, pitch, roll, true);	
 		}
 	
 		private void onLogoDownloaded(Context context, Intent intent)
@@ -1234,7 +1233,7 @@ public class GCFApplication extends Application
 		}
 	}
 	
-	public static void sendQuery(GCFApplication application, String snapToItPhoto, double azimuth, double pitch, double roll, boolean force)
+	public static void sendQuery(GCFApplication application, String snapToItPhoto, String applianceName, double azimuth, double pitch, double roll, boolean force)
 	{
 		boolean sendUpdate = application.appSharedPreferences.getBoolean("impromptu_send", true) || application.getGroupContextManager().getBatteryMonitor().isCharging();
 		
@@ -1253,7 +1252,7 @@ public class GCFApplication extends Application
 				if (sendUpdate || force)
 				{
 					// Updates the Device's Personal Context
-					application.setPersonalContext(snapToItPhoto, azimuth, pitch, roll);
+					application.setPersonalContext(snapToItPhoto, applianceName, azimuth, pitch, roll);
 					
 					// Sends the Context to the Application Directory
 					application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
@@ -1262,11 +1261,6 @@ public class GCFApplication extends Application
 							new String[] { "LOS_DNS" }, 
 							"QUERY", 
 							new String[] { "CONTEXT=" + context.toString(), "TIMESTAMP=" + new Date().toString(), "PID=" + APP_PROCESS_ID });
-					
-					if (force)
-					{
-						Toast.makeText(application, "Sending Context", Toast.LENGTH_SHORT).show();
-					}
 				}
 			}
 			else
@@ -1307,7 +1301,7 @@ public class GCFApplication extends Application
 							new Date(System.currentTimeMillis() + 2 * UPDATE_SECONDS * 1000);
 					
 					// Sends the Context to the Application Directory
-					sendQuery(app, null, 0.0, 0.0, 0.0, false);
+					sendQuery(app, null, null, 0.0, 0.0, 0.0, false);
 					
 					// Removes Any Existing Callbacks
 					removeCallbacks(this);

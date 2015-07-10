@@ -5,9 +5,6 @@ import impromptu_apps.DesktopApplicationProvider;
 import java.util.ArrayList;
 import java.util.Date;
 
-
-import cern.colt.Arrays;
-
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
 import com.adefreitas.desktopframework.toolkit.SQLToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;

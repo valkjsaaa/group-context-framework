@@ -1,6 +1,5 @@
 package impromptu_apps.snaptoit;
 
-
 import impromptu_apps.DesktopApplicationProvider;
 
 import java.io.File;
@@ -9,29 +8,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import openimaj.OpenimajToolkit;
-
-import org.codehaus.plexus.util.FileUtils;
-
-import toolkits.ScreenshotToolkit;
-
-import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
+import com.adefreit.openimajtoolkit.OpenImajToolkit;
+import com.adefreitas.desktopframework.toolkit.FileToolkit;
 import com.adefreitas.desktopframework.toolkit.HttpToolkit;
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SftpToolkit;
+import com.adefreitas.desktopframework.toolkit.ScreenshotToolkit;
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
 import com.adefreitas.messages.CommMessage;
 import com.google.gson.JsonObject;
 
 public abstract class SnapToItApplicationProvider extends DesktopApplicationProvider
 {			
+	public static final String USER_PHOTO_FOLDER = "stiUserPhotos/";
+	
 	// OpenImaj (Image Processing / SIFT)
-	public  OpenimajToolkit   		 	 openimaj;
-	private HashMap<String, PhotoInfo>   photos;
-	private HashMap<String, CompareInfo> comparisonHistory;
+	static private OpenImajToolkit   		  openimaj;
+	static private HashMap<String, PhotoInfo> photos;
+	private HashMap<String, CompareInfo> 	  comparisonHistory;
 	
 	// Behavior Flags
 	private   boolean debugMode       = false;
@@ -63,11 +58,17 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	{
 		super(groupContextManager, contextType, name, description, "SNAP-TO-IT", contextsRequired, preferencesToRequest, logoPath, lifetime, commMode, ipAddress, port);
 		
-		// Creates the Snap-To-It Storage Objects
-		photos   	      = new HashMap<String, PhotoInfo>();
-		openimaj 	      = new OpenimajToolkit();
-		comparisonHistory = new HashMap<String, CompareInfo>();
+		// Creates the Snap-To-It Image Comparison Objects
+		photos   	      = (photos == null) ? new HashMap<String, PhotoInfo>() : photos;
+		openimaj 	      = (openimaj == null) ? new OpenImajToolkit() : openimaj;
+		comparisonHistory = (comparisonHistory == null) ? new HashMap<String, CompareInfo>() : comparisonHistory;
 				
+		// Creates a Default Logo if one does not already exist
+		if (this.logoPath == null || this.logoPath.length() == 0)
+		{
+			this.logoPath = "http://icons.iconarchive.com/icons/double-j-design/origami-colored-pencil/256/blue-camera-icon.png";
+		}
+		
 		// Generates the Local Storage Folder on Initialization
 		this.getLocalStorageFolder();
 	}
@@ -81,21 +82,21 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		super.onSubscription(newSubscription);
 		
 		// Retrieves the File Name
-		String 			  json 	   		 = CommMessage.getValue(newSubscription.getParameters(), "context");
-		JSONContextParser parser   		 = new JSONContextParser(JSONContextParser.JSON_TEXT, json);	
-		JsonObject 		  snapToItObject = parser.getJSONObject("snap-to-it");
+		String 			  json 	   	   = CommMessage.getValue(newSubscription.getParameters(), "context");
+		JSONContextParser parser   	   = new JSONContextParser(JSONContextParser.JSON_TEXT, json);	
+		JsonObject 		  snapToItJSON = parser.getJSONObject("snap-to-it");
 		
 		// Makes a Copy of the File to Use Later!
-		if (snapToItObject != null && storeUserPhotos)
+		if (snapToItJSON != null && storeUserPhotos)
 		{
 			try
 			{
-				if (snapToItObject.has("PHOTO"))
+				if (snapToItJSON.has("PHOTO"))
 				{
-					String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
+					String cloudPhotoPath = snapToItJSON.get("PHOTO").getAsString();
 
 					String filename = cloudPhotoPath.substring(cloudPhotoPath.lastIndexOf("/") + 1); 	// Just the Filename
-					File   photo    = new File(this.getLocalStorageFolder() + filename);
+					File   photo    = new File(DesktopApplicationProvider.APP_DATA_FOLDER + USER_PHOTO_FOLDER + filename);
 					File   newFile  = new File(this.getLocalStorageFolder() + "userPhoto_" + new Date().getTime() + ".jpeg");
 					
 					// Only Adds a File to the Library if it Doesn't Already Match a Lot with an Existing Photograph
@@ -103,9 +104,8 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					{
 						if (comparisonHistory.get(newSubscription.getDeviceID()).getBestMatch() < 30.0)
 						{
-							FileUtils.copyFile(photo, newFile);
-							
-							this.addPhoto(newFile.getAbsolutePath(), false, false, this.getOrientation(parser, "AZIMUTH"), this.getOrientation(parser, "PITCH"), this.getOrientation(parser, "ROLL"));	
+							FileToolkit.copyFile(photo, newFile);
+							this.addAppliancePhoto(newFile.getAbsolutePath(), System.currentTimeMillis(), false, true, false, this.getOrientation(parser, "AZIMUTH"), this.getOrientation(parser, "PITCH"), this.getOrientation(parser, "ROLL"));	
 						}
 					}
 					
@@ -172,6 +172,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	{
 		if (debugMode)
 		{
+			// In debug mode, the device ALWAYS responds to any photo
 			return true;
 		}
 		else
@@ -185,24 +186,40 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			if (snapToItObject != null && snapToItObject.has("PHOTO") && snapToItObject.has("TIMESTAMP"))
 			{
 				String cloudPhotoPath = snapToItObject.get("PHOTO").getAsString();
+				String applianceName  = snapToItObject.get("APPLIANCE_NAME").getAsString();
 				long   timestamp      = snapToItObject.get("TIMESTAMP").getAsLong();
-				double matches 		  = processPhoto(deviceID, cloudPhotoPath, timestamp, this.getOrientation(parser, "AZIMUTH"), this.getOrientation(parser, "PITCH"), this.getOrientation(parser, "ROLL"));
-				System.out.println("Matches = " + matches);
-				return matches >= minMatches;
+				double azimuth 		  = this.getOrientation(parser, "AZIMUTH");
+				double pitch 		  = this.getOrientation(parser, "PITCH");
+				double roll           = this.getOrientation(parser, "ROLL");
+				
+				if (applianceName.equals(this.getContextType()))
+				{
+					System.out.println("    ONBOARDING " + cloudPhotoPath);
+					
+					// Downloads the File
+					String localPhotoPath = this.getLocalStorageFolder() + this.getContextType() + "_" + System.currentTimeMillis() + ".jpeg";		// Local File Location
+					HttpToolkit.downloadFile(cloudPhotoPath, localPhotoPath);
+					this.addAppliancePhoto(localPhotoPath, timestamp, false, true, false, azimuth, pitch, roll);
+				}
+				else
+				{
+					double matches = processPhoto(deviceID, cloudPhotoPath, timestamp, azimuth, pitch, roll);
+					return matches >= minMatches;	
+				}
 			}
 			else
 			{
 				if (snapToItObject == null)
 				{
-					System.out.println("Missing Snap-To-It JSON Element in Context");
+					System.out.print("Missing Snap-To-It JSON Element in Context ");
 				}
 				else if (!snapToItObject.has("PHOTO"))
 				{
-					System.out.println("Missing Photo");
+					System.out.print("Missing Photo ");
 				}
 				else if (!snapToItObject.has("TIMESTAMP"))
 				{
-					System.out.println("Missing Timestamp");
+					System.out.print("Missing Timestamp ");
 				}
 			}
 
@@ -239,24 +256,28 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		{
 			CompareInfo info = comparisonHistory.get(this.getDeviceID(parser));
 
-			if (info.getBestMatch() >= 80)
+			if (info.getBestMatch() >= 100)
+			{
+				newDescription += "Very High";
+			}
+			else if (info.getBestMatch() >= 50)
 			{
 				newDescription += "High";
 			}
-			else if (info.getBestMatch() >= 40)
+			else if (info.getBestMatch() >= 25)
 			{
 				newDescription += "Medium";
 			}
-			else if (info.getBestMatch() >= 20)
-			{
-				newDescription += "Uncertain";
-			}
-			else
+			else if (info.getBestMatch() >= 15)
 			{
 				newDescription += "Low";
 			}
+			else
+			{
+				newDescription += "UNKNOWN";
+			}
 			
-			newDescription += " (" + info.getBestMatch() + ")";
+			newDescription += " (" + info.getBestMatch() + " matches)";
 		}
 		
 		return newDescription;
@@ -282,68 +303,85 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		long featureComputeTime = 0;
 		long totalCompareTime   = 0;
 		long totalDownloadTime  = 0;
+		ArrayList<PhotoInfo> photosToCompare = new ArrayList<PhotoInfo>(); 
 		
 		if (cloudPhotoPath != null)
 		{
-			String filename    	  = cloudPhotoPath.substring(cloudPhotoPath.lastIndexOf("/") + 1); 	// Just the Filename
-			String localPhotoPath = this.getLocalStorageFolder() + filename;						// Local Location
+			System.out.println("\n    Request to Process " + cloudPhotoPath + " [" + timestamp + "]");
 			
-			System.out.println("\nRequest to Process " + cloudPhotoPath + " [" + timestamp + "]");
-					
+			// Extracts the Path for the User's Photo
+			//String localPhotoPath = this.getLocalStorageFolder() + filename;						// Local Location
+			String filename    	  = cloudPhotoPath.substring(cloudPhotoPath.lastIndexOf("/") + 1); 	// Just the Filename
+			String localPhotoPath = DesktopApplicationProvider.APP_DATA_FOLDER + USER_PHOTO_FOLDER + filename;	
+			
 			// Performs Comparisons (as needed)
 			if (deviceID != null && cloudPhotoPath != null && (cloudPhotoPath.endsWith("jpeg") || cloudPhotoPath.endsWith("jpg")))
 			{				
-				// Determines if the Device's Photograph Needs to be Downloaded Again
-				if (!comparisonHistory.containsKey(deviceID) || (timestamp > comparisonHistory.get(deviceID).getLastModifiedTime()))
-				{								
-					if (realtime)
-					{
-						takeScreenshot();
-					}
+				// STEP 1:  Determines if the Device's Photograph Needs to be Downloaded Again
+				if (!photos.containsKey(localPhotoPath) || timestamp > photos.get(localPhotoPath).getTimestamp())
+				{	
+					System.out.println("    Downloading " + filename);
 					
+					// Downloads the Photo (Overwrites the Existing One)
 					Date startDownload = new Date();
 					HttpToolkit.downloadFile(cloudPhotoPath, localPhotoPath);
 					totalDownloadTime = new Date().getTime() - startDownload.getTime();
 										
 					// Recomputes the Features for this Photo from Scratch
+					Date startFeatureCompute = new Date();
 					openimaj.forgetFeatures(localPhotoPath);
-					Date startFeatureCompute = new Date();					
 					openimaj.computeFeatures(localPhotoPath);
 					featureComputeTime = new Date().getTime() - startFeatureCompute.getTime();
 					
-					// Erases Existing Photo Path
-					comparisonHistory.put(deviceID, new CompareInfo(deviceID, timestamp));
+					photos.put(localPhotoPath, new PhotoInfo(localPhotoPath, timestamp, deviceID, true, false, false, azimuth, pitch, roll));
+					
+					// Takes a Screenshot and Extracts the SIFT Features
+					if (realtime)
+					{
+						takeScreenshot();
+					}
 				}
 				else
 				{
-					System.out.println("  Already Downloaded.");
+					System.out.println("    " + filename + " Already Downloaded.  Using Existing Copy.");
 				}
 				
-				// Returns Precalculated Value if One Exists
+				// STEP 2:  Erases the Comparison History if we Downloaded a new Photo
+				if (!comparisonHistory.containsKey(deviceID) || timestamp > comparisonHistory.get(deviceID).getLastModifiedTime())
+				{	
+					// Creates a New Empty Comparison Entry for this Photo
+					comparisonHistory.put(deviceID, new CompareInfo(deviceID, timestamp));
+				}
+				
+				// STEP 3:  Perform Comparisons (or Use Preexisting Cache)
 				if (comparisonHistory.containsKey(deviceID) && comparisonHistory.get(deviceID).containsResults())
 				{
-					System.out.println("  Using Precached Result for " + cloudPhotoPath);
+					System.out.println("    Using Precached Result for " + cloudPhotoPath);
 				}
 				else
 				{	
-					System.out.println("  [" + this.getContextType() + "] Comparing Image Against " + photos.size() + " Photographs.");
+					System.out.println("    Looking at Photo Library for Candidates (" + photos.size() + " photographs total)");
 					
-					ArrayList<PhotoInfo> comparePhotos = new ArrayList<PhotoInfo>(); 
-					PhotoInfo bestPhoto      = null;
-					double 	  bestDifference = Double.MAX_VALUE;
-					
-					// Compares Device Photo to Pictures on Record
+					// Looks for Likely Photo Candidates
 					for (PhotoInfo photo : photos.values())
 					{
-						if (photo.isCloseEnough(azimuth, pitch, roll))
+						if (photo.isAppliance && photo.getContextType().equals(this.getContextType()))
 						{							
-							comparePhotos.add(photo);
-							System.out.println("  **Adding Photo: " + photo.getPhotoPath());
+							if (photo.isCloseEnough(azimuth, pitch, roll))
+							{
+								System.out.println("*");		
+								photosToCompare.add(photo);	
+							}
+							else
+							{
+								System.out.println();
+							}
 						}
 					}
-					
+						
 					// Compares Device Photo to Pictures on Record
-					for (PhotoInfo photo : comparePhotos)
+					System.out.println("    Comparing user photo to " + photosToCompare.size() + " library images.");
+					for (PhotoInfo photo : photosToCompare)
 					{
 						// Performs the Actual Comparison
 						Date startCompare = new Date();
@@ -354,17 +392,17 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 						comparisonHistory.get(deviceID).addComparisonResult(photo.getPhotoPath(), matches);
 						
 						// Displays the Results
-						System.out.println("  Match " + cloudPhotoPath + " vs " + photo.getPhotoPath() + ":  "+ matches);
+						System.out.println("     Match " + cloudPhotoPath + " vs " + photo.getPhotoPath() + ":  "+ matches);
 					}
 				}
 			}
 			
 			// DEBUG:  Reports Timing Data
-			System.out.println("----- ANALYSIS COMPLETE -----");
+			System.out.println("----- ANALYSIS COMPLETE [" + this.getContextType() + "] -----");
 			System.out.println("Total Time Elapsed:   " + (new Date().getTime() - startTime.getTime()) + "ms");
 			System.out.println("Image Download Time:  " + (totalDownloadTime) + "ms");
 			System.out.println("Feature Compute Time: " + (featureComputeTime) + "ms");
-			System.out.println("Avg Comparison Time:  " + ((double)totalCompareTime / (double)photos.size()) + "ms");
+			System.out.println("Avg Comparison Time:  " + ((double)totalCompareTime / (double)Math.max(1, photosToCompare.size())) + "ms");
 			System.out.println("-----------------------------");
 			
 			// Returns the Results of the Comparison
@@ -401,7 +439,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	}
 	
 	// HELPER METHODS ---------------------------------------------------------------------------------
-	public void addPhotoFromWeb(String[] urls)
+	public void addAppliancePhotoFromURL(String[] urls)
 	{
 		ArrayList<String> metadataFiles    = new ArrayList<String>();
 		ArrayList<String> photosDownloaded = new ArrayList<String>();
@@ -449,7 +487,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 					
 					if (photosDownloaded.contains(name))
 					{
-						addPhoto(this.getLocalStorageFolder() + name, true, false, azimuth, pitch, roll);
+						addAppliancePhoto(this.getLocalStorageFolder() + name, System.currentTimeMillis(), false, true, false, azimuth, pitch, roll);
 					}	
 				}
 			}
@@ -462,29 +500,15 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	 * Associates a Photograph with this Application Service
 	 * @param photoPath
 	 */
-	public void addPhoto(String photoPath, boolean isDefault, boolean isScreenshot, double azimuth, double pitch, double roll)
+	public void addAppliancePhoto(String photoPath, long timestamp, boolean isUserPhoto, boolean isAppliance, boolean isScreenshot, double azimuth, double pitch, double roll)
 	{
-		System.out.printf("Adding %s [default=%s, screenshot=%s, azimuth=%1.1f, pitch=%1.1f, roll=%1.1f] . . . ", photoPath, isDefault, isScreenshot, azimuth, pitch, roll);
+		System.out.printf("Adding %s [isAppliance=%s, screenshot=%s, azimuth=%1.1f, pitch=%1.1f, roll=%1.1f] . . . ", photoPath, isAppliance, isScreenshot, azimuth, pitch, roll);
 		
 		if (!photos.containsKey(photoPath))
 		{
-			photos.put(photoPath, new PhotoInfo(photoPath, isDefault, isScreenshot, azimuth, pitch, roll));
+			photos.put(photoPath, new PhotoInfo(photoPath, timestamp, this.getContextType(), isUserPhoto, isAppliance, isScreenshot, azimuth, pitch, roll));
 			openimaj.computeFeatures(photoPath);
 			System.out.println("SUCCESS");
-			
-			// Generates an Automatic Icon
-			if (photos.size() == 1 && (this.logoPath == null || this.logoPath.length() == 0))
-			{
-				System.out.println("GENERATING ICON");
-				this.logoPath = "http://icons.iconarchive.com/icons/double-j-design/origami-colored-pencil/256/blue-camera-icon.png";
-		    	
-//				File logo = DesktopApplicationProvider.resizeImage(photoPath, this.getAppID() + "_logo.jpeg", 320, 240);
-//				cloudToolkit.uploadFile("/var/www/html/gcf/universalremote/magic/", logo);
-//				logo.delete();
-//				
-//				this.logoPath = "http://" + Settings.DEV_WEB_IP + "/gcf/universalremote/magic/" + logo.getName();
-//				System.out.println("  ICON: " + logoPath);
-			}
 		}
 		else
 		{
@@ -498,7 +522,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	 */
 	public void addPhoto(String photoPath)
 	{
-		addPhoto(photoPath, false, false, 0.0, 0.0, 0.0);
+		addAppliancePhoto(photoPath, 0, true, false, false, 0.0, 0.0, 0.0);
 	}
 	
 	/**
@@ -591,7 +615,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 		
 		// Computes New Features
 		photos.remove(screenshot.getPath());
-		addPhoto(screenshot.getPath(), true, true, 0.0, 0.0, 0.0);
+		addAppliancePhoto(screenshot.getPath(), System.currentTimeMillis(), false, true, true, 0.0, 0.0, 0.0);
 		
 		// Updates Screenshot
 		currentScreenshot = (currentScreenshot + 1) % maxScreenshots;
@@ -919,30 +943,38 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 	public class PhotoInfo
 	{
 		private String  photoPath;
-		private boolean isDefault;
+		private long    timestamp;
+		private String  contextType;
+		private boolean isUserPhoto;
+		private boolean isAppliance;
 		private boolean isScreenshot;
 		private double  azimuth;
 		private double  pitch;
 		private double  roll;
 		
-		public PhotoInfo(String photoPath, boolean isDefault, boolean isScreenshot, double azimuth, double pitch, double roll)
+		public PhotoInfo(String photoPath, long timestamp, String contextType, boolean isUserPhoto, boolean isAppliance, boolean isScreenshot, double azimuth, double pitch, double roll)
 		{
-			this.photoPath = photoPath;
-			this.isDefault = isDefault;
-			this.azimuth   = normalizeAngle(azimuth);
-			this.pitch     = normalizeAngle(pitch);
-			this.roll      = normalizeAngle(roll);
+			this.photoPath   = photoPath;
+			this.timestamp   = timestamp;
+			this.contextType = contextType;
+			this.isUserPhoto = isUserPhoto;
+			this.isAppliance = isAppliance;
+			this.azimuth     = normalizeAngle(azimuth);
+			this.pitch       = normalizeAngle(pitch);
+			this.roll        = normalizeAngle(roll);
 		}
 
 		public boolean isCloseEnough(double azimuth, double pitch, double roll)
 		{			
-			double difference = 180 - Math.abs(Math.abs(azimuth - this.azimuth) - 180);
-					
-					// getAngleDifference(azimuth, pitch, roll);
+			double difference = getAngleDifference(azimuth, pitch, roll);
+						
+			System.out.printf("      %s: [Appliance = %1.1f; User = %1.1f; Difference = %1.1f]  ", photoPath, this.azimuth, azimuth, difference);
 			
-			System.out.printf(" Difference: U:%1.1f P:%1.1f = %1.1f\n", azimuth, this.azimuth, difference);
-			
-			if (this.azimuth == 0 && this.pitch == 0 && this.roll == 0)
+			if (this.azimuth <0.1 && this.pitch <0.1 && this.roll <0.1)
+			{
+				return true;
+			}
+			else if (azimuth <0.1 && pitch < 0.1 && roll < 0.1)
 			{
 				return true;
 			}
@@ -962,7 +994,7 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			roll    = normalizeAngle(roll);
 			pitch   = normalizeAngle(pitch);
 			
-			return Math.abs(azimuth - this.azimuth);
+			return 180 - Math.abs(Math.abs(azimuth - this.azimuth) - 180);
 		}
 		
 		double normalizeAngle(double angle)
@@ -986,8 +1018,23 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			return photoPath;
 		}
 
-		public boolean isDefault() {
-			return isDefault;
+		public String getContextType()
+		{
+			return contextType;
+		}
+		
+		public long getTimestamp()
+		{
+			return timestamp;
+		}
+		
+		public boolean isUserPhoto()
+		{
+			return isUserPhoto;
+		}
+		
+		public boolean isAppliance() {
+			return isAppliance;
 		}
 
 		public boolean isScreenshot()

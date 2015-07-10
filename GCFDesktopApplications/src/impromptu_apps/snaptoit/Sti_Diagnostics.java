@@ -2,15 +2,11 @@ package impromptu_apps.snaptoit;
 
 
 import java.util.ArrayList;
-import java.util.Date;
-
-import cern.colt.Arrays;
+import java.util.Arrays;
 
 import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
 import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationObject;
 import com.adefreitas.messages.ComputeInstruction;
 
 public class Sti_Diagnostics extends SnapToItApplicationProvider

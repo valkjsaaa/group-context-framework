@@ -24,7 +24,8 @@ import com.google.gson.JsonObject;
 public class Application implements EventReceiver
 {
 	// Creates a Unique Computer Name (Needed for GCM to Operate, But You Can Change it to Anything Unique)
-	public String COMPUTER_NAME = "";
+	public String COMPUTER_NAME 		  = "";
+	public int    UPDATE_THREAD_WAIT_TIME = 30000;
 	
 	// GCF Communication Settings (BROADCAST_MODE Assumes a Functional TCP Relay Running)
 	public static final CommManager.CommMode COMM_MODE       = CommMode.MQTT;
@@ -107,20 +108,27 @@ public class Application implements EventReceiver
 	{
 		// Standard Apps (IMPROMPTU_CORE)
 		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Impromptu
 		initializeImpromptuApps();
 		
 		// Snap-To-It
-		//initializeSnapToItApps();
+		initializeSnapToItApps();
+		
+		// Favor Banking
+		//initializeFavorBank();
+		
+		// This is Used by the Dispatchers!
+		if (f != null || t != null)
+		{
+			updateThread = new UpdateThread();
+			updateThread.start();
+		}
 	}
 	
 	private void initializeImpromptuApps()
-	{
-		// Impromptu Core
-		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
-		
+	{		
 		// Convenience Apps
 		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
@@ -136,18 +144,6 @@ public class Application implements EventReceiver
 				COMM_MODE, IP_ADDRESS, PORT);
 		cmuApp.addLocation("Campus Center", 40.4433, -79.9436);
 		appProviders.add(cmuApp);
-		
-		
-		// Favors
-//		appProviders.add(new App_FavorViewAll(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
-//		appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
-//		f = new FavorDispatcher(sqlToolkit, gcm);
-		
-		// This is Used by the Dispatchers!
-		updateThread = new UpdateThread();
-		updateThread.start();
 	}
 	
 	private void initializeSnapToItApps()
@@ -155,12 +151,52 @@ public class Application implements EventReceiver
 		appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new Sti_Printer(gcm, "ZIRCON", 
 				new String[] {
-					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_3.jpeg",
-					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_4.jpeg",
-					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_5.jpeg"
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_0.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_1.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_2.jpeg"
 				},
 			    COMM_MODE, IP_ADDRESS, PORT));
-		
+		appProviders.add(new Sti_Printer(gcm, "PEWTER", 
+				new String[] {
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_0.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_1.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_2.jpeg"
+				},
+			    COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_Printer(gcm, "NSH Color", 
+//				new String[] {
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_2.jpeg"
+//				},
+//			    COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_Printer(gcm, "HCI Copy Machine", 
+//				new String[] {
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/hcicopy/hcicopy_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/hcicopy/hcicopy_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/hcicopy/hcicopy_2.jpeg"
+//				},
+//			    COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "Sign", 
+//				new String[] { 
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/sign/sign_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/sign/sign_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/sign/sign_2.jpeg"}, 
+//				COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "Coffee", 
+//				new String[] { 
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/coffee/coffee_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/coffee/coffee_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/coffee/coffee_2.jpeg"},
+//				COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "NSH 2nd Floor Copy", 
+//				new String[] { 
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nsh2copy/nsh2copy_0.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nsh2copy/nsh2copy_1.jpeg",
+//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nsh2copy/nsh2copy_2.jpeg"},
+//				COMM_MODE, IP_ADDRESS, PORT));
+//		appProviders.add(new Sti_GenericDevice(gcm, "Cup", new String[0], COMM_MODE, IP_ADDRESS, PORT));
+//		
 //		appProviders.add(new Sti_GenericDevice(gcm, "Extinguisher (NSH)", 
 //		new String[] { 
 //			"http://gcf.cmu-tbank.com/snaptoit/appliances/extinguisher/extinguisher_0.jpeg",
@@ -173,6 +209,15 @@ public class Application implements EventReceiver
 //			"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_1.jpeg",
 //			"http://gcf.cmu-tbank.com/snaptoit/appliances/ubicomp/ubicomp_2.jpeg"}, 
 //		COMM_MODE, IP_ADDRESS, PORT));
+	}
+	
+	private void initializeFavorBank()
+	{
+		// Favors
+		appProviders.add(new App_FavorListener(gcm, COMM_MODE, IP_ADDRESS, PORT, sqlToolkit));
+		appProviders.add(new App_FavorRequester(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_FavorProfile(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		f = new FavorDispatcher(sqlToolkit, gcm);
 	}
 	
 	/**
@@ -229,7 +274,7 @@ public class Application implements EventReceiver
 					}
 					else
 					{
-						sleep(60000);	
+						sleep(UPDATE_THREAD_WAIT_TIME);	
 					}
 				}
 				catch (Exception ex)

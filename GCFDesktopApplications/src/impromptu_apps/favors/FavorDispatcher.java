@@ -134,9 +134,9 @@ public class FavorDispatcher
 									"favors_submitted.tags, " +
 									"favors_submitted.sensors, " +
 									"favors_submitted.status, " +
-									"favors_profile.userName, " +
+									"favors_profile.username, " +
 									"favors_profile.telephone " +
-							   "FROM favors_submitted INNER JOIN favors_profile on favors_submitted.device_id = favors_profile.deviceID " +
+							   "FROM favors_submitted INNER JOIN favors_profile on favors_submitted.device_id = favors_profile.device_id " +
 							   "WHERE status = \"active\" && CHAR_LENGTH(favors_submitted.tags)>0";
 			ResultSet result = toolkit.runQuery(query);
 			
