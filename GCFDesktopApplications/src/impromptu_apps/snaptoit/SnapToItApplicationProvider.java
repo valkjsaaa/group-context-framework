@@ -398,12 +398,12 @@ public abstract class SnapToItApplicationProvider extends DesktopApplicationProv
 			}
 			
 			// DEBUG:  Reports Timing Data
-			System.out.println("----- ANALYSIS COMPLETE [" + this.getContextType() + "] -----");
-			System.out.println("Total Time Elapsed:   " + (new Date().getTime() - startTime.getTime()) + "ms");
-			System.out.println("Image Download Time:  " + (totalDownloadTime) + "ms");
-			System.out.println("Feature Compute Time: " + (featureComputeTime) + "ms");
-			System.out.println("Avg Comparison Time:  " + ((double)totalCompareTime / (double)Math.max(1, photosToCompare.size())) + "ms");
-			System.out.println("-----------------------------");
+			System.out.println("    ----- ANALYSIS COMPLETE [" + this.getContextType() + "] -----");
+			System.out.println("    Total Time Elapsed:   " + (new Date().getTime() - startTime.getTime()) + "ms");
+			System.out.println("    Image Download Time:  " + (totalDownloadTime) + "ms");
+			System.out.println("    Feature Compute Time: " + (featureComputeTime) + "ms");
+			System.out.println("    Avg Comparison Time:  " + ((double)totalCompareTime / (double)Math.max(1, photosToCompare.size())) + "ms");
+			System.out.println("    -----------------------------");
 			
 			// Returns the Results of the Comparison
 			if (comparisonHistory.containsKey(deviceID))

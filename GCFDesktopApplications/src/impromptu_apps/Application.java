@@ -107,11 +107,11 @@ public class Application implements EventReceiver
 	private void initializeApps()
 	{
 		// Standard Apps (IMPROMPTU_CORE)
-		appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		//appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Impromptu
-		initializeImpromptuApps();
+		//initializeImpromptuApps();
 		
 		// Snap-To-It
 		initializeSnapToItApps();
@@ -148,28 +148,29 @@ public class Application implements EventReceiver
 	
 	private void initializeSnapToItApps()
 	{
-		appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new Sti_Printer(gcm, "ZIRCON", 
+		//appProviders.add(new Sti_DigitalProjector(gcm, COMM_MODE, IP_ADDRESS, PORT));
+		
+		appProviders.add(new Sti_Printer(gcm, "ZIRCON", "\\\\monolith.scs.ad.cs.cmu.edu\\zircon",
 				new String[] {
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_0.jpeg",
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_1.jpeg",
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/zircon/zircon_2.jpeg"
 				},
 			    COMM_MODE, IP_ADDRESS, PORT));
-		appProviders.add(new Sti_Printer(gcm, "PEWTER", 
+		appProviders.add(new Sti_Printer(gcm, "PEWTER", "\\\\monolith.scs.ad.cs.cmu.edu\\pewter", 
 				new String[] {
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_0.jpeg",
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_1.jpeg",
 					"http://gcf.cmu-tbank.com/snaptoit/appliances/pewter/pewter_2.jpeg"
 				},
 			    COMM_MODE, IP_ADDRESS, PORT));
-//		appProviders.add(new Sti_Printer(gcm, "NSH Color", 
-//				new String[] {
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_0.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_1.jpeg",
-//					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_2.jpeg"
-//				},
-//			    COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new Sti_Printer(gcm, "NSH Color 3508", "\\\\monolith.scs.ad.cs.cmu.edu\\NSH3508color",
+				new String[] {
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_0.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_1.jpeg",
+					"http://gcf.cmu-tbank.com/snaptoit/appliances/nshcolor/nshcolor_2.jpeg"
+				},
+			    COMM_MODE, IP_ADDRESS, PORT));
 //		appProviders.add(new Sti_Printer(gcm, "HCI Copy Machine", 
 //				new String[] {
 //					"http://gcf.cmu-tbank.com/snaptoit/appliances/hcicopy/hcicopy_0.jpeg",

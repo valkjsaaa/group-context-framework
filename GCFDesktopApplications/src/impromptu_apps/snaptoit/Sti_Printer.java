@@ -16,8 +16,9 @@ public class Sti_Printer extends SnapToItApplicationProvider
 	// Busy Flag
 	private boolean busy;
 	private String  printerName;
+	private String  networkName;
 	
-	public Sti_Printer(GroupContextManager groupContextManager, String printerName, String[] photos, CommMode commMode, String ipAddress, int port)
+	public Sti_Printer(GroupContextManager groupContextManager, String printerName, String networkName, String[] photos, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"STI_PRINTER_" + printerName,
@@ -34,6 +35,7 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		
 		this.busy 		 = false;
 		this.printerName = printerName;
+		this.networkName = networkName;
 		
 		// Adds Photos
 		this.addAppliancePhotoFromURL(photos);
@@ -98,39 +100,25 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		HttpToolkit.downloadFile(folder + filename, destination);
 		File file = new File(destination);
 		
+		// Determines What Operating System is Being Used
+		String OS = System.getProperty("os.name").toLowerCase();
+		
 		if (file.exists())
 		{
-			// Opens the Application
-			this.executeRuntimeCommand("open " + file.getAbsolutePath());
-			
-			Robot robot = this.getRobot();
-			
-			// Runs the Ctrl-P Command
-			robot.delay(2000);
-			robot.keyPress(KeyEvent.VK_META);
-			robot.delay(20);
-			robot.keyPress(KeyEvent.VK_P);
-			robot.delay(20);
-			robot.keyRelease(KeyEvent.VK_META);
-			robot.delay(20);
-			robot.keyRelease(KeyEvent.VK_P);
-			robot.delay(500);
-			
-			// Accepts Default Print Parameters
-			robot.keyPress(KeyEvent.VK_ENTER);
-			robot.delay(20);
-			robot.keyRelease(KeyEvent.VK_ENTER);
-			robot.delay(3000);
-			
-			// Kills the Program
-			robot.keyPress(KeyEvent.VK_META);
-			robot.delay(20);
-			robot.keyPress(KeyEvent.VK_Q);
-			robot.delay(20);
-			robot.keyRelease(KeyEvent.VK_META);
-			robot.delay(20);
-			robot.keyRelease(KeyEvent.VK_Q);
-			robot.delay(500);
+			if (OS.indexOf("win") >= 0) 
+			{
+				System.out.println("Using Windows Print Method");
+				printWindows(file);
+			}
+			else if (OS.indexOf("mac") >= 0)
+			{
+				System.out.println("Using Mac Print Method");
+				printMac(file);
+			}
+			else
+			{
+				System.out.println("Unsupported OS Detected: " + OS);
+			}
 		}
 		else
 		{
@@ -142,4 +130,63 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		sendContext();
 	}
 
+	private void printMac(File file)
+	{
+		// Opens the Application
+		this.executeRuntimeCommand("open " + file.getAbsolutePath());
+		
+		Robot robot = this.getRobot();
+		
+		// Runs the Ctrl-P Command
+		robot.delay(2000);
+		robot.keyPress(KeyEvent.VK_META);
+		robot.delay(20);
+		robot.keyPress(KeyEvent.VK_P);
+		robot.delay(20);
+		robot.keyRelease(KeyEvent.VK_META);
+		robot.delay(20);
+		robot.keyRelease(KeyEvent.VK_P);
+		robot.delay(500);
+		
+		// Accepts Default Print Parameters
+		robot.keyPress(KeyEvent.VK_ENTER);
+		robot.delay(20);
+		robot.keyRelease(KeyEvent.VK_ENTER);
+		robot.delay(3000);
+		
+		// Kills the Program
+		robot.keyPress(KeyEvent.VK_META);
+		robot.delay(20);
+		robot.keyPress(KeyEvent.VK_Q);
+		robot.delay(20);
+		robot.keyRelease(KeyEvent.VK_META);
+		robot.delay(20);
+		robot.keyRelease(KeyEvent.VK_Q);
+		robot.delay(500);
+	}
+	
+	private void printWindows(File file)
+	{
+		// Step 1:  Make this Device the Default
+		this.executeRuntimeCommand("RUNDLL32 PRINTUI.DLL,PrintUIEntry /y /n \"" + networkName + "\"");
+		
+		// Step 2:  Print		
+		if (file.getAbsolutePath().endsWith("docx"))
+		{
+			String command = String.format("\"%s\" \"%s\" /q /n /mFilePrintDefault /mFileClose /mFileExit", 
+					"C:\\Program Files (x86)\\Microsoft Office\\Office14\\WINWORD.EXE", file.getAbsolutePath());
+			this.executeRuntimeCommand(command);
+		}
+		else if (file.getAbsolutePath().endsWith("pdf"))
+		{
+			String command = String.format("\"%s\" /t \"%s\"", 
+					"C:\\Program Files (x86)\\Adobe\\Reader 11.0\\Reader\\AcroRd32.exe", file.getAbsolutePath());
+			this.executeRuntimeCommand(command);
+		}
+		else
+		{
+			System.out.println("Unsupported File Type: " + file.getAbsoluteFile());
+		}
+	}
+	
 }
