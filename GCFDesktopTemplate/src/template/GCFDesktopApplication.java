@@ -70,7 +70,7 @@ public class GCFDesktopApplication implements EventReceiver
 		//gcm.sendRequest("BLU", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=TEST_CHANNEL", "TARGET=ZTE-3"});
 		//gcm.sendRequest("LOC", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000, new String[] { "CHANNEL=dev/" + deviceID, "TARGET=ZTE-3"});
 		//gcm.sendRequest("AUD", ContextRequest.MULTIPLE_SOURCE, new String[] { }, 60000000, new String[] { "CHANNEL=TEST_CHANNEL" });
-		gcm.sendRequest("COMPASS", ContextRequest.MULTIPLE_SOURCE, new String[] { "Nexus 5-A" }, 1000, new String[] { "CHANNEL=TEST_CHANNEL" });
+		//gcm.sendRequest("COMPASS", ContextRequest.SINGLE_SOURCE, new String[] { "Nexus 5-A", "Device 1" }, 1000, new String[] { "CHANNEL=TEST_CHANNEL" });
 		
 		// Sets Up Keyboard Press Monitoring
 		setupKeypress();

@@ -53,6 +53,29 @@
 				    android:id="@+id/surface_camera"
 					android:layout_width="fill_parent" 
 					android:layout_height="200dp"/>
+			    
+			    <!-- Targeting Reticle -->
+			    <RelativeLayout
+			        android:layout_width="fill_parent"
+	        		android:layout_height="200dp"
+	        		android:paddingTop="40dp"
+	        		android:paddingBottom="40dp"
+	        		android:paddingRight="60dp"
+	        		android:paddingLeft="60dp">
+			        <TextView
+			            android:layout_width="fill_parent"
+	        			android:layout_height="wrap_content"
+	        			android:textColor="#FFFFFF"
+	        			android:textSize="10sp"
+	        			android:padding="3dp"
+	        			android:gravity="center"
+	        			android:text="Appliance Fits in Here"/>
+			        <ImageView
+				        android:src="@drawable/reticle"
+				        android:layout_width="fill_parent"
+				        android:layout_height="fill_parent"/>
+			    </RelativeLayout>
+			    
 			</RelativeLayout>
 				
 			<!-- Object Name (Used for Onboarding New Devices) -->

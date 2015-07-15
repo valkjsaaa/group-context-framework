@@ -139,26 +139,6 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 500, new String[0]);
 	}
 	
-	private void draw()
-	{
-		RelativeLayout layoutCamera = (RelativeLayout)this.findViewById(R.id.layoutCamera);
-		layoutCamera.addView(new Rectangle(this));
-	}
-	
-	private class Rectangle extends View{
-	    Paint paint = new Paint();
-
-	    public Rectangle(Context context) {
-	        super(context);
-	    }
-	    @Override
-	    public void onDraw(Canvas canvas) {
-	        paint.setColor(Color.GREEN);
-	        Rect rect = new Rect(20, 56, 200, 112);
-	        canvas.drawRect(rect, paint );
-	    }
-	 }
-	
 	/**
 	 * Android Method:  Used when an Activity is Paused
 	 */

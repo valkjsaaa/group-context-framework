@@ -6,7 +6,7 @@ public class Theme
 	{
 		if (categoryName.equalsIgnoreCase("debug"))
 		{
-			return 0xFF333333;
+			return 0xFFFFFFFF;
 		}
 		else if (categoryName.equalsIgnoreCase("automation"))
 		{
@@ -20,13 +20,33 @@ public class Theme
 		{
 			return 0xFF993333;
 		}
-		else if (categoryName.equalsIgnoreCase("favor"))
+		else if (categoryName.equalsIgnoreCase("bluewave"))
+		{
+			return 0xFF2676FF;
+		}
+		else if (categoryName.equalsIgnoreCase("feedback"))
+		{
+			return 0xFF339966;
+		}
+		else if (categoryName.equalsIgnoreCase("favor bank"))
 		{
 			return 0xFF993399;
 		}
+		else if (categoryName.equalsIgnoreCase("favors (yours)"))
+		{
+			return 0xFF993399;
+		}
+		else if (categoryName.equalsIgnoreCase("favors (others)"))
+		{
+			return 0xFF993399;
+		}
+		else if (categoryName.equalsIgnoreCase("navigation"))
+		{
+			return 0xFF0080FF;
+		}
 		else if (categoryName.equalsIgnoreCase("snap-to-it"))
 		{
-			return 0xFFDBA616;
+			return 0xFFFF8000;
 		}
 		
 		// Default Color

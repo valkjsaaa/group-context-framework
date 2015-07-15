@@ -40,7 +40,7 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
     
     // Values
     final int maxEntries = 5;
-    ArrayList<Double> accuracy;
+    int accuracy;
     ArrayList<Double> azimuth;
     ArrayList<Double> pitch;
     ArrayList<Double> roll;
@@ -59,7 +59,7 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
         azimuth  = new ArrayList<Double>();
         pitch    = new ArrayList<Double>();
         roll     = new ArrayList<Double>();
-        accuracy = new ArrayList<Double>();
+        accuracy = -1;
 	}
 
 	@Override
@@ -93,7 +93,7 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 				new String[] { "AZIMUTH=" + String.format("%1.1f", getAverage(azimuth)), 
 			   				   "PITCH=" + String.format("%1.1f", getAverage(pitch)), 
 			   				   "ROLL=" + String.format("%1.1f", getAverage(roll)), 
-			   				   "ACCURACY=" + String.format("%1.1f", getAverage(accuracy)) });
+			   				   "ACCURACY=" + String.format("%d", accuracy) });
 	}
 
 	@Override
@@ -145,12 +145,7 @@ public class CompassContextProvider extends ContextProvider implements SensorEve
 		   SENSOR_STATUS_UNRELIABLE = 0
 		 */
 		
-		this.accuracy.add((double)accuracy);
-		
-		if (this.accuracy.size() > maxEntries)
-		{
-			this.accuracy.remove(0);
-		}
+		this.accuracy = accuracy;
 	}
 
 	private double normalizeAngle(double angleInRadians)

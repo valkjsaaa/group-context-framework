@@ -11,7 +11,7 @@ public class SQLToolkit
     static private final String DRIVER = "com.mysql.jdbc.Driver";   
 	
     // The connection is static since there only needs to be one per application
-    static private Connection connection;
+    private Connection connection;
     
 	// Specific Database Attributes
 	private String url;
@@ -55,7 +55,7 @@ public class SQLToolkit
     	// Checks to See if the Database Connection is Valid First
         if (connection == null || !connection.isValid(1))
         {
-            System.out.print("Creating new DB connection . . . ");
+            System.out.print("Creating new DB connection to " + url + ". . . ");
             connection = DriverManager.getConnection(url, username, password);
             System.out.println("DONE!");
         }

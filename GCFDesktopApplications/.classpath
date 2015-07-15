@@ -2,13 +2,13 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/GroupContextFramework"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/GroupContextDesktopFramework"/>
-	<classpathentry kind="lib" path="C:/Users/Adrian/Desktop/GCFWorkspace/libraries/bluecove-2.1.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Adrian/Desktop/GCFWorkspace/libraries/dropbox-core-sdk-1.7.5.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Adrian/Desktop/GCFWorkspace/libraries/gson-2.2.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Adrian/Desktop/GCFWorkspace/libraries/jackson-core-2.2.3.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Adrian/Desktop/GCFWorkspace/libraries/mysql-connector-java-5.1.22-bin.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/bluecove-2.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/dropbox-core-sdk-1.7.5.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/jackson-core-2.2.3.jar"/>
+	<classpathentry kind="lib" path="/Users/adefreit/Development/group-context-framework/libraries/mysql-connector-java-5.1.22-bin.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/OpenImajToolkit"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/GroupContextDesktopFramework"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/GroupContextFramework"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

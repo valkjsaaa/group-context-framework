@@ -2,6 +2,7 @@ package impromptu_apps.favors;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.adefreitas.desktopframework.toolkit.SQLToolkit;
@@ -61,11 +62,12 @@ public class FavorDispatcher
 			double longitude   = resultSet.getDouble("longitude");
 			String[] tags	   = resultSet.getString("tags").split(",");
 			String[] sensors   = resultSet.getString("sensors").split(",");
-			String status	   = resultSet.getString("status");			
-			
+			String[] matches   = (resultSet.getString("matches") != null) ? resultSet.getString("matches").split(",") : new String[] { "NOTHING" };
+			String status	   = resultSet.getString("status");
+						
 			if (!favors.containsKey(id))
 			{		
-				App_Favor newFavor = new App_Favor(id, this, timestamp, deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status, gcm, COMM_MODE, IP_ADDRESS, PORT, toolkit);
+				App_Favor newFavor = new App_Favor(id, this, timestamp, deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status, matches, gcm, COMM_MODE, IP_ADDRESS, PORT, toolkit);
 				newFavor.setSQLEventLogger(toolkit);
 				
 				// Adds a Task (Assuming it has not already been created before)
@@ -81,7 +83,7 @@ public class FavorDispatcher
 			}
 			else
 			{
-				favors.get(id).update(deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status);
+				favors.get(id).update(deviceID, userName, desc, desc_perf, desc_turnin, latitude, longitude, tags, sensors, status, matches);
 			}
 		}
 		catch (Exception ex)
@@ -134,18 +136,19 @@ public class FavorDispatcher
 									"favors_submitted.tags, " +
 									"favors_submitted.sensors, " +
 									"favors_submitted.status, " +
+									"favors_submitted.matches, " +
 									"favors_profile.username, " +
 									"favors_profile.telephone " +
 							   "FROM favors_submitted INNER JOIN favors_profile on favors_submitted.device_id = favors_profile.device_id " +
 							   "WHERE status = \"active\" && CHAR_LENGTH(favors_submitted.tags)>0";
+			System.out.println(query);
 			ResultSet result = toolkit.runQuery(query);
 			
 			ArrayList<String> favorsUpdated = new ArrayList<String>();
 			
 			while (result.next())
 			{
-				Integer timestamp = result.getInt("timestamp");
-				String  id		  = "FAVOR_" + timestamp;
+				String id = "FAVOR_" + result.getInt("timestamp");;
 				
 				// Keeps a Log of Apps that are Considered ACTIVE
 				favorsUpdated.add(id);

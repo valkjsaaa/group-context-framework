@@ -5,6 +5,7 @@ import impromptu_apps.desktop.*;
 import impromptu_apps.favors.*;
 import impromptu_apps.snaptoit.*;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 
@@ -106,18 +107,21 @@ public class Application implements EventReceiver
 	 */
 	private void initializeApps()
 	{
+		
+		
 		// Standard Apps (IMPROMPTU_CORE)
 		//appProviders.add(new App_Disclaimer(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		//appProviders.add(new App_Feedback(gcm, sqlToolkit, COMM_MODE, IP_ADDRESS, PORT));
+		appProviders.add(new App_BluewavePermissions(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
 		// Impromptu
 		//initializeImpromptuApps();
 		
 		// Snap-To-It
-		initializeSnapToItApps();
+		//initializeSnapToItApps();
 		
 		// Favor Banking
-		//initializeFavorBank();
+		initializeFavorBank();
 		
 		// This is Used by the Dispatchers!
 		if (f != null || t != null)
@@ -133,7 +137,7 @@ public class Application implements EventReceiver
 		appProviders.add(new App_Weather(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		appProviders.add(new App_Bus(gcm, COMM_MODE, IP_ADDRESS, PORT));
 		
-		// Location Specific Apps
+		// CMU Map Application
 		App_LocationWebsite cmuApp = new App_LocationWebsite(gcm, 
 				"CMU Campus Map", 
 				"http://www.cmu.edu/about/visit/campus-map-interactive/", 
@@ -144,6 +148,19 @@ public class Application implements EventReceiver
 				COMM_MODE, IP_ADDRESS, PORT);
 		cmuApp.addLocation("Campus Center", 40.4433, -79.9436);
 		appProviders.add(cmuApp);
+		
+		// Best Buy Application
+		App_LocationWebsite bestBuyApp = new App_LocationWebsite(gcm, 
+				"Best Buy Weekly Ad", 
+				"http://deals.bestbuy.com/", 
+				"View the current advertisement for this store.", 
+				"SHOPPING", 
+				"http://www.brandsoftheworld.com/sites/default/files/styles/logo-thumbnail/public/0015/5807/brand.gif", 
+				0.1, 
+				COMM_MODE, IP_ADDRESS, PORT);
+		bestBuyApp.addLocation("Monroeville", 40.431253,-79.799495);
+		bestBuyApp.addLocation("Waterfront", 40.412222, -79.903049);
+		appProviders.add(bestBuyApp);
 	}
 	
 	private void initializeSnapToItApps()

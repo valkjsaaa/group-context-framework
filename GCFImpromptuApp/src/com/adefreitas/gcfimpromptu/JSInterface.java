@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnDismissListener;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
@@ -210,6 +211,27 @@ public class JSInterface
 	public void removeApplicationFromCatalog()
 	{
 		application.removeApplicationFromCatalog(activity.getRunningApp());
+	}
+	
+	@JavascriptInterface
+	public void call(String phoneNumber)
+	{
+		System.out.println("Attempting to call " + phoneNumber);
+		Intent callIntent = new Intent(Intent.ACTION_DIAL);
+		callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        callIntent.setData(Uri.parse("tel:" + phoneNumber));
+        application.startActivity(callIntent);
+	}
+	
+	@JavascriptInterface
+	public void sms(String phoneNumber)
+	{
+		String uri= "smsto:"+phoneNumber;
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uri));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("sms_body", "");
+        intent.putExtra("compose_mode", true);
+        application.startActivity(intent);
 	}
 	
 	@JavascriptInterface

@@ -26,12 +26,9 @@ public class PersonalContextProvider extends ContextProvider
 	// Context Configuration
 	private static final String FRIENDLY_NAME = "PersonalContext";	
 	private static final String CONTEXT_TYPE  = ContextType.PERSONAL;
-	private static final String LOG_NAME      = "GCF-ContextProvider [" + CONTEXT_TYPE + "]";
+	private static final String LOG_NAME      = "Bluewave-PCP";
 	
-	// Link to the Cloud Location Containing JSON Context
-	private String contextCloudPath;
-	
-	// Link to the Context
+	// Link to the Android Application Context Hosting this PCP
 	private Context context;
 	
 	// Link to the Bluewave Manager
@@ -40,9 +37,8 @@ public class PersonalContextProvider extends ContextProvider
 	// The JSON Representing this Object
 	private JSONContextParser parser;
 	
-	// TODO:  Testing New Network Code
-	private String		   contextFilename;
-	private String		   contextFolder;
+	// URLs to Bluewave Cloud Framework
+	private String		contextFolder;
 	private HttpToolkit httpToolkit;
 		
 	// Intent Filters
@@ -50,28 +46,30 @@ public class PersonalContextProvider extends ContextProvider
 	private IntentReceiver receiver;
 	
 	private HashMap<String, JSONObject> buffer;
+	private String						key;
 	private String 						lastPublishedJSON;
 	
 	/**
 	 * Constructor
+	 * @param context
+	 * @param bluewaveManager
 	 * @param groupContextManager
+	 * @param httpToolkit
+	 * @param bluewaveURLFolder
 	 */
-	public PersonalContextProvider(Context context, BluewaveManager bluewaveManager, GroupContextManager groupContextManager, HttpToolkit httpToolkit, String contextCloudPath) 
+	public PersonalContextProvider(Context context, BluewaveManager bluewaveManager, GroupContextManager groupContextManager, HttpToolkit httpToolkit, String bluewaveURLFolder, String masterKey) 
 	{
 		super(CONTEXT_TYPE, groupContextManager);
-		
+
+		this.context      	 = context;
 		this.bluewaveManager = bluewaveManager;
 		
-		contextFolder   = contextCloudPath.substring(0, contextCloudPath.lastIndexOf("/") + 1).replace(" ",  "%20");
-		contextFilename = contextCloudPath.substring(contextCloudPath.lastIndexOf("/") + 1).replace(" ",  "%20");
-		Log.i(LOG_NAME, "Folder: " + contextFolder + "; Filename: " + contextFilename);
+		this.contextFolder   = (bluewaveURLFolder.endsWith("/")) ? bluewaveURLFolder : bluewaveURLFolder + "/";
+		this.httpToolkit 	 = httpToolkit;
+		// Log.i(LOG_NAME, "Folder: " + contextFolder + "; Filename: " + contextFilename);
 		
 		// Initializes Variables
 		this.setSubscriptionDependentForCompute(false);
-		
-		this.contextCloudPath = contextCloudPath;
-		this.context      	  = context;
-		this.httpToolkit      = httpToolkit;
 		
 		// Sets Up Intent Filtering and Listening
 		this.receiver = new IntentReceiver();
@@ -85,29 +83,42 @@ public class PersonalContextProvider extends ContextProvider
 		
 		// Tracks the Last Publish
 		lastPublishedJSON = "";
+		key				  = "";
 		
 		// Downloads This Device's Current Cloud Context
-		httpToolkit.get(contextFolder + contextFilename, BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
+		httpToolkit.get(getPrivateContextURL(), BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
 	}
 	
+	/**
+	 * Context Provider Method:  Starts the Context Provider
+	 */
 	@Override
 	public void start() 
 	{
 		Log.d(LOG_NAME, FRIENDLY_NAME + " Sensor Started ");
 	}
 
+	/**
+	 * Context Provider Method:  Stops the Context Provider
+	 */
 	@Override
 	public void stop() 
 	{
 		Log.d(LOG_NAME, FRIENDLY_NAME + " Sensor Stopped ");
 	}
 
+	/**
+	 * Context Provider Method:  Returns the "Quality" of this Context Provider
+	 */
 	@Override
 	public double getFitness(String[] parameters) 
 	{
 		return 1.0;
 	}
 
+	/**
+	 * Context Provider Method:  Delivers Context to all Subscribed Devices
+	 */
 	@Override
 	public void sendContext() 
 	{
@@ -117,11 +128,12 @@ public class PersonalContextProvider extends ContextProvider
 		}
 	}
 
+	/**
+	 * Context Provider Method:  Responds to Compute Instructions Sent by Other GCF Devices
+	 */
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
-	{
-		Log.d(LOG_NAME, "Received: " + instruction);
-		
+	{		
 		// Creates and Sends a Broadcast Containing Compute Instructions
 		Intent intent = new Intent(BluewaveManager.ACTION_COMPUTE_INSTRUCTION_RECEIVED);
 		intent.putExtra(ComputeInstruction.COMPUTE_CONTEXT_TYPE, instruction.getContextType());
@@ -131,29 +143,49 @@ public class PersonalContextProvider extends ContextProvider
 		context.sendBroadcast(intent);
 	}
 	
-	// Personal Context Management ---------------------------------------------------------------------------------------
-	/**
-	 * Loads JSON for this Particular Device
-	 * @param json
-	 */
-	public void loadJSONFile(String filePath)
+	// URLS --------------------------------------------------------------------------------------------------------------
+	private String getPrivateContextURL()
 	{
-		parser = new JSONContextParser(JSONContextParser.JSON_FILE, filePath);
-		publish();
+		return contextFolder + "context/" + this.getGroupContextManager().getDeviceID().replace(" ", "%20") + ".blu";
 	}
 	
+	public String getPublicContextURL()
+	{
+		return contextFolder + "getContext.php";
+	}
+	
+	public String getUpdateURL()
+	{
+		return contextFolder + "update.php";
+	}
+	
+	public String getPublicKey()
+	{
+		return key;
+	}
+	
+	// Personal Context Management ---------------------------------------------------------------------------------------	
 	public void loadJSONString(String json)
 	{
 		if (json == null || json.length() == 0)
 		{
 			// Downloads This Device's Current Cloud Context
-			httpToolkit.get(contextFolder + contextFilename, BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
+			httpToolkit.get(getPrivateContextURL(), BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
 			Toast.makeText(context, "Error Getting Context. Trying Again", Toast.LENGTH_SHORT).show();
 		}
 		else
 		{
-			parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
-			publish();	
+			try
+			{
+				parser   = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
+				this.key = parser.getJSONObject("_bluewave_key").getString("key");	
+			}
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+			
+			//publish();
 		}
 	}
 	
@@ -168,7 +200,7 @@ public class PersonalContextProvider extends ContextProvider
 			return null;
 		}
 	}
-
+	
 	public void setContext(String name, JSONObject obj)
 	{
 		try
@@ -256,16 +288,13 @@ public class PersonalContextProvider extends ContextProvider
 				}
 				
 				// Uploads the File
-				String dev_name = contextFilename.substring(0, contextFilename.lastIndexOf("."));
 				String json     = this.getContext().toString();
 				
 				if (!lastPublishedJSON.equals(json))
 				{
 					// TODO:  Assumes that PHP is Used to Write/Update Files!
-					String url = String.format(contextFolder + "upload.php?deviceID=%s", dev_name);
+					String url = String.format(contextFolder + "upload.php?deviceID=%s", this.getGroupContextManager().getDeviceID().replace(" ", "%20"));
 					httpToolkit.post(url, "json=" + json, BluewaveManager.ACTION_USER_CONTEXT_UPDATED);
-					
-					bluewaveManager.updateBluetoothName();
 				}
 				
 				buffer.clear();
@@ -285,47 +314,6 @@ public class PersonalContextProvider extends ContextProvider
 	{
 		try
 		{	
-//			// Device Settings
-//			JSONObject deviceContext = new JSONObject();
-//			deviceContext.put("deviceID", this.getGroupContextManager().getDeviceID());
-//			deviceContext.put("commMode", GCFApplication.COMM_MODE);
-//			deviceContext.put("commIP", GCFApplication.IP_ADDRESS);
-//			deviceContext.put("commPort", 12345);
-//			deviceContext.put("callbackProvider", CONTEXT_TYPE);
-//			
-//			// User Settings
-//			JSONObject userContext = new JSONObject();
-//			
-//			// Grabs Account Information
-//			Account[] accounts = AccountManager.get(application).getAccountsByType("com.google");
-//			if (accounts.length > 0)
-//			{
-//				userContext.put("name", accounts[0].name.split("@")[0]);
-//				userContext.put("email", accounts[0].name);
-//			}
-//			
-//			// Grabs the Default Language
-//			userContext.put("language", Locale.getDefault().getDisplayLanguage());
-//			
-//			// Get Telephone Number
-//			TelephonyManager tMgr = (TelephonyManager)application.getSystemService(Context.TELEPHONY_SERVICE);
-//			if (tMgr.getLine1Number() != null)
-//			{
-//				userContext.put("telephone", tMgr.getLine1Number());
-//			}
-//			else
-//			{
-//				userContext.put("telephone", "NOT AVAILABLE");
-//			}
-//			
-//			// Grabs the User's Calendar
-//			userContext.put("calendar", getCalendarData(3));
-//			
-//			// Adds the JSON Objects to the Overall Context
-//			parser.setJSONObject(DEVICE_TAG, deviceContext);
-//			parser.setJSONObject(USER_TAG,userContext);
-//			parser.setJSONObject(COMM_TAG, new JSONObject());
-
 			// Device Settings
 			JSONObject deviceContext = new JSONObject();
 			deviceContext.put(BluewaveManager.DEVICE_ID, this.getGroupContextManager().getDeviceID());
@@ -338,14 +326,6 @@ public class PersonalContextProvider extends ContextProvider
 			}
 			deviceContext.put(BluewaveManager.CONTEXTS, contexts);
 			
-			// Describes All Nearby Devices (According to Bluetooth)
-			JSONArray devices = new JSONArray();
-			for (String deviceID : bluewaveManager.getNearbyDevices(30))
-			{
-				devices.put(deviceID);
-			}
-			deviceContext.put(BluewaveManager.DEVICES, devices);
-			
 			// Adds the Device Tag
 			parser.setJSONObject(BluewaveManager.DEVICE_TAG, deviceContext);
 		}
@@ -354,7 +334,7 @@ public class PersonalContextProvider extends ContextProvider
 			Log.e(LOG_NAME, "Problem occurred while updating device context: " + ex.getMessage());
 			
 			// Downloads This Device's Current Cloud Context
-			httpToolkit.get(contextFolder + contextFilename, BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
+			httpToolkit.get(this.getPrivateContextURL(), BluewaveManager.ACTION_USER_CONTEXT_DOWNLOADED);
 		}
 	}
 	
@@ -374,9 +354,19 @@ public class PersonalContextProvider extends ContextProvider
 			else if (intent.getAction().equals(BluewaveManager.ACTION_USER_CONTEXT_UPDATED))
 			{
 				// Grabs the Newly Downloaded JSON
-				String response = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
-				Log.d(LOG_NAME, "PERSONAL CONTEXT UPDATE: " + response);
-				//Toast.makeText(context, "UPDATE COMPLETE: " + response, Toast.LENGTH_SHORT).show();
+				String responseJSON = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+				
+				try
+				{
+					JSONObject jsonObj = new JSONObject(responseJSON);
+					key = jsonObj.getString("key");	
+					bluewaveManager.updateBluetoothName();
+					Log.d(LOG_NAME, "PERSONAL CONTEXT UPDATED: " + responseJSON);
+				}
+				catch (Exception ex)
+				{
+					Log.d(LOG_NAME, "Problem Occurred Updating Personal Context: " + ex.getMessage());
+				}
 			}
 			else
 			{

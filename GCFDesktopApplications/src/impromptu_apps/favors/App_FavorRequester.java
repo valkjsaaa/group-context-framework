@@ -24,7 +24,7 @@ public class App_FavorRequester extends DesktopApplicationProvider
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://cdn5.fedobe.com/wp-content/uploads/2012/09/service-icon-concept.png", // LOGO
-				3600,
+				120,
 				commMode,
 				ipAddress,
 				port);
@@ -52,6 +52,6 @@ public class App_FavorRequester extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
-		return this.hasEmailAddress(parser, new String[] {"adrian.defreitas@gmail.com", "gcf.user.1@gmail.com"});
+		return true;
 	}
 }

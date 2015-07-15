@@ -37,7 +37,7 @@ public class App_FavorListener extends DesktopApplicationProvider
 				"LISTEN",
 				"Favor Listener Application",
 				"This app records all context advertised by Impromptu.",
-				"DEV TOOLS",
+				"FAVOR BANK",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"https://cdn1.iconfinder.com/data/icons/MetroStation-PNG/128/MB__listen.png", // LOGO
@@ -101,12 +101,12 @@ public class App_FavorListener extends DesktopApplicationProvider
 					deviceID, time, latitude, longitude, activity, confidence);
 			
 			// Generates the Real Time Query
-			String realtimeQuery = (parser.getJSONObject("location").has("SENSOR")) ?
+			String realtimeQuery = (parser.getJSONObject("location") != null && parser.getJSONObject("location").has("SENSOR")) ?
 					// This query occurs if there is a sensor
-					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, last_sensor, last_sensor_date, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',CURRENT_TIMESTAMP,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), last_sensor=VALUES(lastSensor), last_sensor_date=VALUES(last_sensor_date), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
-							deviceID, latitude, longitude, parser.getJSONObject("location").get("SENSOR").getAsString(), activity, (double)confidence) :
-					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%f,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
-							deviceID, latitude, longitude, activity, (double)confidence);
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, last_sensor, last_sensor_date, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%d,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), last_sensor=VALUES(last_sensor), last_sensor_date=VALUES(last_sensor_date), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
+							deviceID, latitude, longitude, parser.getJSONObject("location").get("SENSOR").getAsString(), System.currentTimeMillis(), activity, (double)confidence, System.currentTimeMillis()) :
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
+							deviceID, latitude, longitude, activity, (double)confidence, System.currentTimeMillis());
 					
 			// Runs the SQL Queries
 			sqlToolkit.runUpdateQuery(historyQuery);

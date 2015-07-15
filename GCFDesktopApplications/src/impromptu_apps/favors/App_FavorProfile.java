@@ -23,7 +23,7 @@ public class App_FavorProfile extends DesktopApplicationProvider
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://icons.iconarchive.com/icons/double-j-design/origami-colored-pencil/256/blue-user-icon.png", // LOGO
-				3600,
+				120,
 				commMode,
 				ipAddress,
 				port);
@@ -46,7 +46,7 @@ public class App_FavorProfile extends DesktopApplicationProvider
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		
-		return this.hasEmailAddress(parser, new String[] {"adrian.defreitas@gmail.com", "gcf.user.1@gmail.com"});
+		return true;
 	}
 	
 }

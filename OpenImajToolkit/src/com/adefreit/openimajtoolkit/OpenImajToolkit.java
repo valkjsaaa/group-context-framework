@@ -131,7 +131,7 @@ public class OpenImajToolkit
 			// Loads the Images
 			MBFImage mbf1 = ImageUtilities.readMBF(new File(path1));
 			MBFImage mbf2 = ImageUtilities.readMBF(new File(path2));
-			final MBFImage consistentMatches = MatchingUtilities.drawMatches(mbf1, mbf2, matcher.getMatches(), RGBColour.CYAN);
+			final MBFImage consistentMatches = MatchingUtilities.drawMatches(mbf1, mbf2, matcher.getMatches(), RGBColour.GREEN);
 
 			// Closes an Existing Window
 			frame = DisplayUtilities.display(consistentMatches);

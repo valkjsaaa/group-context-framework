@@ -1,8 +1,9 @@
 package com.adefreitas.gcfimpromptu.lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
-public class AppCategoryInfo 
+public class AppCategoryInfo implements Comparable<AppCategoryInfo>
 {
 	private String 			   name;
 	private ArrayList<AppInfo> apps;
@@ -38,6 +39,7 @@ public class AppCategoryInfo
 		{
 			if (app.getID().equalsIgnoreCase(newApp.getID()))
 			{
+				//System.out.println("Updating " + newApp.getName());
 				app.update(newApp);
 			}
 		}
@@ -86,6 +88,7 @@ public class AppCategoryInfo
 	
 	public ArrayList<AppInfo> getApps()
 	{
+		Collections.sort(apps);
 		return apps;
 	}
 	
@@ -101,6 +104,20 @@ public class AppCategoryInfo
 			}
 		}
 		
+		// Sorts the List :)
+		Collections.sort(result);
+		
 		return result;
+	}
+
+	
+	/**
+	 * Allows this object to be sorted
+	 */
+	@Override
+	public int compareTo(AppCategoryInfo another) 
+	{	
+		// Returns the Name Comparison
+		return this.name.compareTo(another.name);
 	}
 }

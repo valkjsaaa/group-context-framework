@@ -12,7 +12,11 @@ import com.adefreitas.groupcontextframework.GroupContextManager;
 public class BluewaveManager
 {
 	// Log Constant
-	private static final String LOG_NAME = "BLUEWAVE";
+	private static final String LOG_NAME = "Bluewave";
+	
+	// Protocol Constants
+	public static final String ID_TAG		  = "GCF";
+	public static final String NAME_SEPARATOR = "::";
 	
 	// JSON Constants
 	public static final String DEVICE_TAG = "device";
@@ -28,6 +32,7 @@ public class BluewaveManager
 	public    static final String ACTION_OTHER_USER_CONTEXT_RECEIVED   = "OTHER_USER_CONTEXT_RECEIVED";
 	public    static final String OTHER_USER_CONTEXT		    	   = "OTHER_USER_CONTEXT";
 	public    static final String NEW_CONTEXT						   = "NEW_CONTEXT";
+	public    static final String RSSI								   = "RSSI";
 	public 	  static final String ACTION_COMPUTE_INSTRUCTION_RECEIVED  = "PCP_COMPUTE_INSTRUCTION";
 	protected static final String OTHER_USER_ID		    			   = "OTHER_USER_ID";
 	protected static final String ACTION_BLUETOOTH_SCAN_UPDATE 		   = "BT_UPDATE";
@@ -45,22 +50,27 @@ public class BluewaveManager
 		
 	// Bluewave Components
 	private boolean					keepScanning;
-	private String					urlToContextFile;
+	private String					url;
 	private BluetoothScanner		bluetoothScanner;
 	private PersonalContextProvider pcp;
-	private ContextListener			contextListener;			
+	private ContextListener			contextListener;	
+	
+	// Bluewave Credentials
+	private String 	 appID;
+	private String[] contextsRequested;
 	
 	/**
 	 * Constructor
-	 * @param context
-	 * @param gcm
-	 * @param urlToContextFile
+	 * @param context - the Android application context
+	 * @param gcm - the group context manager
+	 * @param url - the base URL containing the bluewave php files
+	 * @param discoverable - sets whether or not the bluetooth adapter is discoverable
 	 */
-	public BluewaveManager(Context context, GroupContextManager gcm, String urlToContextFile, boolean discoverable)
+	public BluewaveManager(Context context, GroupContextManager gcm, String url, String masterKey, boolean discoverable)
 	{
-		this.context 		  = context;
-		this.gcm 	 		  = gcm;
-		this.urlToContextFile = urlToContextFile;
+		this.context = context;
+		this.gcm 	 = gcm;
+		this.url	 = url;
 		
 		// Creates the HTTP Toolkit
 		this.httpToolkit = new HttpToolkit((Application)context.getApplicationContext());
@@ -72,14 +82,29 @@ public class BluewaveManager
 		this.setDiscoverable(discoverable);
 		
 		// Creates the Personal Context Provider
-		this.pcp = new PersonalContextProvider(context, this, gcm, httpToolkit, urlToContextFile);
+		this.pcp = new PersonalContextProvider(context, this, gcm, httpToolkit, url, masterKey);
 		this.gcm.registerContextProvider(this.pcp);
 		
+		// Initializes Credentials
+		this.appID 			   = null;
+		this.contextsRequested = null;
+		
 		// Creates the Context Listener
-		this.contextListener = new ContextListener(context, httpToolkit);
+		this.contextListener = new ContextListener(context, this, httpToolkit);
 		
 		// Updates the Device's Bluetooth Name to Note that it has been Initialized
 		updateBluetoothName();
+	}
+	
+	/**
+	 * This is used by applications to identify themselves to other devices
+	 * @param appID
+	 * @param contextsRequested
+	 */
+	public void setCredentials(String appID, String[] contextsRequested)
+	{
+		this.appID 			   = appID;
+		this.contextsRequested = contextsRequested;
 	}
 	
 	/**
@@ -135,11 +160,10 @@ public class BluewaveManager
 	public void updateBluetoothName()
 	{
 		// Creates the Main Bluetooth Name
-		String bluetoothName = "BLU::" + gcm.getDeviceID() + "::" + urlToContextFile + "::" + new Date().getTime();
+		String bluetoothName = ID_TAG + NAME_SEPARATOR + gcm.getDeviceID() + NAME_SEPARATOR + pcp.getPublicContextURL() + NAME_SEPARATOR + pcp.getPublicKey();
 		
 		// Updates the Bluetooth Name
 		bluetoothScanner.setBluetoothName(bluetoothName);
-		Log.d(LOG_NAME, "Set Name to: " + bluetoothName);
 	}
 	
 	/**
@@ -173,6 +197,25 @@ public class BluewaveManager
 	}
 
 	/**
+	 * Returns this Application's Bluewave App ID
+	 * You get this by registering with the Bluewave site
+	 * @return
+	 */
+	public String getAppID()
+	{
+		return appID;
+	}
+	
+	/**
+	 * Returns the Contexts Requested by this App
+	 * @return
+	 */
+	public String[] getContextsRequested()
+	{
+		return contextsRequested;
+	}
+	
+	/**
 	 * Determines if a Bluetooth Name is Bluewave Compatible
 	 * @param bluetoothName
 	 * @return
@@ -181,9 +224,11 @@ public class BluewaveManager
 	{
 		if (bluetoothName != null)
 		{
-			String[] nameComponents = bluetoothName.split("::");
+			String[] nameComponents = bluetoothName.split(NAME_SEPARATOR);
+			boolean result = (nameComponents.length == 4 && nameComponents[0].equals(ID_TAG));
 			
-			return nameComponents.length >= 4 && nameComponents[0].equals("BLU");	
+			//Log.d(LOG_NAME, bluetoothName + " - " + result);
+			return result;	
 		}
 		else
 		{
@@ -200,7 +245,7 @@ public class BluewaveManager
 	{
 		if (BluewaveManager.isBluewaveName(bluetoothName))
 		{
-			String[] nameComponents = bluetoothName.split("::");
+			String[] nameComponents = bluetoothName.split(NAME_SEPARATOR);
 			return nameComponents[1];
 		}
 		else

@@ -110,7 +110,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		// Generates the Execution Alert for an App
 		if (this.getIntent() != null && this.getIntent().hasExtra(APP_ID))
 		{
-			Toast.makeText(this, "Processing Intent: " + this.getIntent().getStringExtra(APP_ID), Toast.LENGTH_SHORT).show();
+			//Toast.makeText(this, "Processing Intent: " + this.getIntent().getStringExtra(APP_ID), Toast.LENGTH_SHORT).show();
 			selectedApp = this.application.getApplicationFromCatalog(this.getIntent().getStringExtra(APP_ID));
 			
 			if (selectedApp != null)
@@ -147,6 +147,13 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			toolbar.setTitle(savedInstanceState.getString(TITLEBAR_CONTENTS));
 		}
 				
+		// Requests Context Information from Self
+		if (application.getGroupContextManager().getRequest("LOC") == null || application.getGroupContextManager().getRequest("ACT") == null)
+		{
+			application.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);
+			application.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);	
+		}
+		
 		// Updates the Application List
 		updateViewContents();
 	}

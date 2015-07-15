@@ -90,6 +90,7 @@ public class GCFApplication extends Application
 		// Initializes Bluewave
 		groupContextManager.getBluewaveManager().setDiscoverable(BLUETOOTH_DISCOVERABLE);
 		groupContextManager.startBluewaveScan(SCAN_PERIOD_IN_SECONDS * 1000);
+		groupContextManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[] {"device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
 		
 		// Creates a Custom Context Provider for Bluewave Data
 		groupContextManager.registerContextProvider(new BluewaveContextProvider(this, groupContextManager, 60000));
@@ -229,21 +230,6 @@ public class GCFApplication extends Application
 		
 		// Creates a Toast
 		Toast.makeText(this, "Discovered: " + parser.getDeviceID(), Toast.LENGTH_SHORT).show();
-		
-		//Log.e("Bluewave-Scan", "HELLO WORLD");
-		
-//		try 
-//		{
-//			Log.e("Bluewave-Scan", "FOUND: " + parser.getJSONObject("preferences").getString("Hello"));
-//		} 
-//		catch (JSONException e) 
-//		{
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
-		// TODO:  Add Any Application Wide Context Analysis Here
-		// IMPORTANT:  If you need to analyze context within an activity, just use setContextReceiver
 	}
 	
 	/**
@@ -349,7 +335,6 @@ public class GCFApplication extends Application
 			}
 			catch (Exception ex)
 			{
-				ex.printStackTrace();
 				Toast.makeText(this, "Problem Analyzing Context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
 			}	
 		}

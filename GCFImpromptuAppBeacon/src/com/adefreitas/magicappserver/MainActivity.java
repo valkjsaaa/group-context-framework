@@ -51,6 +51,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	
 	// Android Controls
 	private Toolbar	 toolbar;
+	private TextView txtDeviceInfo;
 	private TextView txtContext;
 	private TextView txtBluewave;
 	private TextView txtDevices;
@@ -77,10 +78,11 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.application = (GCFApplication)this.getApplication();
 				
 		// Grabs Controls
-		toolbar	    = (Toolbar)this.findViewById(R.id.toolbar);
-		txtContext  = (TextView)this.findViewById(R.id.txtContext);
-		txtBluewave = (TextView)this.findViewById(R.id.txtBluewave);
-		txtDevices  = (TextView)this.findViewById(R.id.txtDevices);
+		toolbar	      = (Toolbar)this.findViewById(R.id.toolbar);
+		txtDeviceInfo = (TextView)this.findViewById(R.id.txtDeviceInfo);
+		txtContext    = (TextView)this.findViewById(R.id.txtContext);
+		txtBluewave   = (TextView)this.findViewById(R.id.txtBluewave);
+		txtDevices    = (TextView)this.findViewById(R.id.txtDevices);
 				
 		// Sets Up Toolbar
 		this.setSupportActionBar(toolbar);
@@ -214,6 +216,9 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	// Custom Application Logic Goes Here -------------------------------------------------------
 	private void updateView()
 	{
+		// Displays Device Information
+		txtDeviceInfo.setText(application.getGroupContextManager().getDeviceID());
+		
 		// Grabs IDs of All Registered Context Providers
 		String providers = "";
 		for (ContextProvider p : application.getGroupContextManager().getRegisteredProviders())

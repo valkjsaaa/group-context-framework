@@ -2,6 +2,7 @@ package com.adefreitas.gcfimpromptu.lists;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import com.adefreitas.gcfimpromptu.GCFApplication;
@@ -19,6 +20,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,18 +54,28 @@ public class CatalogRenderer
 		// Removes All Views
 		categoryDirectory.clear();
 		appDirectory.clear();
-		
+				
 		// Counts the Total Number of Available Apps
 		int totalAvailableApps = 0;
 		
 		for (AppCategoryInfo category : categories)
 		{
 			totalAvailableApps += category.getAvailableApps().size();
+			
+			// SNAP-TO-IT Override
+			// Only displays STI apps if they are available
+			if (category.getName().equalsIgnoreCase("SNAP-TO-IT") && category.getAvailableApps().size() > 0)
+			{
+				categories = new ArrayList<AppCategoryInfo>();
+				categories.add(category);
+				totalAvailableApps = category.getAvailableApps().size();
+				break;
+			}
 		}
 		
 		// Renders the Categories and/or Apps (depending on the total number)
-		if (totalAvailableApps > APP_THRESHHOLD)
-		{
+		if (totalAvailableApps >= APP_THRESHHOLD)
+		{			
 			// Case 1:  LOTS of Apps.  Render Category Headings
 			for (AppCategoryInfo category : categories)
 			{
@@ -81,17 +93,34 @@ public class CatalogRenderer
 		}
 		else
 		{
-			// Case 2:  Few Apps.  Render Apps Directly
+			// Case 2:  Few Apps.  Open the Categories
 			for (AppCategoryInfo category : categories)
-			{				
-				// Adds the App to the Main View
-				for (AppInfo app : category.getAvailableApps())
+			{
+				category.setRenderAll(true);
+				
+				View categoryView = renderCategory(context, category);
+							
+				if (categoryView != null)
 				{
-					View appView = renderApplication(context, app, true);
-					appDirectory.put(appView, app);
-					layout.addView(appView);
+					// Stores the View with the Category for Later Reference
+					categoryDirectory.put(categoryView, category);
+					categoryView.setOnClickListener(onCategoryClickListener);
+					
+					layout.addView(categoryView);
 				}
 			}
+		
+//			// Case 2:  Few Apps.  Render Apps Directly
+//			for (AppCategoryInfo category : categories)
+//			{				
+//				// Adds the App to the Main View
+//				for (AppInfo app : category.getAvailableApps())
+//				{
+//					View appView = renderApplication(context, app, true);
+//					appDirectory.put(appView, app);
+//					layout.addView(appView);
+//				}
+//			}
 		}
 		
 		// Creates a Little Breating Room on the Bottom
@@ -118,7 +147,7 @@ public class CatalogRenderer
 		LayoutInflater inflater     = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View 		   categoryView = inflater.inflate(R.layout.app_category_info_single, null);
 		categoryView.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-		
+				
 		// Gets List of all Available Apps
 		ArrayList<AppInfo> availableApps = category.getAvailableApps();
 		
@@ -129,12 +158,13 @@ public class CatalogRenderer
 		}
 		
 		// Gets Controls
-		LinearLayout appsView  = (LinearLayout)categoryView.findViewById(R.id.layoutApps);
-		TextView     txtTitle  = (TextView)categoryView.findViewById(R.id.txtTitle);
-		TextView     btnExpand = (TextView)categoryView.findViewById(R.id.btnExpand);
+		RelativeLayout layoutCategoryContainer = (RelativeLayout)categoryView.findViewById(R.id.layoutCategoryContainer);
+		LinearLayout   appsView  			   = (LinearLayout)categoryView.findViewById(R.id.layoutApps);
+		TextView       txtTitle  			   = (TextView)categoryView.findViewById(R.id.txtTitle);
+		TextView       btnExpand 			   = (TextView)categoryView.findViewById(R.id.btnExpand);
 
 		// Sets Colors
-		txtTitle.setTextColor(Theme.getColor(category.getName()));
+		layoutCategoryContainer.setBackgroundColor(Theme.getColor(category.getName()));
 		
 		// Updates Title
 		txtTitle.setText(category.getName().toUpperCase());
@@ -144,13 +174,14 @@ public class CatalogRenderer
 		{
 			btnExpand.setVisibility(View.VISIBLE);
 			btnExpand.setText("HIDE");
-			btnExpand.setTextColor(0xFF333333);
+			//btnExpand.setTextColor(0xFFFFFFFF);
 		}
 		else
 		{
 			btnExpand.setVisibility(View.VISIBLE);
 			btnExpand.setText("SHOW ALL " + availableApps.size());
-			btnExpand.setTextColor(0xFF0186D5);
+			//btnExpand.setTextColor(0xFF0186D5);
+			//btnExpand.setTextColor(0xFFFFFFFF);
 		}
 		
 		// Determines How Many Apps to Render

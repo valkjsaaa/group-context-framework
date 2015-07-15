@@ -58,7 +58,7 @@ public class AndroidGroupContextManager extends GroupContextManager
 		this.commManager = new AndroidCommManager(this, cw);
 		
 		// Creates the Bluewave Manager
-		bluewaveManager = new BluewaveManager(cw, this, "http://gcf.cmu-tbank.com/bluewave/" + getDeviceID() + ".txt", true);
+		bluewaveManager = new BluewaveManager(cw, this, "http://gcf.cmu-tbank.com/bluewave/", "6cede095659678c4c86cd0d7d7be0972c426192e", true);
 		
 		// Creates the Scheduled Event Timer	
 		scheduledTaskHandler = new ScheduledTaskHandler(this);

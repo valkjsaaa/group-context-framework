@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.adefreitas.androidbluewave.BluewaveManager;
 import com.adefreitas.androidbluewave.JSONContextParser;
 import com.adefreitas.androidframework.ContextReceiver;
 import com.adefreitas.messages.ContextData;
@@ -64,6 +65,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.intentReceiver = new IntentReceiver();
 		this.filter = new IntentFilter();
 		this.filter.addAction(BluetoothDevice.ACTION_FOUND);
+		this.filter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 		this.filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);	
 	}
 
@@ -191,6 +193,10 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			{
 				lastBluetoothUpdate = new Date();
 				updateView();
+			}
+			else if (intent.getAction().equals(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED))
+			{
+				String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
 			}
 			else if (intent.getAction().equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED))
 			{

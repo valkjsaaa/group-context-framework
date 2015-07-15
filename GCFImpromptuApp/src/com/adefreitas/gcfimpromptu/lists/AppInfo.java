@@ -7,7 +7,7 @@ import com.adefreitas.groupcontextframework.CommManager.CommMode;
 import com.adefreitas.liveos.ApplicationFunction;
 import com.adefreitas.messages.ContextData;
 
-public class AppInfo
+public class AppInfo implements Comparable<AppInfo>
 {
 	// Read Only Attributes
 	private String 			  appID;
@@ -22,7 +22,7 @@ public class AppInfo
 	private ArrayList<ApplicationFunction> functions;
 	
 	// Snap To It Values
-	private double photoMatches;
+	private double  photoMatches;
 	private boolean favorite;
 	
 	// Communications Settings
@@ -256,5 +256,28 @@ public class AppInfo
 		this.dateExpires 	= otherApp.getDateExpires();
 		this.functions      = otherApp.getFunctions();
 		this.photoMatches   = otherApp.getPhotoMatches();
+		
+		//System.out.println(this.appContextType + " Expires at: " + dateExpires);
+	}
+
+	/**
+	 * Allows this Object to be Sorted :)
+	 */
+	@Override
+	public int compareTo(AppInfo another) 
+	{
+		// Compares Using Photo Matches First, and then Name
+		if (this.photoMatches == another.photoMatches)
+		{
+			return this.name.compareTo(another.name);
+		}
+		else if (this.photoMatches > another.photoMatches)
+		{
+			return -1;
+		}
+		else
+		{
+			return 1;
+		}
 	}
 }

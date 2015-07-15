@@ -68,6 +68,11 @@ public class App_LocationWebsite extends DesktopApplicationProvider
 		locations.add(new LocationInfo(locationName, websiteURL, description, category, logoPath, latitude, longitude));
 	}
 	
+	public void addLocation(String locationName, double latitude, double longitude, String url)
+	{
+		locations.add(new LocationInfo(locationName, url, description, category, logoPath, latitude, longitude));
+	}
+	
 	private boolean nearLocation(JSONContextParser parser, double km)
 	{
 		double bestDistance = Double.MAX_VALUE;

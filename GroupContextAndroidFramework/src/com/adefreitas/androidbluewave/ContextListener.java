@@ -14,7 +14,7 @@ import com.adefreitas.androidframework.toolkit.HttpToolkit;
 public class ContextListener
 {
 	// Log Constant
-	private static final String LOG_NAME = "Bluewave_Listener";
+	private static final String LOG_NAME = "Bluewave-Listener";
 	
 	// Intent Filters
 	private IntentFilter    	   filter;
@@ -22,6 +22,9 @@ public class ContextListener
 	
 	// Android Application Context
 	private Context context;
+	
+	// The Bluewave Manager
+	private BluewaveManager bluewaveManager;
 	
 	// HTTP Toolkit
 	private HttpToolkit httpToolkit;
@@ -33,10 +36,11 @@ public class ContextListener
 	 * Constructor
 	 * @param context
 	 */
-	public ContextListener(Context context, HttpToolkit httpToolkit)
+	public ContextListener(Context context, BluewaveManager bluewaveManager, HttpToolkit httpToolkit)
 	{
-		this.context     = context;
-		this.httpToolkit = httpToolkit;
+		this.context         = context;
+		this.bluewaveManager = bluewaveManager;
+		this.httpToolkit     = httpToolkit;
 		
 		// Sets Up Intent Filtering and Listening
 		this.receiver = new ListenerIntentReceiver();
@@ -55,13 +59,13 @@ public class ContextListener
 	{
 		private String  json;
 		private String  deviceID;
-		private Date    timestamp;
+		private String  key;
 		private boolean downloaded;
 		
-		public ContextInfo(String deviceID, Date timestamp)
+		public ContextInfo(String deviceID, String key)
 		{
 			this.deviceID   = deviceID;
-			this.timestamp  = timestamp;
+			this.key	    = key;
 			this.downloaded = false;
 		}
 
@@ -79,12 +83,12 @@ public class ContextListener
 			return deviceID;
 		}
 
-		public boolean isDownloaded() {
-			return downloaded;
+		public String getKey() {
+			return key;
 		}
 		
-		public Date getDateDownloaded() {
-			return timestamp;
+		public boolean isDownloaded() {
+			return downloaded;
 		}
 	}
 	
@@ -124,19 +128,36 @@ public class ContextListener
 				// Processes Bluetooth Devices with the Above Naming Convention
 				if (BluewaveManager.isBluewaveName(bluetoothID))
 				{
-					String[] components = bluetoothID.split("::");
+					String[] components = bluetoothID.split(BluewaveManager.NAME_SEPARATOR);
 					String deviceID     = components[1];
 					String downloadPath = components[2];
-					long   lastUpdate   = Long.parseLong(components[3]);
+					String key          = components[3];
 				   	
-					if (!archive.containsKey(deviceID) || archive.get(deviceID).getDateDownloaded().getTime() < lastUpdate)
+					if (!archive.containsKey(deviceID) || !archive.get(deviceID).getKey().equals(key))
 					{
-						// Downloads the New Context
-						String url = downloadPath.replace(" ", "%20");
-						httpToolkit.get(url, BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED);
+						// Generates a URL
+						String url = (downloadPath + "?deviceID=" + deviceID + "&key=" + key);
+						
+						if (bluewaveManager.getAppID() != null)
+						{
+							url += "&appID=" + bluewaveManager.getAppID();
+						}
+						
+						if (bluewaveManager.getContextsRequested() != null)
+						{
+							for (String requestedContext : bluewaveManager.getContextsRequested())
+							{
+								url += "&context[]=" + requestedContext;		
+							}
+						}
+						
+						Log.d(LOG_NAME, url.replace(" ", "%20"));
+						
+						// Requests the Actual Context from the Device
+						httpToolkit.get(url.replace(" ", "%20"), BluewaveManager.ACTION_OTHER_USER_CONTEXT_DOWNLOADED);	
 						
 						// Creates an Entry (and replaces the previous entry)
-						archive.put(deviceID, new ContextInfo(deviceID, new Date(lastUpdate)));
+						archive.put(deviceID, new ContextInfo(deviceID, key));
 					}
 					else if (archive.containsKey(deviceID))
 					{
@@ -147,6 +168,7 @@ public class ContextListener
 							Intent i = new Intent(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 							i.putExtra(BluewaveManager.OTHER_USER_CONTEXT, json);
 							i.putExtra(BluewaveManager.NEW_CONTEXT, false);
+							i.putExtra(BluewaveManager.RSSI, bluewaveManager.getRSSI(deviceID));
 							context.sendBroadcast(i);
 							
 							// TODO:  Debug Toast
@@ -162,6 +184,8 @@ public class ContextListener
 			// This is the Raw JSON from the Device
 			String json = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
 			
+			//Log.d(LOG_NAME, "Downloaded: " + json);
+			
 			// Makes Sure that the Uploaded JSON Actually Has JSON in it!
 			if (json != null)
 			{
@@ -176,6 +200,7 @@ public class ContextListener
 					Intent i = new Intent(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
 					i.putExtra(BluewaveManager.OTHER_USER_CONTEXT, json);
 					i.putExtra(BluewaveManager.NEW_CONTEXT, true);
+					i.putExtra(BluewaveManager.RSSI, bluewaveManager.getRSSI(deviceID));
 					context.sendBroadcast(i);
 					
 					// TODO:  Debug Toast
@@ -183,6 +208,5 @@ public class ContextListener
 				}	
 			}
 		}
-	
 	}
 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -333,7 +334,7 @@ public class GCFApplication extends Application
 			if (apps.size() == 1)
 			{
 				AppInfo app = apps.get(0);
-				title       = "New App: " + app.getName();
+				title       = app.getName();
 				subtitle    = app.getDescription();
 				
 				intent = new Intent(this.getApplicationContext(), MainActivity.class);
@@ -764,7 +765,7 @@ public class GCFApplication extends Application
 			Intent i = new Intent(ACTION_APP_UPDATE);
 			sendBroadcast(i);
 		}
-		
+				
 		return isNew;
 	}
 	
@@ -821,11 +822,13 @@ public class GCFApplication extends Application
 			}
 		}
 		
+		Collections.sort(catalog);
 		return catalog;
 	}
 	
 	public ArrayList<AppCategoryInfo> getCatalog()
 	{
+		Collections.sort(appCatalog);
 		return appCatalog;
 	}
 					
@@ -1009,12 +1012,7 @@ public class GCFApplication extends Application
 				gcfService.getGroupContextManager().registerContextProvider(locationProvider);
 				gcfService.getGroupContextManager().registerContextProvider(gpsProvider);
 				gcfService.getGroupContextManager().registerContextProvider(compassProvider);
-				
-				// Requests Context Information from Self
-				gcfService.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
-				gcfService.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, UPDATE_SECONDS * 1000, new String[0]);
-				//gcfService.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, 250, new String[0]);
-				
+								
 				if (!isInForeground())
 				{
 					Toast.makeText(GCFApplication.this, "GCF Ready [" + gcfService.getGroupContextManager().getRegisteredProviders().length + " context providers]", Toast.LENGTH_SHORT).show();	
@@ -1081,7 +1079,9 @@ public class GCFApplication extends Application
 			{
 				String[] appsJson          = gson.fromJson(instruction.getPayload("APPS"), new TypeToken<String[]>() {}.getType());
 				ArrayList<AppInfo> newApps = new ArrayList<AppInfo>();
-									
+							
+				boolean isSystemAlert = false;
+				
 				for (String s : appsJson)
 				{
 					String[] appPayload = gson.fromJson(s, new TypeToken<String[]>() {}.getType());
@@ -1135,9 +1135,10 @@ public class GCFApplication extends Application
 						}
 												
 						// Adds the App
-						AppInfo app = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
+						AppInfo app   = new AppInfo(appID, appContextType, deviceID, appName, description, category, logo, lifetime, photoMatches, contexts, preferences, functions, commMode, ipAddress, port, channel);					
 						boolean isNew = GCFApplication.this.addApplicationToCatalog(app);
 						
+						// Keeps Track of New Apps
 						if (isNew)
 						{
 							newApps.add(app);
@@ -1149,15 +1150,15 @@ public class GCFApplication extends Application
 						Toast.makeText(GCFApplication.this, "Problem With App: " + ex.getMessage(), Toast.LENGTH_LONG).show();
 					}
 				}
-				
-				// Stores the Catalog in Long Term Memory
-				saveCatalog();
-				
+								
 				if (newApps.size() >= 1)
 				{
 					createNotification(newApps);
 					Log.d(LOG_NAME, "Received " + appsJson.length + " apps (" + newApps.size() + " new)");
 				}
+				
+				// Stores the Catalog in Long Term Memory
+				saveCatalog();
 			}
 		}
 	

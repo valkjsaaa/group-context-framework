@@ -3,6 +3,7 @@ package impromptu_apps.favors;
 import impromptu_apps.DesktopApplicationProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import com.adefreitas.desktopframework.toolkit.JSONContextParser;
@@ -16,19 +17,20 @@ import com.google.gson.JsonObject;
 public class App_Favor extends DesktopApplicationProvider
 {	
 	// Properties
-	private String	   		id;
-	private FavorDispatcher dispatcher;
-	private int		   		timestamp;
-	private String			deviceID;
-	private String			userName;
-	private String 	   		description;
-	private String 	   		desc_performance;
-	private String 	   		desc_turnin;
-	private double	   		latitude;
-	private double	   		longitude;
-	ArrayList<String>		tags;
-	ArrayList<String>  		sensors;
-	private String	   		status;
+	private String	   		  id;
+	private FavorDispatcher   dispatcher;
+	private int		   		  timestamp;
+	private String			  deviceID;
+	private String			  userName;
+	private String 	   		  description;
+	private String 	   		  desc_performance;
+	private String 	   		  desc_turnin;
+	private double	   		  latitude;
+	private double	   		  longitude;
+	private ArrayList<String> tags;
+	private ArrayList<String> sensors;
+	private ArrayList<String> matches;
+	private String	   		  status;
 	
 	// SQL Database Query Tool
 	private SQLToolkit sqlToolkit;
@@ -48,7 +50,8 @@ public class App_Favor extends DesktopApplicationProvider
 	/**
 	 * Constructor
 	 */
-	public App_Favor(String id, FavorDispatcher dispatcher, int timestamp, String deviceID, String userName, String description, String desc_performance, String desc_turnin, double latitude, double longitude, String[] tags, String[] sensors, String status, 
+	public App_Favor(String id, FavorDispatcher dispatcher, int timestamp, String deviceID, String userName, String description, String desc_performance, 
+			String desc_turnin, double latitude, double longitude, String[] tags, String[] sensors, String status, String[] matches, 
 			GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port, SQLToolkit sqlToolkit)
 	{
 		super(	groupContextManager, 
@@ -71,12 +74,11 @@ public class App_Favor extends DesktopApplicationProvider
 		this.sqlToolkit  	  = sqlToolkit;
 		this.sensors 	 	  = new ArrayList<String>();
 		this.tags 			  = new ArrayList<String>();
+		this.matches		  = new ArrayList<String>();
 		this.dateCreated 	  = new Date();
-		this.devicesOffered 		  = new ArrayList<String>();
+		this.devicesOffered   = new ArrayList<String>();
 		
-		System.out.println("Favor " + id + " created!");
-		
-		update(deviceID, userName, description, desc_performance, desc_turnin, latitude, longitude, tags, sensors, status);
+		update(deviceID, userName, description, desc_performance, desc_turnin, latitude, longitude, tags, sensors, status, matches);
 	}
 		
 	/**
@@ -131,7 +133,7 @@ public class App_Favor extends DesktopApplicationProvider
 	{
 		super.onSubscription(newSubscription);
 		
-		System.out.println(newSubscription.getDeviceID() + " has subscribed.");
+		this.log("FAVOR_VIEWED", "device_id=" + newSubscription.getDeviceID());
 		
 		views++;
 	}
@@ -157,10 +159,9 @@ public class App_Favor extends DesktopApplicationProvider
 		String 			  deviceID = this.getDeviceID(parser);
 		
 		// This will make the text output pretty.  Trust me.
-		System.out.println("\n    Context: " + parser);
+		System.out.print("\n    Matches: " + matches + ": ");
 		
-		boolean result = !completed &&  
-				(this.deviceID.equals(deviceID) || canViewAll(parser) || (sensorsMatch(parser) && tagsMatch(parser) && distanceCheck(parser)));
+		boolean result = !completed && (this.deviceID.equals(deviceID) || canViewAll(parser) || (isMatch(parser)) || deviceID.equals(acceptedDeviceID));
 		
 		// Creates a Log Entry
 		if (result && !this.deviceID.equals(deviceID) && !devicesOffered.contains(deviceID))
@@ -192,10 +193,10 @@ public class App_Favor extends DesktopApplicationProvider
 			{
 				String logEntry = "accomplished=" + (acceptedDeviceID.length() > 0) + ",";
 				logEntry	   += "offers=" + this.devicesOffered.size() + ",";
-				logEntry       += "deviceID=" + this.acceptedDeviceID + ",";
+				logEntry       += "device_id=" + this.acceptedDeviceID + ",";
 				logEntry       += "timeElapsedInMillis=" + (dateCompleted.getTime() - dateCreated.getTime()) + ",";
 				
-				this.log("FAVOR_COMPLETE",  logEntry);
+				this.log("FAVOR_COMPLETED",  logEntry);
 			}
 		}
 		else if (instruction.getCommand().equalsIgnoreCase("ACCEPT_FAVOR"))
@@ -203,12 +204,14 @@ public class App_Favor extends DesktopApplicationProvider
 			hasBeenAccepted = true;
 			acceptedDeviceID = instruction.getDeviceID();
 			acceptedDate = new Date();
+			this.log("FAVOR_ACCEPTED", "device_id=" + instruction.getDeviceID());
 		}
 		else if (instruction.getCommand().equalsIgnoreCase("BACK_OUT"))
 		{
 			hasBeenAccepted = false;
 			acceptedDeviceID = "";
 			acceptedDate = new Date(0);
+			this.log("FAVOR_BACKOUT", "device_id=" + instruction.getDeviceID());
 		}
 		
 		this.sendContext();
@@ -259,11 +262,11 @@ public class App_Favor extends DesktopApplicationProvider
 		
 		if (deviceID.equals(this.deviceID))
 		{
-			return "YOUR FAVOR REQUESTS";
+			return "FAVORS (Yours)";
 		}
 		else
 		{
-			return "FAVORS FROM OTHERS";	
+			return "FAVORS (Others)";	
 		}
 	}
 	
@@ -279,13 +282,17 @@ public class App_Favor extends DesktopApplicationProvider
 		
 		result += this.description + "\n\nStatus: ";
 		
-		if (hasBeenAccepted)
+		if (completed)
 		{
-			result += "ACCEPTED!";
+			result += "Completed";
+		}
+		else if (hasBeenAccepted)
+		{
+			result += "Accepted";
 		}
 		else
 		{
-			result += "AVAILABLE!";
+			result += "Available";
 		}
 		
 		return result;
@@ -296,7 +303,7 @@ public class App_Favor extends DesktopApplicationProvider
 	 */
 	public int getLifetime(String userContextJSON)
 	{
-		if (completed || hasBeenAccepted)
+		if (completed)
 		{
 			return 0;
 		}
@@ -317,7 +324,7 @@ public class App_Favor extends DesktopApplicationProvider
 	 * @param sensors
 	 * @param status
 	 */
-	public void update(String deviceID, String userName, String description, String desc_performance, String desc_turnin, double latitude, double longitude, String[] tags, String[] sensors, String status)
+	public void update(String deviceID, String userName, String description, String desc_performance, String desc_turnin, double latitude, double longitude, String[] tags, String[] sensors, String status, String matches[])
 	{
 		this.deviceID		  = deviceID;
 		this.userName		  = userName;
@@ -331,6 +338,7 @@ public class App_Favor extends DesktopApplicationProvider
 		// Clears the List of Sensors and Tags for New Additions
 		this.tags.clear();
 		this.sensors.clear();
+		this.matches.clear();
 		
 		for (String tag : tags)
 		{
@@ -348,7 +356,15 @@ public class App_Favor extends DesktopApplicationProvider
 			}
 		}
 		
-		if (System.currentTimeMillis() - acceptedDate.getTime() > 1000 * 120)
+		for (String match : matches)
+		{
+			if (match.length() > 0)
+			{
+				this.matches.add(match);
+			}
+		}
+		
+		if (System.currentTimeMillis() - acceptedDate.getTime() > 1000 * 300)
 		{
 			hasBeenAccepted = false;
 			acceptedDeviceID = "";
@@ -366,20 +382,11 @@ public class App_Favor extends DesktopApplicationProvider
 	{
 		boolean result = this.hasEmailAddress(
 			parser, 
-			new String[] {
+			new String[] 
+			{
 
 			}
 		);
-		
-		if (result)
-		{
-			System.out.println("    Can View All Favors.  Returning TRUE");	
-		}
-		else
-		{
-			System.out.println("    Cannot View All.  Performing Additional Tests");
-		}
-		
 		return result;
 	}
 	
@@ -472,5 +479,15 @@ public class App_Favor extends DesktopApplicationProvider
 			System.out.println("    No Sensor Match.");
 			return false;	
 		}
+	}
+
+	/**
+	 * This method returns TRUE if the deviceID is in the list of matches; returns FALSE otherwise
+	 * @param parser
+	 * @return
+	 */
+	private boolean isMatch(JSONContextParser parser)
+	{
+		return matches.contains(this.getDeviceID(parser));
 	}
 }

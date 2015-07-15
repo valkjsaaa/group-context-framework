@@ -79,3 +79,34 @@ tmp/
 
 # TeXlipse plugin
 .texlipse
+*.cache
+
+GCFBluetoothRSSI/bin/R.txt
+
+GCFAndroidCoreServices/bin/R.txt
+
+GCFAndroidTemplate/bin/R.txt
+
+aware_framework_v2/bin/AndroidManifest.xml
+
+OpenImajToolkit/.classpath
+
+GroupContextFramework/.classpath
+
+GroupContextDesktopFramework/.classpath
+
+*.properties
+
+GCFDesktopApplications/.classpath
+
+GCFDesktopTemplate/.classpath
+
+GCFImpromptuApp/bin/R.txt
+
+GCFImpromptuAppBeacon/bin/R.txt
+
+GroupContextAndroidFramework/bin/R.txt
+
+*.properties
+
+GroupContextDesktopFramework/.classpath
