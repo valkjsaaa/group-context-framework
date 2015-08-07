@@ -6,44 +6,67 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Date;
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.impromptu.ApplicationElement;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class Sti_DigitalProjector extends SnapToItApplicationProvider
 {		
 	// Provider Specific Variables Go Here
 	public		  String PRIMARY_DEVICE		   = "";
 	public 		  String PRESENTATION_FILE     = "";	// The File (ON THE COMPUTER)
+	public		  String PRESENTATION_URL      = "";    // The cloud location where this file was received
 	public static String PRESENTATION_LOCATION = "";	// The Path to the File (ON THE COMPUTER)
-	public static String UPLOAD_FOLDER         = "/var/www/html/gcf/universalremote/Server/";	// The Folder Containing the Presentation (ON SERVER)
+	
+	public boolean listMode = true;
 	
 	public Sti_DigitalProjector(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"STI_POWERPOINT",
-				"Digital Projector",
+				"STI_DIGITAL_PROJECTOR",
+				"Digital Projector (EIKI 1)",
 				"Lets you upload PowerPoint presentations and control them on this digital projector.",
-				"DEBUG",
+				"Snap-To-It",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://png-4.findicons.com/files/icons/2711/free_icons_for_windows8_metro/128/video_projector.png",				   // LOGO
-				30,
+				60,
 				commMode,
 				ipAddress,
 				port);
 		
 		this.addAppliancePhotoFromURL(new String[] {
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_3.jpeg",
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_4.jpeg",
-				"http://gcf.cmu-tbank.com/snaptoit/appliances/projector1/projector1_5.jpeg"
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/digitalprojector/digitalprojector_0.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/digitalprojector/digitalprojector_1.jpeg",
+				"http://gcf.cmu-tbank.com/snaptoit/appliances/digitalprojector/digitalprojector_2.jpeg",
 				});
 		
 		// Takes a Photo At the Moment a New Photo Comes In
 		//this.enableRealtimeScreenshots();
+	}
+	
+	/**
+	 * Determines Whether or Not to Send Application Data
+	 */
+	@Override
+	public boolean sendAppData(String bluewaveContext)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
+		
+		if (listMode)
+		{
+			return this.getDeviceID(parser).equals("Device 1");
+		}
+		else
+		{
+			return super.sendAppData(bluewaveContext);
+		}
 	}
 
 	@Override
@@ -69,14 +92,22 @@ public class Sti_DigitalProjector extends SnapToItApplicationProvider
 					  "<input value=\"Quit Presentation\" type=\"button\" style=\"height:50px; font-size:25px\" onclick=\"device.sendComputeInstruction('QUIT', []);\"/></div>" +
 					  "</html>";
 				
-				return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/powerpoint/control_presentation.html"};
+				// Creates an Object for this Application
+				ApplicationObject obj = new ApplicationObject(this.getAppID(), "FILE_PPTX", PRESENTATION_URL);
+				
+				// Converts Objects into a JSON String
+				String objects = ApplicationElement.toJSONArray(new ApplicationElement[] { obj }) ;
+						
+				// Delivers the UI Code, as Well as the Objects
+				//System.out.println("OBJECTS = " + objects);
+				return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/powerpoint/control_presentation.html", "OBJECTS=" + objects};
 			}
 			else
 			{
 				ui += "<div>" + 
 						"<h5>Last Updated: " + new Date().toString() + "</h5><h5>Latest Screenshot</h5>"+
 						"<img border=\"0\" src=\"http://" + Settings.DEV_WEB_IP + "/gcf/universalremote/Server/screen.jpeg\" alt=\"Screenshot\" width=\"304\" height=\"228\">" +
-						"<input value=\"Download Presentation\" type=\"button\" style=\"height:50px; font-size:25px\" onclick=\"device.downloadFile('" + UPLOAD_FOLDER + PRESENTATION_FILE + "');\"/>" + 
+						"<input value=\"Download Presentation\" type=\"button\" style=\"height:50px; font-size:25px\" onclick=\"device.downloadFile('" + this.getLocalStorageFolder() + PRESENTATION_FILE + "');\"/>" + 
 					  "</div>" +
 					  "</html>";
 			}
@@ -110,6 +141,7 @@ public class Sti_DigitalProjector extends SnapToItApplicationProvider
 			String folder      = filePath.substring(0, filePath.lastIndexOf("/") + 1);
 			String filename    = filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length());
 			String destination = this.getLocalStorageFolder() + instruction.getDeviceID().replace(" ", "") + "/" + filename;
+			this.PRESENTATION_URL = folder + filename;
 			
 			System.out.println("Folder: " + folder);
 			System.out.println("File:   " + filename);
@@ -155,7 +187,23 @@ public class Sti_DigitalProjector extends SnapToItApplicationProvider
 			this.sendContext();
 		}
 	}
-
+	
+	public String getCategory(String userContextJSON)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
+		boolean stiData = parser.getJSONObject("snap-to-it").has("PHOTO") || parser.getJSONObject("snap-to-it").has("CODE");
+		
+		if (stiData)
+		{
+			return "SNAP-TO-IT";
+		}
+		else
+		{
+			return "DEVICES";
+		}
+		//return category;
+	}
+	
 	// OVERRIDE METHODS ----------------------------------------------------------------------------------
 	@Override
 	public void onSubscriptionCancelation(ContextSubscriptionInfo subscription)

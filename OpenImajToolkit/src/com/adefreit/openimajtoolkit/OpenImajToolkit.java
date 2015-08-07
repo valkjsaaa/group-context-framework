@@ -1,5 +1,6 @@
 package com.adefreit.openimajtoolkit;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -17,8 +18,11 @@ import org.openimaj.image.colour.RGBColour;
 import org.openimaj.image.feature.local.engine.DoGSIFTEngine;
 import org.openimaj.image.feature.local.keypoints.Keypoint;
 import org.openimaj.math.geometry.point.Point2d;
-import org.openimaj.math.geometry.transforms.HomographyModel;
+import org.openimaj.math.geometry.transforms.*;
 import org.openimaj.math.model.fit.RANSAC;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * This is a simple wrapper class that makes using OpenImaj's SIFT Comparison extremely simple
@@ -57,7 +61,7 @@ public class OpenImajToolkit
 
 	public synchronized void computeFeatures(String path)
 	{
-		File file 	 = new File(path);
+		File file 	   = new File(path);
 		Date startDate = new Date();
 		
 		try
@@ -79,8 +83,39 @@ public class OpenImajToolkit
 		}
 	}
 	
+	public String serializeFeatures(String imagePath)
+	{
+		Gson   gson     = new Gson();
+		File   image    = new File(imagePath);
+		String features = "";
+		
+		try
+		{
+			features = gson.toJson(engine.findFeatures(ImageUtilities.readMBF(image).flatten()));
+		}
+		catch (Exception ex)
+		{
+			println("Problem occurred while computing features for: " + imagePath);
+			ex.printStackTrace();
+		}
+		
+		return features;
+	}
+	
+	public synchronized void deserializeFeatures(String path, String json)
+	{
+		Gson   gson 		= new Gson();
+		Type   keypointType = new TypeToken<LocalFeatureList<Keypoint>>(){}.getType();
+		LocalFeatureList<Keypoint> o = (LocalFeatureList<Keypoint>)gson.fromJson(json, keypointType);
+		
+		System.out.println(o.getClass().toString());
+				
+		//keypointDB.put(path, );
+	}
+	
 	public void forgetFeatures(String path)
 	{
+		println("Forgetting features for file: " + path);
 		keypointDB.remove(path);
 	}
 	

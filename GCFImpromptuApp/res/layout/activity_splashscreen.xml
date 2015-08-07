@@ -13,14 +13,65 @@
         android:layout_centerVertical="true"
         android:textColor="@color/custom_primary"
         android:src="@drawable/splash"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyleSmall"
-        android:visibility="gone"
+    
+    <TextView
+        android:id="@+id/txtStatus"
         android:layout_below="@id/imgSplash"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"/>
+        android:layout_marginBottom="15dp"
+        android:text="You Must Enable the Following Services:"
+        android:gravity="center_horizontal"
+        android:textColor="#333333"
+        android:visibility="gone"
+    />
+    
+    <Button
+        android:id="@+id/btnBluewave"
+        android:background="#00FFFFFF"
+    	android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="0dp"
+        android:layout_below="@id/txtStatus"
+        android:text="Enable Bluetooth Discovery"
+        android:visibility="gone"/>
+    
+    <Button
+        android:id="@+id/btnLocation"
+        android:background="#00FFFFFF"
+    	android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="0dp"
+        android:layout_below="@id/btnBluewave"
+        android:text="Enable Location Services"
+        android:visibility="gone"/>
+    
+    <Button
+        android:id="@+id/btnGoogle"
+        android:background="#00FFFFFF"
+    	android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="0dp"
+        android:layout_below="@id/btnLocation"
+        android:text="Get Google Play Services"
+        android:visibility="gone"/>
+    
+    <Button
+        android:id="@+id/btnOverride"
+        android:background="#00FFFFFF"
+    	android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="0dp"
+        android:layout_below="@id/btnLocation"
+        android:text="Ignore Warnings and Proceed"
+        android:textColor="#993333"/>
     
 </RelativeLayout>

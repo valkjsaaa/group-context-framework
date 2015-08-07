@@ -4,11 +4,11 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
+import com.adefreitas.gcf.CommManager;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
 
 public class TaskDispatcher 
 {

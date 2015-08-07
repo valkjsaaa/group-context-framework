@@ -2,14 +2,13 @@ package com.adefreitas.gcfimpromptu;
 
 import java.io.ByteArrayOutputStream;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
@@ -21,7 +20,6 @@ import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -29,7 +27,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,10 +34,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidframework.toolkit.ImageToolkit;
-import com.adefreitas.androidproviders.LocationContextProvider;
+import com.adefreitas.gcf.android.providers.LocationContextProvider;
+import com.adefreitas.gcf.android.toolkit.HttpToolkit;
+import com.adefreitas.gcf.android.toolkit.ImageToolkit;
 import com.adefreitas.gcfmagicapp.R;
 
 public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Callback 
@@ -408,7 +404,7 @@ public class ProblemReport extends ActionBarActivity implements SurfaceHolder.Ca
 		{				
 			if (intent.getAction().equals(ACTION_PROBLEM_SUBMITTED))
 			{
-				Toast.makeText(context, intent.getStringExtra(HttpToolkit.HTTP_RESPONSE), Toast.LENGTH_SHORT).show();
+				Toast.makeText(context, intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE), Toast.LENGTH_SHORT).show();
 				finish();
 			}
 			else

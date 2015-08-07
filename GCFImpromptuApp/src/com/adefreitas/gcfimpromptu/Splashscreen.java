@@ -1,48 +1,41 @@
 package com.adefreitas.gcfimpromptu;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.PorterDuff.Mode;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.GCFService;
+import com.adefreitas.gcf.android.GCFService;
 import com.adefreitas.gcfmagicapp.R;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 public class Splashscreen extends Activity 
-{
-    // Splash screen timer
-    private static int SPLASH_TIME_OUT = 1000;
-	
+{	
 	// Intent Receiver
 	private IntentFilter   filter;
 	private IntentReceiver intentReceiver;
-	
-	// Flags
-	private boolean splashTimeout = false;
-	
+		
 	// Link to the Application
 	private GCFApplication application;
 	
-	// Intent to Start the Main Activity
-	private Intent   startIntent;
-	private Runnable splashRunnable;
+	// Controls
+	private TextView txtStatus;
+	private Button   btnBluewave;
+	private Button   btnLocation;
+	private Button   btnGoogle;
+	private Button   btnOverride;
 	
+	// Intent to Start the Main Activity
+	private Intent startIntent;
+		
 	/**
 	 * Android Method:  Runs when the Activity is Created
 	 */
@@ -55,6 +48,19 @@ public class Splashscreen extends Activity
 		// Creates a Link to the Application
 		this.application = (GCFApplication)this.getApplication();
 				
+		// Saves Controls
+		txtStatus   = (TextView)this.findViewById(R.id.txtStatus);
+		btnBluewave = (Button)this.findViewById(R.id.btnBluewave);
+		btnLocation = (Button)this.findViewById(R.id.btnLocation);
+		btnGoogle   = (Button)this.findViewById(R.id.btnGoogle);
+		btnOverride = (Button)this.findViewById(R.id.btnOverride);
+		
+		// Creates Invent Handlers
+		btnBluewave.setOnClickListener(onBluewaveClickListener);
+		btnLocation.setOnClickListener(onLocationClickListener);
+		btnGoogle.setOnClickListener(onGoogleClickListener);
+		btnOverride.setOnClickListener(onOverrideClickListener);
+		
 		// Generates the Intent Receiver
 		this.intentReceiver = new IntentReceiver();
 		this.filter 		= new IntentFilter();
@@ -62,20 +68,6 @@ public class Splashscreen extends Activity
 		
 		// Creates an Intent to Start the Main Activity
 		startIntent = new Intent(this, MainActivity.class);
-		
-		// Creates a Runnable that Starts the Application
-		splashRunnable = new Runnable() 
-		{	 
-	        @Override
-	        public void run() 
-	        {
-	            splashTimeout = true;
-	            startApplication();
-	        }
-	    };
-		
-		// Verifies that Critical Services are Enabled before Starting the App
-		verifyServices();
 	}
 	
 	/**
@@ -85,8 +77,15 @@ public class Splashscreen extends Activity
 	{
 		super.onResume();
 		
+		application.setInForeground(true);
+		
 		// Sets Up the Intent Listener
 		this.registerReceiver(intentReceiver, filter);
+		
+		if (application.getGCFService() != null)
+		{
+			startApplication();	
+		}
 	}
 	
 	/**
@@ -96,7 +95,12 @@ public class Splashscreen extends Activity
 	protected void onPause() 
 	{
 	    super.onPause();
+	    
+	    // Removes the Intent Listener
 	    this.unregisterReceiver(intentReceiver);
+	    
+	    // Removes the 
+	    application.setInForeground(false);
 	}
 	
 	/**
@@ -105,105 +109,101 @@ public class Splashscreen extends Activity
 	 */
 	protected void startApplication()
 	{
-		if (application.getGCFService() != null && application.getGCFService().isReady() && splashTimeout)
+		boolean locationWorking = application.verifyLocationServices();
+		boolean googleWorking   = application.verifyGoogleServices();
+		boolean bluewaveWorking = application.verifyBluewaveServices();
+		
+		if (locationWorking && googleWorking && bluewaveWorking)
 		{
 			startActivity(startIntent);
 			finish();
 		}
 		else
 		{
-			ProgressBar progressBar = (ProgressBar)this.findViewById(R.id.progressBar);
-			progressBar.setVisibility(View.VISIBLE);
-			progressBar.getIndeterminateDrawable().setColorFilter(0xFF0186D5, android.graphics.PorterDuff.Mode.MULTIPLY);
+			txtStatus.setVisibility(View.VISIBLE);
+			
+			if (!locationWorking)
+			{
+				btnLocation.setVisibility(View.VISIBLE);
+			}
+			
+			if (!googleWorking)
+			{
+				btnGoogle.setVisibility(View.VISIBLE);
+			}
+			
+			if (!bluewaveWorking)
+			{
+				btnBluewave.setVisibility(View.VISIBLE);
+			}
 		}
 	}
 	
 	/**
-	 * Custom Method to Make Sure that the Right Services are Enabled
+	 * Enables Bluetooth Discovery
 	 */
-	private void verifyServices()
-	{
-		// LOCATION CHECK
-		LocationManager lm 				 = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		boolean 		locationEnabled = false;
-		
-		int locationMode = 0;
-	    String locationProviders;
-
-	    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-	    {
-		    try 
-		    {
-		    	locationMode = Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE);
-		    } 
-		    catch (Exception e) 
-		    {
-		    	e.printStackTrace();
-		    }
+	private OnClickListener onBluewaveClickListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) 
+		{
+			if (application.getGCFService() != null)
+			{
+				application.getGCFService().getBluewaveManager().setDiscoverable(true);
+				finish();
+			}
+			else
+			{
+				Toast.makeText(application, "Service Unavailable", Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
 	
-		    locationEnabled = locationMode != Settings.Secure.LOCATION_MODE_OFF;
-	    }
-	    else
-	    {
-	    	// Looks at Location Mode for Jelly Bean and Below Systems
-	        locationProviders = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-	        locationEnabled   = !TextUtils.isEmpty(locationProviders);
-	    }
-
-		if (!locationEnabled)
+	/**
+	 * Enables Location Tracking
+	 */
+	private OnClickListener onLocationClickListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) 
 		{
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-		    dialog.setMessage("Location Services Not Enabled");
-		    dialog.setPositiveButton("Location Settings", new DialogInterface.OnClickListener() 
-		      {
-                @Override
-	            public void onClick(DialogInterface paramDialogInterface, int paramInt) 
-                {
-	              Intent myIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-		          startActivity(myIntent);
-		          finish();
-		        }
-              });
-		    dialog.setNegativeButton("Ignore", new DialogInterface.OnClickListener() 
-		      {
-                @Override
-	            public void onClick(DialogInterface paramDialogInterface, int paramInt) 
-                {
-                	Toast.makeText(Splashscreen.this, "Some services may not work properly without location.", Toast.LENGTH_LONG).show();
-                	
-                	// Lets the Main Screen Exist for a Few Seconds
-        			new Handler().postDelayed(splashRunnable, SPLASH_TIME_OUT);
-	            }
- 	          });
-		    dialog.show();
+			Intent myIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+	        startActivity(myIntent);
+	        finish();
 		}
-
-		// GOOGLE PLAY SERVICES CHECK
-		int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-		
-		try 
+	};
+	
+	/**
+	 * Enables Google Play Services
+	 */
+	private OnClickListener onGoogleClickListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) 
 		{
-		    if (status != ConnectionResult.SUCCESS) 
-		    {
-		        GooglePlayServicesUtil.getErrorDialog(status, this, 1).show();
-		        finish();
-		    }
-		} 
-		catch (Exception e) 
-		{
-		    Log.e("IMPROMPTU", "" + e);
+			int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(Splashscreen.this);
+			
+			// Will Only Display a Dialog if an ERROR is received!
+			Dialog googleDialog = GooglePlayServicesUtil.getErrorDialog(status, Splashscreen.this, 1);
+			
+			// Displays the Dialog IFF it exists.
+			if (googleDialog != null)
+			{
+				googleDialog.show();
+				finish();
+			}
 		}
-		
-		// Lets the Main Screen Exist for a Few Seconds
-		if (locationEnabled && status == ConnectionResult.SUCCESS)
+	};
+	
+	/**
+	 * Bypasses Warnings and Runs the App
+	 */
+	private OnClickListener onOverrideClickListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) 
 		{
-			new Handler().postDelayed(splashRunnable, SPLASH_TIME_OUT);
+			startActivity(startIntent);
+			finish();
 		}
-		else
-		{
-	        //finish();
-		}
-	}
+	};
+	
 	
 	/**
 	 * Intent Receiver
@@ -217,7 +217,23 @@ public class Splashscreen extends Activity
 		{	
 			if (intent.getAction().equalsIgnoreCase(GCFService.ACTION_GCF_STARTED))
 			{
-				startApplication();
+				Thread startThread = new Thread()
+				{
+					public void run()
+					{
+						try
+						{
+							sleep(500);
+							startApplication();
+						}
+						catch (Exception ex)
+						{
+							ex.printStackTrace();
+						}
+					}
+				};
+				
+				startThread.run();
 			}
 		}
 	}

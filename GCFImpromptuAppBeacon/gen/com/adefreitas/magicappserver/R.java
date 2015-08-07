@@ -2101,18 +2101,18 @@ containing a value of this type.
         public static final int action_bar_spinner=0x7f070017;
         public static final int action_bar_subtitle=0x7f070034;
         public static final int action_bar_title=0x7f070033;
-        public static final int action_clear_list=0x7f070076;
+        public static final int action_clear_list=0x7f070077;
         public static final int action_context_bar=0x7f070047;
-        public static final int action_identify=0x7f070074;
+        public static final int action_identify=0x7f070075;
         public static final int action_inoutboard=0x7f070078;
-        public static final int action_insert_manually=0x7f070075;
+        public static final int action_insert_manually=0x7f070076;
         public static final int action_menu_divider=0x7f07001a;
         public static final int action_menu_presenter=0x7f07001b;
         public static final int action_mode_bar=0x7f070043;
         public static final int action_mode_bar_stub=0x7f070042;
         public static final int action_mode_close_button=0x7f070035;
         public static final int action_quit=0x7f07007a;
-        public static final int action_settings=0x7f070077;
+        public static final int action_settings=0x7f070074;
         public static final int action_sign=0x7f070079;
         public static final int activity_chooser_view_content=0x7f070036;
         public static final int adjust_height=0x7f07001f;
@@ -2211,10 +2211,10 @@ containing a value of this type.
         public static final int txtDeviceName=0x7f07006e;
         public static final int txtDevices=0x7f07005a;
         public static final int txtDisplayName=0x7f07006f;
-        public static final int txtHelloWorld=0x7f07005b;
         public static final int txtName=0x7f070071;
         public static final int up=0x7f070016;
         public static final int useLogo=0x7f070005;
+        public static final int webView=0x7f07005b;
         public static final int withText=0x7f07000e;
         public static final int wrap_content=0x7f070000;
     }
@@ -2268,25 +2268,27 @@ containing a value of this type.
         public static final int abc_search_dropdown_item_icons_2line=0x7f030014;
         public static final int abc_search_view=0x7f030015;
         public static final int abc_simple_dropdown_hint=0x7f030016;
-        public static final int activity_creation_board=0x7f030017;
-        public static final int activity_in_out_board=0x7f030018;
-        public static final int activity_main=0x7f030019;
-        public static final int activity_sign=0x7f03001a;
-        public static final int esm_checkbox=0x7f03001b;
-        public static final int esm_likert=0x7f03001c;
-        public static final int esm_quick=0x7f03001d;
-        public static final int esm_radio=0x7f03001e;
-        public static final int esm_text=0x7f03001f;
-        public static final int plugin_row=0x7f030020;
-        public static final int plugins_manager=0x7f030021;
-        public static final int prompt_insert_manually=0x7f030022;
-        public static final int support_simple_spinner_dropdown_item=0x7f030023;
-        public static final int user_info_single=0x7f030024;
+        public static final int activity_bus=0x7f030017;
+        public static final int activity_creation_board=0x7f030018;
+        public static final int activity_in_out_board=0x7f030019;
+        public static final int activity_main=0x7f03001a;
+        public static final int activity_sign=0x7f03001b;
+        public static final int esm_checkbox=0x7f03001c;
+        public static final int esm_likert=0x7f03001d;
+        public static final int esm_quick=0x7f03001e;
+        public static final int esm_radio=0x7f03001f;
+        public static final int esm_text=0x7f030020;
+        public static final int plugin_row=0x7f030021;
+        public static final int plugins_manager=0x7f030022;
+        public static final int prompt_insert_manually=0x7f030023;
+        public static final int support_simple_spinner_dropdown_item=0x7f030024;
+        public static final int user_info_single=0x7f030025;
     }
     public static final class menu {
-        public static final int in_out_board=0x7f0e0000;
-        public static final int main=0x7f0e0001;
-        public static final int sign=0x7f0e0002;
+        public static final int bus=0x7f0e0000;
+        public static final int in_out_board=0x7f0e0001;
+        public static final int main=0x7f0e0002;
+        public static final int sign=0x7f0e0003;
     }
     public static final class raw {
         public static final int gtm_analytics=0x7f060000;
@@ -2473,6 +2475,7 @@ containing a value of this type.
         public static final int read_permission=0x7f0c0039;
         public static final int store_picture_message=0x7f0c0011;
         public static final int store_picture_title=0x7f0c0010;
+        public static final int title_activity_bus=0x7f0c0046;
         public static final int title_activity_in_out_board=0x7f0c0041;
         public static final int title_activity_quit=0x7f0c003f;
         public static final int title_activity_settings=0x7f0c003e;

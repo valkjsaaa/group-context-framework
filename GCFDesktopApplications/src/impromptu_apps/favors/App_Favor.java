@@ -2,20 +2,23 @@ package impromptu_apps.favors;
 
 import impromptu_apps.DesktopApplicationProvider;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 import com.google.gson.JsonObject;
 
 public class App_Favor extends DesktopApplicationProvider
 {	
+	public static final int TIME_TO_COMPLETE = 3600;
+	
 	// Properties
 	private String	   		  id;
 	private FavorDispatcher   dispatcher;
@@ -46,6 +49,7 @@ public class App_Favor extends DesktopApplicationProvider
 	private boolean hasBeenAccepted  = false;
 	private String  acceptedDeviceID = "";
 	private Date    acceptedDate     = new Date(0);
+	private Date	lastTransmission = new Date(0);
 	
 	/**
 	 * Constructor
@@ -58,7 +62,7 @@ public class App_Favor extends DesktopApplicationProvider
 				id, 
 				"Favor Request", 
 				"description", 
-				"FAVOR",
+				"FAVORS",
 				new String[] { }, 
 				new String[] { }, 
 				"http://25.media.tumblr.com/tumblr_kvewyajk5c1qzxzwwo1_500.jpg",
@@ -122,7 +126,15 @@ public class App_Favor extends DesktopApplicationProvider
 			parameter = "mode=open";
 		}
 		
-		return new String[] { "WEBSITE=" + "http://gcf.cmu-tbank.com/apps/favors/viewFavor.php?timestamp=" + timestamp + "&" + parameter, "FORCE=true"};
+		// Determines if we should force a refresh on the user's device
+		String forceMode = "FORCE=FALSE";
+//		if ((System.currentTimeMillis() - lastTransmission.getTime()) > 60000)
+//		{
+//			lastTransmission = new Date();
+//			forceMode = "FORCE=true";
+//		}
+		
+		return new String[] { "WEBSITE=" + "http://gcf.cmu-tbank.com/apps/favors/viewFavor.php?timestamp=" + timestamp + "&" + parameter, forceMode};
 	}
 
 	/**
@@ -133,9 +145,24 @@ public class App_Favor extends DesktopApplicationProvider
 	{
 		super.onSubscription(newSubscription);
 		
-		this.log("FAVOR_VIEWED", "device_id=" + newSubscription.getDeviceID());
+		ResultSet viewerInfo = sqlToolkit.runQuery("SELECT * FROM favors_profile WHERE device_id='" + newSubscription.getDeviceID() + "'");
 		
-		views++;
+		try
+		{
+			if (viewerInfo.next())
+			{
+				String sensor   = viewerInfo.getString("last_sensor") != null ? viewerInfo.getString("last_sensor") : "";	
+				String contents = String.format("favorID=%s,timestamp=%d,submissionType=request,viewerDeviceID=%s,viewerLat=%f,viewerLon=%f,viewerSensor=%s,sensorTimestamp=%d",
+						this.getAppID(), this.timestamp, newSubscription.getDeviceID(), viewerInfo.getDouble("latitude"), viewerInfo.getDouble("longitude"), sensor, viewerInfo.getInt("last_sensor_date"));
+				this.log("FAVOR_VIEWED", contents);
+				
+				views++;
+			}
+		}
+		catch (Exception ex)
+		{
+			System.out.println("Error Occurred While Logging FAVOR_VIEWED: " + ex.getMessage());
+		}
 	}
 	
 	/**
@@ -167,7 +194,12 @@ public class App_Favor extends DesktopApplicationProvider
 		if (result && !this.deviceID.equals(deviceID) && !devicesOffered.contains(deviceID))
 		{
 			devicesOffered.add(deviceID);
-			this.log("FAVOR_OFFERED", "deviceID=" + deviceID + ", total=" + devicesOffered.size());
+			double latitude  = parser.getJSONObject("location").has("LATITUDE")  ?  parser.getJSONObject("location").get("LATITUDE").getAsDouble() : 0.0;
+			double longitude = parser.getJSONObject("location").has("LONGITUDE") ? parser.getJSONObject("location").get("LONGITUDE").getAsDouble() : 0.0;
+			String sensors   = parser.getJSONObject("location").has("SENSOR")    ? parser.getJSONObject("location").get("SENSOR").getAsString()    : "";
+			String contents  = String.format("favorID=%s,timestamp=%d,submissionType=request,matchedDeviceID=%s,matchedLatitude=%f,matchedLongitude=%f,matchedSensor=%s",
+					this.getAppID(), this.timestamp, deviceID, latitude, longitude, sensors);
+			this.log("FAVOR_SENT", contents);
 		}
 		
 		return result;
@@ -183,19 +215,30 @@ public class App_Favor extends DesktopApplicationProvider
 		
 		if (instruction.getCommand().equalsIgnoreCase("MARK_COMPLETE"))
 		{
+			System.out.println(instruction.getPayload("completed"));
+			
 			// Updates the Database
-			dispatcher.markComplete(timestamp);
 			completed     = true;
 			dateCompleted = new Date();
 			
 			// Logs the Completion
-			if (acceptedDeviceID.length() > 0)
+			if (instruction.getPayload("completed").equalsIgnoreCase("false"))
 			{
-				String logEntry = "accomplished=" + (acceptedDeviceID.length() > 0) + ",";
-				logEntry	   += "offers=" + this.devicesOffered.size() + ",";
-				logEntry       += "device_id=" + this.acceptedDeviceID + ",";
-				logEntry       += "timeElapsedInMillis=" + (dateCompleted.getTime() - dateCreated.getTime()) + ",";
+				String logEntry = "favorID=" + this.getAppID() + ",";
+				logEntry	   += "timestamp=" + this.timestamp + ",";
+				logEntry       += "submissionType=" + "requested" + ",";
 				
+				dispatcher.markComplete(timestamp, false);
+				this.log("FAVOR_CANCELED", logEntry);
+			}
+			else if (acceptedDeviceID.length() > 0)
+			{
+				String logEntry = "favorID=" + this.getAppID() + ",";
+				logEntry	   += "timestamp=" + this.timestamp + ",";
+				logEntry       += "submissionType=" + "requested" + ",";
+				logEntry       += "completedByDeviceID=" + acceptedDeviceID + "";
+				
+				dispatcher.markComplete(timestamp, true);
 				this.log("FAVOR_COMPLETED",  logEntry);
 			}
 		}
@@ -204,14 +247,53 @@ public class App_Favor extends DesktopApplicationProvider
 			hasBeenAccepted = true;
 			acceptedDeviceID = instruction.getDeviceID();
 			acceptedDate = new Date();
-			this.log("FAVOR_ACCEPTED", "device_id=" + instruction.getDeviceID());
+			
+			// Generates the Log Entry
+			ResultSet viewerInfo = sqlToolkit.runQuery("SELECT * FROM favors_profile WHERE device_id='" + instruction.getDeviceID() + "'");
+			
+			try
+			{
+				if (viewerInfo.next())
+				{
+					String sensor   = viewerInfo.getString("last_sensor") != null ? viewerInfo.getString("last_sensor") : "";	
+					String contents = String.format("favorID=%s,timestamp=%d,submissionType=request,viewerDeviceID=%s,viewerLat=%f,viewerLon=%f,viewerSensor=%s,sensorTimestamp=%d",
+							this.getAppID(), this.timestamp, instruction.getDeviceID(), viewerInfo.getDouble("latitude"), viewerInfo.getDouble("longitude"), sensor, viewerInfo.getInt("last_sensor_date"));
+					this.log("FAVOR_ACCEPTED", contents);
+				}
+			}
+			catch (Exception ex)
+			{
+				System.out.println("Error Occurred While Logging FAVOR_ACCEPTED: " + ex.getMessage());
+			}
 		}
 		else if (instruction.getCommand().equalsIgnoreCase("BACK_OUT"))
 		{
 			hasBeenAccepted = false;
 			acceptedDeviceID = "";
 			acceptedDate = new Date(0);
-			this.log("FAVOR_BACKOUT", "device_id=" + instruction.getDeviceID());
+			
+			// Generates the Log Entry
+			ResultSet viewerInfo = sqlToolkit.runQuery("SELECT * FROM favors_profile WHERE device_id='" + instruction.getDeviceID() + "'");
+			
+			try
+			{
+				if (viewerInfo.next())
+				{
+					String sensor   = viewerInfo.getString("last_sensor") != null ? viewerInfo.getString("last_sensor") : "";	
+					String contents = String.format("favorID=%s,timestamp=%d,submissionType=request,viewerDeviceID=%s,viewerLat=%f,viewerLon=%f,viewerSensor=%s,sensorTimestamp=%d",
+							this.getAppID(), this.timestamp, instruction.getDeviceID(), viewerInfo.getDouble("latitude"), viewerInfo.getDouble("longitude"), sensor, viewerInfo.getInt("last_sensor_date"));
+					this.log("FAVOR_BACKEDOUT", contents);
+				}
+			}
+			catch (Exception ex)
+			{
+				System.out.println("Error Occurred While Logging FAVOR_BACKEDOUT: " + ex.getMessage());
+			}
+		}
+		else if (instruction.getCommand().equalsIgnoreCase("SEND_MESSAGE"))
+		{
+			String contents = String.format("favorID=%s,timestamp=%d,deviceID=%s", this.getAppID(), this.timestamp, instruction.getDeviceID());
+			this.log("MESSAGE_EXCHANGE", contents);
 		}
 		
 		this.sendContext();
@@ -364,7 +446,7 @@ public class App_Favor extends DesktopApplicationProvider
 			}
 		}
 		
-		if (System.currentTimeMillis() - acceptedDate.getTime() > 1000 * 300)
+		if (System.currentTimeMillis() - acceptedDate.getTime() > 1000 * TIME_TO_COMPLETE)
 		{
 			hasBeenAccepted = false;
 			acceptedDeviceID = "";

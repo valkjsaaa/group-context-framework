@@ -2,10 +2,10 @@ package impromptu_apps.desktop;
 
 import impromptu_apps.DesktopApplicationProvider;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Game_PiratePig extends DesktopApplicationProvider
 {

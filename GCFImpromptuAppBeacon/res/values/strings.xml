@@ -11,5 +11,6 @@
     <string name="action_identify">Set Location</string>
     <string name="action_insert_manually">Insert Manually</string>
     <string name="title_activity_sign">Sign</string>
+    <string name="title_activity_bus">BusActivity</string>
 
 </resources>

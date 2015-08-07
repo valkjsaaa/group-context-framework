@@ -6,12 +6,13 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -19,27 +20,66 @@ public class Sti_Game extends SnapToItApplicationProvider
 {		
 	// Provider Specific Variables Go Here
 	private final String WEBSITE_URL = "http://gcf.cmu-tbank.com/apps/gamecontroller/index.html";
+		
+	public boolean listMode = true;
 	
 	public Sti_Game(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
 				"STI_GAME_CONTROLLER",
-				"Game Controller",
-				"Game Controller Application",
-				"DEBUG",
+				"Macbook Air",
+				"Lets you control the application on this computer.",
+				"SNAP-TO-IT",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://inwallspeakers1.com/wp-content/uploads/2014/06/gaming-controller-icon.png",				   // LOGO
+				"http://www.gedtestingservice.com/uploads/images/medium/0a54c4f41f9bb1a1b74fe0cdaedbc0a7.jpeg",
+				//"http://inwallspeakers1.com/wp-content/uploads/2014/06/gaming-controller-icon.png",				   // LOGO
 				30,
 				commMode,
 				ipAddress,
 				port);
 		
-		//this.enableScreenshots(5000, 3);
+		//this.setDebugMode(f);
+		
+		//this.enableScreenshots(5000, 3, 0.0, 0.0, 0);
 		// Takes a Photo At the Moment a New Photo Comes In
-		this.enableRealtimeScreenshots();
+		this.enableRealtimeScreenshots(0.0, 0.0, 0);
 	}
-
+		
+	public String getCategory(String userContextJSON)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
+		boolean stiData = parser.getJSONObject("snap-to-it").has("PHOTO") || parser.getJSONObject("snap-to-it").has("CODE");
+		
+		if (stiData)
+		{
+			return "SNAP-TO-IT";
+		}
+		else
+		{
+			return "DEVICES";
+		}
+		//return category;
+	}
+	
+	/**
+	 * Determines Whether or Not to Send Application Data
+	 */
+	@Override
+	public boolean sendAppData(String bluewaveContext)
+	{
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
+		
+		if (listMode)
+		{
+			return this.getDeviceID(parser).equals("Device 1");
+		}
+		else
+		{
+			return super.sendAppData(bluewaveContext);
+		}
+	}
+	
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{

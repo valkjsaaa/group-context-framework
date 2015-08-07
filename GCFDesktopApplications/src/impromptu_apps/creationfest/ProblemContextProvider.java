@@ -1,8 +1,8 @@
 package impromptu_apps.creationfest;
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.gcf.ContextProvider;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
 
 /**
  * This Context Provider Provides 

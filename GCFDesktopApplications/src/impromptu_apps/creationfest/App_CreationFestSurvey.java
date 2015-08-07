@@ -5,18 +5,18 @@ import java.util.Date;
 
 import impromptu_apps.DesktopApplicationProvider;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_CreationFestSurvey extends DesktopApplicationProvider
 {	
-	public static final String   CONTEXT_TYPE  	      = "CF_SURVEY";
-	public static final String   DEFAULT_TITLE 	      = "Survey App";
-	public static final String   DEFAULT_DESCRIPTION  = "Last chance to fill out the survey!  Thanks in advance!";
-	public static final String   DEFAULT_CATEGORY     = "CREATIONFEST 2015";
+	public static final String   CONTEXT_TYPE  	      = "IMP_SURVEY";
+	public static final String   DEFAULT_TITLE 	      = "Impromptu Survey";
+	public static final String   DEFAULT_DESCRIPTION  = "Please fill out a survey to let us know about your experiences using Impromptu";
+	public static final String   DEFAULT_CATEGORY     = "SURVEY";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
 	public static final String   DEFAULT_LOGO_PATH    = "https://panorama-www.s3.amazonaws.com/sites/53d29249e511304c2f000002/theme/images/icon-admin.png";
@@ -56,7 +56,7 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		return new String[] { "WEBSITE=https://docs.google.com/forms/d/1rkyUJRTTX7pM_-GpoDJVdjwPvtDK1FuqzVzV1GUzIL4/viewform" };
+		return new String[] { "WEBSITE=https://docs.google.com/forms/d/1pTR6DRaNYU2cR1yQNGCTiOP5KTCln2danN216HJcc5k/viewform" };
 	}
 
 	/**
@@ -87,15 +87,33 @@ public class App_CreationFestSurvey extends DesktopApplicationProvider
 	@Override
 	public boolean sendAppData(String bluewaveContext)
 	{
-		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.set(2015, 5, 27, 00, 00);
-		boolean pastDate = System.currentTimeMillis() > cal.getTimeInMillis();
-		
-		double distanceToFestival = this.getDistance(parser, 40.297858, -77.874164);
-		
-		return (pastDate);
+		// TODO:  Specify the EXACT conditions when this app should appear
+				JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContext);
+				return (this.hasEmailAddress(parser, new String[] { 
+						"adrian.defreitas@gmail.com", 
+						"anind@cs.cmu.edu",
+						"roywant@google.com",
+						"maxsenges@google.com",
+						"ptone@google.com",
+						"ninataft@google.com",
+						"walz@google.com",
+						"rhk@illinois.edu",
+						"shmatikov@cornell.edu",
+						"lujo.bauer@gmail.com",
+						"lorrie@cs.cmu.edu",
+						"sadeh@cs.cmu.edu",
+						"yuvraj.agarwal@gmail.com",
+						"jasonhong666@gmail.com",
+						"cmusatya@gmail.com",
+						"anthony.rowe2@gmail.com",
+						"harrisonhci@gmail.com",
+						"aninddey@gmail.com",
+						"gdarakos@cs.cmu.edu",
+						"edge.hayashi@gmail.com",
+						"awmcmu@gmail.com",
+						"lyou@google.com",
+						"youngjoo@google.com"
+						}));
 	}
 
 	/**

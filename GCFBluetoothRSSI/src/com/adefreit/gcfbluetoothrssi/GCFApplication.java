@@ -1,34 +1,19 @@
 package com.adefreit.gcfbluetoothrssi;
 
-import java.util.Date;
-
 import android.app.Application;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidBatteryMonitor;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.GCFService;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidproviders.BluetoothContextProvider;
-import com.adefreitas.androidproviders.BluewaveContextProvider;
-import com.adefreitas.androidproviders.LocationContextProvider;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ContextData;
-import com.google.gson.Gson;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.messages.ContextData;
 
 /**
  * This is a Sample Application Class Used to Abstract GCF's Core Functions
@@ -92,7 +77,7 @@ public class GCFApplication extends Application
 		gcm.connect(COMM_MODE, IP_ADDRESS, PORT);
 	    
 		// Creates Context Providers
-		gcm.getBluewaveManager().startScan(30000);
+		gcm.getBluewaveManager().startLEScan(30000);
 		
 		// TODO: Initialize Your App's Data Structures
 	}
@@ -176,7 +161,7 @@ public class GCFApplication extends Application
 		private void onOtherUserContextReceived(Context context, Intent intent)
 		{
 			// This is the Raw JSON from the Device
-			String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+			String json = intent.getStringExtra(BluewaveManager.EXTRA_OTHER_USER_CONTEXT);
 			
 			// Creates a Parser
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);

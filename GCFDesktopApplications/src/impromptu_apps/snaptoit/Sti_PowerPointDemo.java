@@ -6,12 +6,12 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Date;
 
-import com.adefreitas.desktopframework.toolkit.ScreenshotToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.ScreenshotToolkit;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 {		
@@ -39,7 +39,7 @@ public class Sti_PowerPointDemo extends SnapToItApplicationProvider
 		this.setDebugMode(false);
 		
 //		this.enableScreenshots(300000, 1);
-		this.enableRealtimeScreenshots();
+		this.enableRealtimeScreenshots(250.0, 25.0, 0);
 	}
 
 	@Override

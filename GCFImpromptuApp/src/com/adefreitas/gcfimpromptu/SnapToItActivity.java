@@ -1,7 +1,6 @@
 package com.adefreitas.gcfimpromptu;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,10 +9,6 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
@@ -36,12 +31,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidframework.toolkit.ImageToolkit;
+import com.adefreitas.gcf.android.AndroidGroupContextManager;
+import com.adefreitas.gcf.android.toolkit.HttpToolkit;
+import com.adefreitas.gcf.android.toolkit.ImageToolkit;
+import com.adefreitas.gcf.messages.ContextData;
+import com.adefreitas.gcf.messages.ContextRequest;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.messages.ContextData;
-import com.adefreitas.messages.ContextRequest;
 
 public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder.Callback  {
 
@@ -73,6 +68,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 	private double currentPitch;
 	private double currentRoll;
 	private double currentAccuracy;
+	private RelativeLayout layoutCamera;
 	
 	// Camera Surface
 	private Camera        camera;
@@ -98,6 +94,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		btnCamera  = (Button)this.findViewById(R.id.btnCamera);
 		txtObject  = (EditText)this.findViewById(R.id.txtObject);
 		txtCompass = (TextView)this.findViewById(R.id.txt_compass);
+		layoutCamera = (RelativeLayout)this.findViewById(R.id.layoutCamera);
 		
 		// Sets Up the Toolbar
 		this.setSupportActionBar(toolbar);
@@ -133,7 +130,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		super.onResume();
 		this.registerReceiver(receiver, intentFilter);
 		
-		// Notifies the Application to Forward GCF Message to this View
+		// Notifies the Application that the Window is Active
 		this.application.setInForeground(true);
 		
 		application.getGroupContextManager().sendRequest("COMPASS", ContextRequest.LOCAL_ONLY, new String[0], 500, new String[0]);
@@ -148,8 +145,6 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 	    super.onPause();
 	    this.application.setInForeground(false);
 	    this.unregisterReceiver(receiver);
-	    
-	    application.getGroupContextManager().cancelRequest("COMPASS");
 	}
 	
 	@Override
@@ -288,7 +283,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 			camera.release();	
 		}
 	}
-
+	
 	// EVENT HANDLERS -----------------------------------------------------------------------------
 	final OnClickListener onCameraClickListener = new OnClickListener() 
     {
@@ -312,7 +307,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 			}
 		}
     };
-	
+    	
 	/**
 	 * Asynchronous Task to Encode an Image to a String
 	 * @param byteArray
@@ -387,7 +382,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		
 		private void onPhotoSubmitted(Context context, Intent intent)
 		{		
-			String photoURL = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE).replace(" ", "%20");
+			String photoURL = intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE).replace(" ", "%20");
 			Log.d("ASDF", "Response: " + photoURL);
 			
 			double azimuth  = (photoAzimuth != Double.NaN) ? photoAzimuth : currentAzimuth;
@@ -439,7 +434,7 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 				currentPitch    = (Double.valueOf(data.getPayload("PITCH")));
 				currentRoll     = (Double.valueOf(data.getPayload("ROLL")));
 				currentAccuracy = (Double.valueOf(data.getPayload("ACCURACY")));
-				txtCompass.setText(String.format("AZ=%1.1f, PIT=%1.1f, ROLL=%1.1f, ACC=%1.1f", currentAzimuth, currentPitch, currentRoll, currentAccuracy));
+				txtCompass.setText(String.format("Azimuth: %1.0f, Pitch: %1.0f, Accuracy=%1.1f", currentAzimuth, currentPitch, currentAccuracy));
 				
 				if (currentAccuracy < 3.0)
 				{
@@ -451,9 +446,9 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 				else
 				{
 					btnCamera.setEnabled(true);
-					btnCamera.setBackgroundColor(0xFF339966);
+					btnCamera.setBackgroundColor(0xFFFF8000);
 					btnCamera.setText("Take Photo");
-					txtCompass.setBackgroundColor(0xFF339966);
+					txtCompass.setBackgroundColor(0xFFFF8000);
 				}
 			}
 		}

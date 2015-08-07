@@ -11,15 +11,15 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.hashlibrary.SHA1;
-import com.adefreitas.liveos.ApplicationProvider;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.impromptu.ApplicationProvider;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
+import com.adefreitas.gcf.toolkit.SHA1;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -55,9 +55,7 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 		
 		try
 		{
-			System.out.print("Initializing Application " + name + " . . . ");
 			robot = new Robot();
-			System.out.println("DONE!");
 		}
 		catch (Exception ex)
 		{
@@ -137,6 +135,10 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 			
 			// Updates the Database
 			sqlEventLogger.runUpdateQuery(sql);
+		}
+		else
+		{
+			System.out.println("Log Entry Ignored (SQL Event Logger is NULL");
 		}
 	}
 	
@@ -433,6 +435,22 @@ public abstract class DesktopApplicationProvider extends ApplicationProvider
 			{
 				return true;
 			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Determines if a user is in a vehicle
+	 * @param parser
+	 * @return
+	 */
+	protected boolean inVehicle(JSONContextParser parser)
+	{
+		// Checks Activity to See if the User is in a Vehicle
+		if (parser.getJSONObject("activity") != null && parser.getJSONObject("activity").get("type").getAsString().equals("in_vehicle"))
+		{
+			return true;
 		}
 		
 		return false;

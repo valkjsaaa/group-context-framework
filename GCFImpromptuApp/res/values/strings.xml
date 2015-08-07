@@ -16,13 +16,19 @@
     <string name="title_activity_debug">Developer Tools</string>
     <string name="title_activity_show_web_view">ShowWebView</string>
     <string name="title_activity_problem_report">Problem Reporter</string>
-    
+
     <!-- Snap-To-It -->
     <string name="title_activity_snap_to_it">Snap-To-It</string>
-    <string name="sti_instruction">Take a Photo of the Device</string>
+    <string name="sti_instruction">Tips</string>
+    <string name="sti_tips_1">&#8226; Take the photo from the front of the appliance</string>
+    <string name="sti_tips_2">&#8226; Make sure the appliance is in the center of the box</string>
+    <string name="sti_tips_3">&#8226; Take photos in portrait view</string>
+    <string name="sti_tips_4">&#8226; Check to see if your compass is calibrated (use nearby posters)</string>
     <string name="sti_camera">TAKE PHOTO</string>
+    <string name="sti_qr">QR</string>
+    <string name="sti_text">TEXT</string>
 
-	<!-- CreationFest (Remove Someday) -->
+    <!-- CreationFest (Remove Someday) -->
     <string-array name="departments">
         <item>Public Safety</item>
         <item>Medical</item>
@@ -62,5 +68,7 @@
         <item>Technical Service</item>
         <item>Transportation</item>
     </string-array>
+
+    <string name="title_activity_qrcode">QRCodeActivity</string>
 
 </resources>

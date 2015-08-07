@@ -79,6 +79,7 @@
     </LinearLayout>
             
     <LinearLayout
+        android:id="@+id/layoutSnapToIt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true"
@@ -87,13 +88,33 @@
 	    android:elevation="5dp"
         android:orientation="horizontal">
         
+        <ImageView
+	        android:id="@+id/imgTextSmall"
+	        android:layout_width="50dp"
+	        android:layout_height="50dp"
+	        android:padding="10dp"
+	        android:layout_marginLeft="5dp"
+	        android:background="@drawable/text_focused"
+	        android:src="@drawable/ic_text"/>
+        
+        <ImageView
+	        android:id="@+id/imgQRSmall"
+	        android:layout_width="50dp"
+	        android:layout_height="50dp"
+	        android:padding="10dp"
+	        android:layout_marginLeft="5dp"
+	        android:background="@drawable/qr_focused"
+	        android:src="@drawable/ic_qrcode"/>
+        
 		<ImageView
 	        android:id="@+id/imgCameraSmall"
-	        android:layout_width="60dp"
-	        android:layout_height="60dp"
+	        android:layout_width="50dp"
+	        android:layout_height="50dp"
 	        android:padding="10dp"
+	        android:layout_marginLeft="5dp"
 	        android:background="@drawable/camera_focused"
 	        android:src="@drawable/ic_camera"/>
+		
     </LinearLayout>
 
 </RelativeLayout>

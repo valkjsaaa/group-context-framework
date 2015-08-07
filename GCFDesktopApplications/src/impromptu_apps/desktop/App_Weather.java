@@ -8,13 +8,13 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -123,7 +123,7 @@ public class App_Weather extends DesktopApplicationProvider
 		
 		// Only Lets you See the App ONCE per Day!
 		//f (this.hasEmailAddress(parser, "adrian.defreitas@gmail.com"))
-		if (bestDistance < 20.0 && calendar.get(Calendar.HOUR_OF_DAY) >= 5 && calendar.get(Calendar.HOUR_OF_DAY) <= 9 && !devicesAccessed.contains(deviceID))
+		if (bestDistance < 20.0 && calendar.get(Calendar.HOUR_OF_DAY) >= 5 && calendar.get(Calendar.HOUR_OF_DAY) <= 9)
 		{
 			return true;
 		}

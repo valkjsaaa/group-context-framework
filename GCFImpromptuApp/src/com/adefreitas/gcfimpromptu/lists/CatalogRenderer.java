@@ -55,77 +55,26 @@ public class CatalogRenderer
 		categoryDirectory.clear();
 		appDirectory.clear();
 				
-		// Counts the Total Number of Available Apps
-		int totalAvailableApps = 0;
+		// Sorts the Catalog First
+		Collections.sort(categories);
 		
 		for (AppCategoryInfo category : categories)
 		{
-			totalAvailableApps += category.getAvailableApps().size();
-			
-			// SNAP-TO-IT Override
-			// Only displays STI apps if they are available
-			if (category.getName().equalsIgnoreCase("SNAP-TO-IT") && category.getAvailableApps().size() > 0)
+			View categoryView = renderCategory(context, category);
+						
+			if (categoryView != null)
 			{
-				categories = new ArrayList<AppCategoryInfo>();
-				categories.add(category);
-				totalAvailableApps = category.getAvailableApps().size();
-				break;
-			}
-		}
-		
-		// Renders the Categories and/or Apps (depending on the total number)
-		if (totalAvailableApps >= APP_THRESHHOLD)
-		{			
-			// Case 1:  LOTS of Apps.  Render Category Headings
-			for (AppCategoryInfo category : categories)
-			{
-				View categoryView = renderCategory(context, category);
-							
-				if (categoryView != null)
-				{
-					// Stores the View with the Category for Later Reference
-					categoryDirectory.put(categoryView, category);
-					categoryView.setOnClickListener(onCategoryClickListener);
-					
-					layout.addView(categoryView);
-				}
-			}
-		}
-		else
-		{
-			// Case 2:  Few Apps.  Open the Categories
-			for (AppCategoryInfo category : categories)
-			{
-				category.setRenderAll(true);
+				// Stores the View with the Category for Later Reference
+				categoryDirectory.put(categoryView, category);
+				categoryView.setOnClickListener(onCategoryClickListener);
 				
-				View categoryView = renderCategory(context, category);
-							
-				if (categoryView != null)
-				{
-					// Stores the View with the Category for Later Reference
-					categoryDirectory.put(categoryView, category);
-					categoryView.setOnClickListener(onCategoryClickListener);
-					
-					layout.addView(categoryView);
-				}
+				layout.addView(categoryView);
 			}
-		
-//			// Case 2:  Few Apps.  Render Apps Directly
-//			for (AppCategoryInfo category : categories)
-//			{				
-//				// Adds the App to the Main View
-//				for (AppInfo app : category.getAvailableApps())
-//				{
-//					View appView = renderApplication(context, app, true);
-//					appDirectory.put(appView, app);
-//					layout.addView(appView);
-//				}
-//			}
 		}
 		
-		// Creates a Little Breating Room on the Bottom
+		// Creates a Little Breathing Room on the Bottom
 		LinearLayout bottomBuffer = new LinearLayout(context);
-		bottomBuffer.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 500));
+		bottomBuffer.setLayoutParams(new LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 300));
 		bottomBuffer.setOrientation(LinearLayout.VERTICAL);
 		layout.addView(bottomBuffer);
 		
@@ -151,6 +100,8 @@ public class CatalogRenderer
 		// Gets List of all Available Apps
 		ArrayList<AppInfo> availableApps = category.getAvailableApps();
 		
+		Collections.sort(availableApps);
+		
 		// Do Nothing if there are no Available Apps for this Category
 		if (availableApps.size() == 0)
 		{
@@ -163,8 +114,15 @@ public class CatalogRenderer
 		TextView       txtTitle  			   = (TextView)categoryView.findViewById(R.id.txtTitle);
 		TextView       btnExpand 			   = (TextView)categoryView.findViewById(R.id.btnExpand);
 
-		// Sets Colors
+		// SETS COLOR THEME (DARK BACKGROUND)
 		layoutCategoryContainer.setBackgroundColor(Theme.getColor(category.getName()));
+		txtTitle.setTextColor(0xFFFFFFFF);
+		btnExpand.setTextColor(0xFFFFFFFF);
+		
+		// ALTERNATIVE WAY TO SET COLORS (WHITE BACKGROUND)
+//		layoutCategoryContainer.setBackgroundColor(0xFFFFFFFF);
+//		txtTitle.setTextColor(Theme.getColor(category.getName()));
+//		btnExpand.setTextColor(Theme.getColor(category.getName()));
 		
 		// Updates Title
 		txtTitle.setText(category.getName().toUpperCase());
@@ -186,7 +144,8 @@ public class CatalogRenderer
 		
 		// Determines How Many Apps to Render
 		int numAppsToRender = category.shouldRenderAll() ? availableApps.size() : 0;
-		
+		numAppsToRender = (category.getName().equalsIgnoreCase("snap-to-it")) ? Math.max(numAppsToRender, 5) : numAppsToRender;
+				
 		// Renders Apps
 		for (int i=0; i<numAppsToRender; i++)
 		{
@@ -225,7 +184,7 @@ public class CatalogRenderer
 		txtTitle.setText(app.getName());
 		txtCategory.setText(app.getCategory());
 		txtDescription.setText(app.getDescription());
-		txtRunMessage.setText(Theme.getRunMessage(app.getCategory()) + " (" + expirationMessage + " left)" );
+		txtRunMessage.setText(Theme.getRunMessage(app.getCategory()));
 					
 		// Sets Colors
 		txtTitle.setTextColor(Theme.getColor(app.getCategory()));

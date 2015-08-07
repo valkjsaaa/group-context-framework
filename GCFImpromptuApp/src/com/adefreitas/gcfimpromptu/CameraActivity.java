@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -27,7 +26,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.toolkit.ImageToolkit;
+import com.adefreitas.gcf.android.toolkit.ImageToolkit;
 import com.adefreitas.gcfmagicapp.R;
 
 public class CameraActivity extends Activity 

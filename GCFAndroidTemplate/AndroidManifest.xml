@@ -29,8 +29,7 @@
         android:theme="@style/AppTheme" >
         
         <!-- Services -->
-        <service android:name="com.adefreitas.androidframework.GCFService" />
-        <service android:name="com.adefreitas.androidproviders.ActivityRecognitionIntentService" />
+        <service android:name="com.adefreitas.gcf.android.GCFService" />
 
         <!-- Google Play Services -->
         <meta-data

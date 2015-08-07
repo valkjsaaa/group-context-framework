@@ -2,18 +2,18 @@ package impromptu_apps.desktop;
 
 import impromptu_apps.DesktopApplicationProvider;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Disclaimer extends DesktopApplicationProvider
 {
 	public static final String   CONTEXT_TYPE  	      = "DISCLAIMER";
 	public static final String   DEFAULT_TITLE 	      = "Disclaimer";
 	public static final String   DEFAULT_DESCRIPTION  = "View Impromptu's terms of use.  You must agree to these conditions before your device will receive apps.";
-	public static final String   DEFAULT_CATEGORY     = "ADMIN";
+	public static final String   DEFAULT_CATEGORY     = "IMPROMPTU";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
 	public static final String   LOGO_PATH			  = "http://www.andrew.cmu.edu/course/98-233/images/cmu_seal.png";

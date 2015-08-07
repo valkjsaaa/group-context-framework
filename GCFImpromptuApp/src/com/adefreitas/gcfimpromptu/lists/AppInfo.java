@@ -3,9 +3,9 @@ package com.adefreitas.gcfimpromptu.lists;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.liveos.ApplicationFunction;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.impromptu.ApplicationFunction;
+import com.adefreitas.gcf.messages.ContextData;
 
 public class AppInfo implements Comparable<AppInfo>
 {
@@ -118,6 +118,11 @@ public class AppInfo implements Comparable<AppInfo>
 	public String getDescription()
 	{
 		return description;
+	}
+
+	public String getDebugDescription()
+	{
+		return description + "\n\nDebug:\n" + appID + ":" + deviceID + ":" + channel;
 	}
 	
 	/**

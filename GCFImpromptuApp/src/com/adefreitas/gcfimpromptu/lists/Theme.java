@@ -12,33 +12,37 @@ public class Theme
 		{
 			return 0xFF996633;
 		}
-		else if (categoryName.equalsIgnoreCase("transportation"))
-		{
-			return 0xFF339966;
-		}
 		else if (categoryName.equalsIgnoreCase("administrative"))
 		{
 			return 0xFF993333;
-		}
+		}		
 		else if (categoryName.equalsIgnoreCase("bluewave"))
 		{
-			return 0xFF2676FF;
+			return 0xFF188CFF;
 		}
-		else if (categoryName.equalsIgnoreCase("feedback"))
+		else if (categoryName.equalsIgnoreCase("devices"))
 		{
-			return 0xFF339966;
+			return 0xFF364261;
 		}
-		else if (categoryName.equalsIgnoreCase("favor bank"))
+		else if (categoryName.equalsIgnoreCase("favors"))
 		{
-			return 0xFF993399;
+			return 0xFF9933CC;
 		}
 		else if (categoryName.equalsIgnoreCase("favors (yours)"))
 		{
-			return 0xFF993399;
+			return 0xFF9933CC;
 		}
 		else if (categoryName.equalsIgnoreCase("favors (others)"))
 		{
-			return 0xFF993399;
+			return 0xFF9933CC;
+		}
+		else if (categoryName.equalsIgnoreCase("feedback"))
+		{
+			return 0xFFDEB201;
+		}
+		else if (categoryName.equalsIgnoreCase("impromptu"))
+		{
+			return 0xFF0186D5;
 		}
 		else if (categoryName.equalsIgnoreCase("navigation"))
 		{
@@ -47,6 +51,10 @@ public class Theme
 		else if (categoryName.equalsIgnoreCase("snap-to-it"))
 		{
 			return 0xFFFF8000;
+		}
+		else if (categoryName.equalsIgnoreCase("transportation"))
+		{
+			return 0xFF339966;
 		}
 		
 		// Default Color
@@ -63,9 +71,9 @@ public class Theme
 		{
 			return "View Details";
 		}
-		else if (categoryName.equalsIgnoreCase("snap-to-it"))
+		else if (categoryName.equalsIgnoreCase("snap-to-it") || categoryName.equalsIgnoreCase("devices"))
 		{
-			return "Connect to Device";
+			return "Connect to Appliance";
 		}
 		
 		// Default Message

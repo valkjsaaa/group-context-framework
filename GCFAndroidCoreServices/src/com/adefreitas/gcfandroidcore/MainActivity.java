@@ -5,9 +5,10 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.messages.ContextData;
 import com.adefreitas.gcfandroidcore.R;
 
 public class MainActivity extends ActionBarActivity implements ContextReceiver

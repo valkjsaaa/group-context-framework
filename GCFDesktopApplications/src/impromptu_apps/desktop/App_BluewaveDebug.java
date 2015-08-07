@@ -2,12 +2,12 @@ package impromptu_apps.desktop;
 
 import impromptu_apps.DesktopApplicationProvider;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_BluewaveDebug extends DesktopApplicationProvider
 {
@@ -17,7 +17,7 @@ public class App_BluewaveDebug extends DesktopApplicationProvider
 	public static final String   DEFAULT_CATEGORY     = "DEV TOOLS";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
-	public static final String   LOGO_PATH			  = "http://www.clipartbest.com/cliparts/Rcd/g4B/Rcdg4B5Xi.jpeg";
+	public static final String   LOGO_PATH			  = "http://gcf.cmu-tbank.com/apps/icons/bluewave.jpeg";
 	public static final int      DEFAULT_LIFETIME	  = 120;
 	
 	/**
@@ -82,12 +82,12 @@ public class App_BluewaveDebug extends DesktopApplicationProvider
 	public boolean sendAppData(String userContext)
 	{
 		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContext);
-		
-		double distanceFromPittsburgh = this.getDistance(parser, 40.4397, -79.9764);
-		
-		System.out.print("Distance = " + distanceFromPittsburgh + "km ");
-		
-		return distanceFromPittsburgh < 20.0;
+		return this.hasEmailAddress(parser, new String[] { "adrian.defreitas@gmail.com", "akshaya.kar@gmail.com", "gcf.user.2@gmail.com", "gcf.user.3@gmail.com", "gcf.user.4@gmail.com" });
+//		double distanceFromPittsburgh = this.getDistance(parser, 40.4397, -79.9764);
+//		
+//		System.out.print("Distance = " + distanceFromPittsburgh + "km ");
+//		
+//		return distanceFromPittsburgh < 20.0;
 	}
 
 	/**

@@ -6,16 +6,16 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationFunction;
-import com.adefreitas.liveos.ApplicationObject;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.impromptu.ApplicationElement;
+import com.adefreitas.gcf.impromptu.ApplicationFunction;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -89,18 +89,18 @@ public class App_Printer extends DesktopApplicationProvider
 	public String getFunctions()
 	{
 		// Creates the Function
-		ApplicationFunction wordFunction 	   = new ApplicationFunction("Print Document", "Prints a *.docx file using default settings.", "PRINT_WORD");
-		ApplicationFunction powerPointFunction = new ApplicationFunction("Print Handouts", "Converts a *.pptx file into handouts.", "PRINT_PPTX");
-			
-		// Adds a Required Object to the Function
-		wordFunction.addRequiredObject(new ApplicationObject("FILE_DOCX", "FILE"));
-		powerPointFunction.addRequiredObject(new ApplicationObject("FILE_PPTX", "FILE"));
-		
-		// Generates the JSON that Contains all Functions
-		String functionsJSON = ApplicationElement.toJSONArray(new ApplicationElement[] { wordFunction, powerPointFunction });
-		System.out.println(functionsJSON);
-		
-		return functionsJSON;
+				ApplicationFunction wordFunction 	   = new ApplicationFunction(this.getAppID(), "Print Document (" + printerName + ")", "Prints a *.docx file using default settings.", "PRINT_WORD");
+				ApplicationFunction powerPointFunction = new ApplicationFunction(this.getAppID(), "Print Handouts (" + printerName + ")", "Converts a *.pptx file into handouts.", "PRINT_PPTX");
+					
+				// Adds a Required Object to the Function
+				wordFunction.addRequiredObject(new ApplicationObject("", "FILE_DOCX", "FILE"));
+				powerPointFunction.addRequiredObject(new ApplicationObject("", "FILE_PPTX", "FILE"));
+				
+				// Generates the JSON that Contains all Functions
+				String functionsJSON = ApplicationElement.toJSONArray(new ApplicationElement[] { wordFunction, powerPointFunction });
+				System.out.println(functionsJSON);
+				
+				return functionsJSON;
 	}
 	
 	@Override

@@ -11,11 +11,9 @@ import android.preference.PreferenceCategory;
 import android.util.Log;
 import android.view.Menu;
 
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.gcfimpromptu.lists.AppInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.android.bluewave.JSONContextParser;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ContextRequest;
 
 public class SettingsActivity extends PreferenceActivity
 {

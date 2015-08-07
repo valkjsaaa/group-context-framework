@@ -2,22 +2,22 @@ package impromptu_apps.desktop;
 
 import impromptu_apps.DesktopApplicationProvider;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Feedback extends DesktopApplicationProvider
 {
-	public static final String   CONTEXT_TYPE  	      = "FEEDBACK";
-	public static final String   DEFAULT_TITLE 	      = "Feedback App";
-	public static final String   DEFAULT_DESCRIPTION  = "Have an idea for a new app?  Let us know!";
-	public static final String   DEFAULT_CATEGORY     = "FEEDBACK";
+	public static final String   CONTEXT_TYPE  	      = "SUGGESTION";
+	public static final String   DEFAULT_TITLE 	      = "Suggestion Box";
+	public static final String   DEFAULT_DESCRIPTION  = "Have an idea for a new app, or a general suggestion?  Let us know!";
+	public static final String   DEFAULT_CATEGORY     = "IMPROMPTU";
 	public static final String[] CONTEXTS_REQUIRED    = new String[] { };
 	public static final String[] PREFERENCES_REQUIRED = new String[] { };
-	public static final String   LOGO_PATH			  = "http://m.wmhomecoming.com/wp-content/themes/Touch-child/images/icon-feedback-256x256.png";
+	public static final String   LOGO_PATH			  = "http://gcf.cmu-tbank.com/apps/icons/suggestion.png";
 	public static final int      DEFAULT_LIFETIME	  = 3600;
 	
 	public SQLToolkit sqlToolkit;

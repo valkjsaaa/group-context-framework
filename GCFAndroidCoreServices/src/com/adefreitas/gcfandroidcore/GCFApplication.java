@@ -12,18 +12,15 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.GCFService;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidproviders.BluetoothContextProvider;
-import com.adefreitas.androidproviders.BluewaveContextProvider;
-import com.adefreitas.androidproviders.LocationContextProvider;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.android.providers.BluetoothContextProvider;
+import com.adefreitas.gcf.android.providers.BluewaveContextProvider;
+import com.adefreitas.gcf.android.providers.LocationContextProvider;
+import com.adefreitas.gcf.messages.ContextData;
 import com.google.gson.Gson;
 
 /**
@@ -243,7 +240,7 @@ public class GCFApplication extends Application
 		private void onOtherUserContextReceived(Context context, Intent intent)
 		{
 			// This is the Raw JSON from the Device
-			String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+			String json = intent.getStringExtra(BluewaveManager.EXTRA_OTHER_USER_CONTEXT);
 			
 			// Creates a Parser
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);

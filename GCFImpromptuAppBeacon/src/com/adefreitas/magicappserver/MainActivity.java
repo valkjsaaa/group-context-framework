@@ -1,5 +1,6 @@
 package com.adefreitas.magicappserver;
 
+import java.util.Arrays;
 import java.util.Date;
 
 import android.bluetooth.BluetoothAdapter;
@@ -16,15 +17,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.creationboard.CreationBoard;
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.inoutboard.InOutBoard;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.beacon.apps.App_ControlScreen;
+import com.adefreitas.beacon.inoutboard.InOutBoard;
+import com.adefreitas.gcf.ContextProvider;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.messages.ContextData;
 
 /**
  * This is an Example Android Project with GCF Set Up and Ready to Go.  You're Welcome.
@@ -50,11 +52,12 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	private IntentReceiver  intentReceiver;
 	
 	// Android Controls
-	private Toolbar	 toolbar;
-	private TextView txtDeviceInfo;
-	private TextView txtContext;
-	private TextView txtBluewave;
-	private TextView txtDevices;
+	private LinearLayout layoutRoot;
+	private Toolbar	 	 toolbar;
+	private TextView 	 txtDeviceInfo;
+	private TextView 	 txtContext;
+	private TextView 	 txtBluewave;
+	private TextView 	 txtDevices;
 	
 	// Timestamp
 	private Date 	lastSnapToItContact;
@@ -78,6 +81,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.application = (GCFApplication)this.getApplication();
 				
 		// Grabs Controls
+		layoutRoot    = (LinearLayout)this.findViewById(R.id.layoutRoot);
 		toolbar	      = (Toolbar)this.findViewById(R.id.toolbar);
 		txtDeviceInfo = (TextView)this.findViewById(R.id.txtDeviceInfo);
 		txtContext    = (TextView)this.findViewById(R.id.txtContext);
@@ -92,6 +96,11 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		this.filter = new IntentFilter();
 		this.filter.addAction(BluetoothDevice.ACTION_FOUND);
 		this.filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);	    
+		
+//		// DEBUG:
+//		App_ControlScreen app = new App_ControlScreen(application, layoutRoot, application.getGroupContextManager(), GCFApplication.COMM_MODE, GCFApplication.IP_ADDRESS, GCFApplication.PORT);
+//		application.getGroupContextManager().registerContextProvider(app);
+//		application.getGroupContextManager().subscribe(application.getConnectionKey(), app.getContextType());
 	}
 	
 	/**
@@ -121,6 +130,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	    	Intent intent = new Intent(this, InOutBoard.class);
 	    	this.startActivity(intent);
 	    }
+		
 		else if (item.toString().equalsIgnoreCase(this.getString(R.string.title_activity_sign)))
 	    {
 	    	Intent intent = new Intent(this, SignActivity.class);
@@ -217,7 +227,10 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	private void updateView()
 	{
 		// Displays Device Information
-		txtDeviceInfo.setText(application.getGroupContextManager().getDeviceID());
+		txtDeviceInfo.setText(application.getGroupContextManager().getDeviceID() + "\n\n" 
+				+ application.getGroupContextManager().getBluewaveManager().getBluetoothName() + "\n\n"
+				+ "Bluewave App ID:\n" + GCFApplication.BLUEWAVE_APP_ID + "\n\n" 
+				+ "Bluewave Contexts:\n" + Arrays.toString(GCFApplication.BLUEWAVE_CONTEXTS));
 		
 		// Grabs IDs of All Registered Context Providers
 		String providers = "";

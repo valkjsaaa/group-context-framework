@@ -1,11 +1,11 @@
 package impromptu_app_directory;
 
-import com.adefreitas.desktopframework.DesktopGroupContextManager;
-import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.CommThread;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.liveos.ApplicationSettings;
+import com.adefreitas.gcf.CommManager;
+import com.adefreitas.gcf.CommThread;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.DesktopGroupContextManager;
+import com.adefreitas.gcf.impromptu.ApplicationSettings;
 
 public class GCFController
 {

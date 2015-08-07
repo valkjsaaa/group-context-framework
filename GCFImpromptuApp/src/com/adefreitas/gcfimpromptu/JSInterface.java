@@ -1,17 +1,20 @@
 package com.adefreitas.gcfimpromptu;
 
+import java.util.Arrays;
+
 import org.json.JSONObject;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,13 +24,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
+import com.adefreitas.gcf.android.toolkit.HttpToolkit;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
 
 public class JSInterface
 {			
 	// Application Constants
+	public static final String LOG_NAME				  = "Impromptu-JS";
 	public static final String JAVASCRIPT_OBJECT_NAME = "device";
 	
 	private Handler 		handler;
@@ -120,7 +124,9 @@ public class JSInterface
 		alertDialog.show();
 	}
 	
-	// JAVASCRIPT Methods (Can be Called by Impromptu Apps) --------------------------------------------
+	// -------------------------------------------------------------------------------------------------
+	// JAVASCRIPT Methods (Can be Called by Impromptu Apps)
+	// -------------------------------------------------------------------------------------------------
 	@JavascriptInterface
 	public void downloadFile(String url)
 	{		
@@ -136,14 +142,30 @@ public class JSInterface
 	}
 	
 	@JavascriptInterface
-	public void uploadFile(String callbackCommand, String dialogMessage, String[] filetypes)
+	public void uploadFile(String callbackCommand, String dialogMessage, String[] mimeTypes)
 	{	
 		try
 		{	
-			// Allows User to Select a File and Upload it via SCP
-			UploadFileDialog fd = new UploadFileDialog(application, context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, "UPLOAD_COMPLETE");
-			
-			this.callbackCommand = callbackCommand;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+			{
+				// Allows User to Select a File and Upload it via SCP
+				//UploadFileDialog fd = new UploadFileDialog(application, context, dialogMessage, GCFApplication.DOWNLOAD_FOLDER, filetypes, "UPLOAD_COMPLETE");
+
+				Log.d(LOG_NAME, "Mime Types: " + Arrays.toString(mimeTypes));
+				
+				// Creates an Intent to Call the System Level File Chooser
+				Intent i = new Intent(Intent.ACTION_GET_CONTENT, null);
+				i.setTypeAndNormalize("*/*");
+				i.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);		
+				activity.startActivityForResult(i, AppEngine.FILECHOOSER_RESULTCODE);
+				
+				// Sets a Callback to Send to the Application
+				this.callbackCommand = callbackCommand;	
+			}
+			else
+			{
+				toast("This function is not supported on this version of Android.");
+			}
 		}
 		catch (Exception ex)
 		{

@@ -14,7 +14,7 @@
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:layout_marginRight="5dp"
-        android:background="#CCCCCC"
+        android:background="#EEEEEE"
         android:orientation="vertical" >
     </ImageView>
     

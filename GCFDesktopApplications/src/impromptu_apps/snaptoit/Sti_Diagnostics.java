@@ -4,10 +4,10 @@ package impromptu_apps.snaptoit;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class Sti_Diagnostics extends SnapToItApplicationProvider
 {

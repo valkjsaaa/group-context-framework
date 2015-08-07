@@ -5,16 +5,16 @@ import impromptu_apps.DesktopApplicationProvider;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Bus extends DesktopApplicationProvider
 {
-	public static final double MIN_DISTANCE_IN_KM = 0.25;
+	public static final double MIN_DISTANCE_IN_KM = 0.10;
 	
 	// Stores Coordinates
 	private ArrayList<Location> locations;
@@ -51,7 +51,7 @@ public class App_Bus extends DesktopApplicationProvider
 		// Populates coordinates
 		locations.add(new Location("Ardmore Blvd", 40.424654, -79.859158, "http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=69&direction=INBOUND&id=7787&showAllBusses=on"));
 		locations.add(new Location("Forbes Ave (Near NSH)", 40.443608, -79.945573, "http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=67&direction=OUTBOUND&id=7116&showAllBusses=on"));
-		locations.add(new Location("Forbes Ave (Near University Center)", 40.44449351, -79.7425490200, "http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=67&direction=OUTBOUND&id=7117&showAllBusses=on"));
+		locations.add(new Location("Forbes Ave (Near University Center)", 40.444533, -79.942550, "http://truetime.portauthority.org/bustime/wireless/html/eta.jsp?route=67&direction=OUTBOUND&id=7117&showAllBusses=on"));		
 	}
 	
 	private Location getNearestLocation(JSONContextParser parser, double threshold)
@@ -102,11 +102,7 @@ public class App_Bus extends DesktopApplicationProvider
 		JSONContextParser parser 		  = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
 		Location 		  nearestLocation = getNearestLocation(parser, MIN_DISTANCE_IN_KM);
 		
-		// Gets the Time of Day
-		Calendar calendar = Calendar.getInstance();
-		int hour = calendar.get(Calendar.HOUR_OF_DAY);
-		
-		return nearestLocation != null && (hour < 9 || hour > 16);
+		return nearestLocation != null && !this.inVehicle(parser);
 	}
 	
 	public String getDescription(String userContextJSON)

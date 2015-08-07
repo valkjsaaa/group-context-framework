@@ -19,10 +19,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.messages.ContextData;
 
 public class MainActivity extends ActionBarActivity implements ContextReceiver
 {
@@ -196,7 +196,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			}
 			else if (intent.getAction().equals(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED))
 			{
-				String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+				String json = intent.getStringExtra(BluewaveManager.EXTRA_OTHER_USER_CONTEXT);
 			}
 			else if (intent.getAction().equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED))
 			{

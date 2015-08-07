@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ContextRequest;
+import com.adefreitas.gcf.CommManager;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.messages.ContextRequest;
 
 public class FavorDispatcher 
 {
@@ -71,10 +71,19 @@ public class FavorDispatcher
 				newFavor.setSQLEventLogger(toolkit);
 				
 				// Adds a Task (Assuming it has not already been created before)
-				ResultSet result = toolkit.runQuery("SELECT * FROM impromptu_eventLog WHERE app='" + newFavor.getAppID() + "' && tag='TASK_CREATED'");
+				ResultSet result = toolkit.runQuery("SELECT * FROM impromptu_eventLog WHERE app='" + newFavor.getAppID() + "' && tag='FAVOR_CREATED'");
 				if (!result.next())
 				{
-					newFavor.log("FAVOR_CREATED", "TIMESTAMP=" + timestamp);	
+					// This query attempts to get information about the user
+					ResultSet creatorInfo = toolkit.runQuery("SELECT * FROM favors_profile WHERE device_id='" + deviceID + "'");
+					
+					if (creatorInfo.next())
+					{
+						String sensor   = creatorInfo.getString("last_sensor") != null ? creatorInfo.getString("last_sensor") : "";
+						String contents = String.format("favorID=%s,timestamp=%d,submissionType=request,creatorDeviceID=%s,creatorLat=%f,creatorLon=%f,creatorSensor=%s", 
+								newFavor.getAppID(), timestamp, deviceID, creatorInfo.getDouble("latitude"), creatorInfo.getDouble("longitude"), sensor);
+						newFavor.log("FAVOR_CREATED", contents);
+					}
 				}
 				
 				gcm.registerContextProvider(newFavor);
@@ -110,10 +119,11 @@ public class FavorDispatcher
 	 * Marks a Task as Being Complete
 	 * @param id
 	 */
-	public void markComplete(int timestamp)
+	public void markComplete(int timestamp, boolean completed)
 	{
 		// Query 1:  Update Favor in Database
-		String    query  = "UPDATE favors_submitted SET status = \"completed\" WHERE timestamp=" + timestamp;
+		String    newStatus = (completed) ? "completed" : "canceled";
+		String    query     = "UPDATE favors_submitted SET status = \"" + newStatus + "\" WHERE timestamp=" + timestamp;
 		toolkit.runUpdateQuery(query);		
 	}
 	
@@ -140,7 +150,7 @@ public class FavorDispatcher
 									"favors_profile.username, " +
 									"favors_profile.telephone " +
 							   "FROM favors_submitted INNER JOIN favors_profile on favors_submitted.device_id = favors_profile.device_id " +
-							   "WHERE status = \"active\" && CHAR_LENGTH(favors_submitted.tags)>0";
+							   "WHERE favors_submitted.status = \"active\" && CHAR_LENGTH(favors_submitted.tags)>0 && favors_submitted.destination_time>" + (System.currentTimeMillis()/1000-7200);
 			System.out.println(query);
 			ResultSet result = toolkit.runQuery(query);
 			

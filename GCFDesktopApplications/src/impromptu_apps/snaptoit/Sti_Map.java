@@ -3,10 +3,10 @@ package impromptu_apps.snaptoit;
 
 import java.util.ArrayList;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class Sti_Map extends SnapToItApplicationProvider
 {
@@ -15,19 +15,18 @@ public class Sti_Map extends SnapToItApplicationProvider
 	{
 		super(groupContextManager, 
 				"STI_MAP",
-				"Map Demonstration",
-				"Tests STI v2.0. with non-connected appliances",
-				"DEBUG",
+				"CMU Map",
+				"Provides you with an interactive map of the CMU campus",
+				"SNAP-TO-IT",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
-				"http://108.32.88.8/gcf/universalremote/magic/gears.png",				   // LOGO
-				30,
+				"http://icons.iconarchive.com/icons/igh0zt/ios7-style-metro-ui/512/MetroUI-Google-Maps-icon.png",				   // LOGO
+				60,
 				commMode,
 				ipAddress,
 				port);
 		
-		this.addPhoto(this.getLocalStorageFolder() + "Map1.jpeg");
-		this.addPhoto(this.getLocalStorageFolder() + "Map2.jpeg");
+		this.addPhoto(this.getLocalStorageFolder() + "Map1.jpg");
 	}
 	
 	public ArrayList<String> getInformation()
@@ -56,7 +55,7 @@ public class Sti_Map extends SnapToItApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{
-		return new String[] { "WEBSITE=https://www.google.com/maps/@40.4437326,-79.9461237,22z"};
+		return new String[] { "WEBSITE=http://www.cmu.edu/about/visit/campus-map-interactive/"};
 		//return new String[] { "PACKAGE=com.rovio.angrybirds" };
 	}
 

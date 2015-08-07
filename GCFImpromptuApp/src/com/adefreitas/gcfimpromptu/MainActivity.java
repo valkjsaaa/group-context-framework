@@ -1,6 +1,5 @@
 package com.adefreitas.gcfimpromptu;
 
-import java.util.Date;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -11,6 +10,8 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
@@ -21,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.FrameLayout;
@@ -29,15 +31,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.androidframework.GCFService;
+import com.adefreitas.gcf.android.AndroidCommManager;
+import com.adefreitas.gcf.android.ContextReceiver;
+import com.adefreitas.gcf.android.GCFService;
+import com.adefreitas.gcf.android.bluewave.JSONContextParser;
+import com.adefreitas.gcf.messages.ContextData;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfimpromptu.lists.CatalogRenderer;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.messages.ContextData;
-import com.adefreitas.messages.ContextRequest;
 
 public class MainActivity extends ActionBarActivity implements ContextReceiver
 {	
@@ -45,6 +46,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	private static final String TITLEBAR_CONTENTS = "TITLE";
 	private static final String APP_ID			  = "APP_ID";
 	private static final double CONFIDENT_MATCH   = 40.0;
+	private static final int    QR_REQUEST_CODE	  = 13579;
 	
 	// Link to the Application
 	private GCFApplication application;
@@ -52,9 +54,12 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	// Android Controls
 	private Toolbar	     	   toolbar;
 	private LinearLayout       layoutApps;
+	private LinearLayout       layoutSnapToIt;
 	private ExpandableListView lstApps;
 	private LinearLayout 	   layoutInstructions;
 	private ImageView    	   imgCameraSmall;
+	private ImageView    	   imgQRSmall;
+	private ImageView    	   imgTextSmall;
 	private ImageView    	   imgIconBig;
 	private TextView	 	   txtInstructionTitle;
 	private TextView	 	   txtInstructionDescription;
@@ -83,9 +88,12 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		// Saves Controls
 		this.toolbar   	   			   = (Toolbar)this.findViewById(R.id.toolbar);
 		this.layoutApps  	    	   = (LinearLayout)this.findViewById(R.id.layoutApps);
+		this.layoutSnapToIt			   = (LinearLayout)this.findViewById(R.id.layoutSnapToIt);
 		this.lstApps  	    		   = (ExpandableListView)this.findViewById(R.id.lstApps);
 		this.layoutInstructions 	   = (LinearLayout)this.findViewById(R.id.layoutInstructions);
 		this.imgCameraSmall 		   = (ImageView)this.findViewById(R.id.imgCameraSmall);
+		this.imgQRSmall		 		   = (ImageView)this.findViewById(R.id.imgQRSmall);
+		this.imgTextSmall	 		   = (ImageView)this.findViewById(R.id.imgTextSmall);
 		this.imgIconBig   		       = (ImageView)this.findViewById(R.id.imgCameraBig);
 		this.txtInstructionTitle 	   = (TextView)this.findViewById(R.id.txtInstructionTitle);
 		this.txtInstructionDescription = (TextView)this.findViewById(R.id.txtInstructionDescription);
@@ -105,7 +113,8 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		
 		// Creates Event Handlers
 		this.imgCameraSmall.setOnClickListener(onSnapToItClickListener);
-		this.imgIconBig.setOnClickListener(onRefreshClickListener);
+		this.imgQRSmall.setOnClickListener(onQRClickListener);
+		this.imgTextSmall.setOnClickListener(onTextClickListener);
 		
 		// Generates the Execution Alert for an App
 		if (this.getIntent() != null && this.getIntent().hasExtra(APP_ID))
@@ -146,14 +155,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		{
 			toolbar.setTitle(savedInstanceState.getString(TITLEBAR_CONTENTS));
 		}
-				
-		// Requests Context Information from Self
-		if (application.getGroupContextManager().getRequest("LOC") == null || application.getGroupContextManager().getRequest("ACT") == null)
-		{
-			application.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);
-			application.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);	
-		}
-		
+									
 		// Updates the Application List
 		updateViewContents();
 	}
@@ -211,9 +213,12 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	protected void onResume()
 	{
 		super.onResume();
-			
+		
 		application.setInForeground(true);
 		
+		// Makes Sure that All Services are Working as Intended
+		application.verifyServices();
+						
 		// Sets Up the Intent Listener
 		this.registerReceiver(intentReceiver, filter);
 		
@@ -228,13 +233,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		
 		// Cleans Up Running Applications
 		if (application.getActiveApplications().size() > 0)
-		{			
-			// Terminates Active Subscriptions
-//			for (ContextRequest request : application.getGroupContextManager().getRequests())
-//			{
-//				application.getGroupContextManager().cancelRequest(request.getContextType());
-//			}
-			
+		{						
 			// Clears Active Applications
 			for (AppInfo app : application.getActiveApplications())
 			{
@@ -258,6 +257,9 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			// Removes all Active Applications
 			application.getActiveApplications().clear();
 		}
+		
+		// Cancels an Existing Compass Request
+		application.getGroupContextManager().cancelRequest("COMPASS");
 		
 		// Updates the Application List
 		updateViewContents();
@@ -405,18 +407,16 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 	 */
 	public void updateViewContents()
 	{					
-		//Toast.makeText(this, "Updating View", Toast.LENGTH_SHORT).show();
-		
 		// Determines What Apps are Currently Available
 		List<AppInfo> availableApps = application.getAvailableApps();
 		
 		// Removes All Apps Currently Visible
 		layoutApps.removeAllViews();
 		
-		// Determines What Icon to Display
+		// Determines What Icons to Display
 		if (connectionProblems)
 		{
-			imgCameraSmall.setVisibility(View.GONE);
+			layoutSnapToIt.setVisibility(View.GONE);
 			lstApps.setVisibility(View.GONE);
 			layoutInstructions.setVisibility(View.VISIBLE);
 		}
@@ -425,11 +425,11 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			// Displays the Snap-To-It Control (Assuming that the Feature is Enabled in Settings)
 			if (PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getBoolean("sti_enabled", false))
 			{
-				imgCameraSmall.setVisibility(View.VISIBLE);
+				layoutSnapToIt.setVisibility(View.VISIBLE);
 			}
 			else
 			{
-				imgCameraSmall.setVisibility(View.GONE);
+				layoutSnapToIt.setVisibility(View.GONE);
 			}
 		
 			// Determines Whether to Show the App Tray, or a Friendly Message
@@ -447,7 +447,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 				layoutApps.addView(CatalogRenderer.renderCatalog(this, application.getCatalog()));
 				
 				lstApps.setVisibility(View.VISIBLE);
-				layoutInstructions.setVisibility(View.GONE);	
+				layoutInstructions.setVisibility(View.GONE);
 			}
 		}
 		
@@ -473,7 +473,7 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 			}
 			
 			// Determines if the Snap To It Button is Visible
-			imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
+			//imgCameraSmall.setBackground(this.getResources().getDrawable(R.drawable.camera_focused));
 		}
 		else
 		{
@@ -583,7 +583,9 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
     {
 		@Override
 		public void onClick(View v) 
-		{
+		{			
+			application.removeSnapToItApps();
+			
 		  	// Opens Up the Camera Application
 			Intent i = new Intent(application, SnapToItActivity.class);
 			i.putExtra("SnapToIt", true);
@@ -600,6 +602,106 @@ public class MainActivity extends ActionBarActivity implements ContextReceiver
 		}
     };
 	
+    final OnClickListener onQRClickListener = new OnClickListener() 
+    {
+		@Override
+		public void onClick(View v) 
+		{	
+			String 		   appURI 		 = "com.google.zxing.client.android";
+			Intent 		   intent 		 = null;
+			PackageManager pm 			 = getPackageManager();
+	        boolean 	   app_installed = false;
+	        
+	        // Determines if the QR Code App is Installed
+	        try 
+	        {
+	            pm.getPackageInfo(appURI, PackageManager.GET_ACTIVITIES);
+	            app_installed = true;
+	        }
+	        catch (PackageManager.NameNotFoundException e) 
+	        {
+	            app_installed = false;
+	        }
+	        
+	        if (app_installed)
+			{
+		        // If the App is installed, run the QR code scan
+	        	Log.d("IMPROMPTU", "Starting QR Scan Mode");
+	        	intent = new Intent("com.google.zxing.client.android.SCAN");
+				intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+				startActivityForResult(intent, QR_REQUEST_CODE);
+			}
+			else
+			{
+				// Otherwise, go to the play store
+				intent = new Intent(Intent.ACTION_VIEW);
+				intent.setData(Uri.parse("market://details?id=" + appURI));
+				startActivity(intent);
+			}
+			
+			application.removeSnapToItApps();
+		}
+    };
+    
+    final OnClickListener onTextClickListener = new OnClickListener() 
+    {
+    	private static final int TEXT_ID = 0;
+    	
+		@Override
+		public void onClick(View v) 
+		{		
+			AlertDialog.Builder builder = new android.app.AlertDialog.Builder(MainActivity.this, AlertDialog.THEME_HOLO_LIGHT);
+	        builder.setTitle("Manual Entry");
+	        builder.setMessage("Enter Appliance Code:");
+	 
+	         // Use an EditText view to get user input.
+	        final EditText input = new EditText(MainActivity.this);
+	        input.setId(TEXT_ID);
+	        builder.setView(input);
+	 
+	        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+	 
+	            @Override
+	            public void onClick(DialogInterface dialog, int whichButton) {
+	                String applianceName = input.getText().toString();
+	                GCFApplication.sendQuery(application, applianceName);
+					application.removeSnapToItApps();
+					Toast.makeText(MainActivity.this, "Searching for Appliance: " + applianceName, Toast.LENGTH_SHORT).show();
+	                return;
+	            }
+	        });
+	 
+	        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() 
+	        {
+	            @Override
+	            public void onClick(DialogInterface dialog, int which) {
+	                return;
+	            }
+	        });
+	 
+	        AlertDialog dialog = builder.create();
+	        dialog.show();
+		}
+    };
+    
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) 
+    {   
+    	Log.d("IMPROMPTU", "Activity Result: " + requestCode + "; " + resultCode);
+    	
+        if (requestCode == QR_REQUEST_CODE) 
+        {
+            if (resultCode == RESULT_OK) 
+            {
+            	GCFApplication.sendQuery(application, intent.getStringExtra("SCAN_RESULT"));
+            	Toast.makeText(application, "QR Code Found: " + intent.getStringExtra("SCAN_RESULT"), Toast.LENGTH_SHORT).show();
+            }
+            else 
+            {
+            	Toast.makeText(application, "Invalid QR Code", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+    
 	// Intent Receiver --------------------------------------------------------------------------
     private class IntentReceiver extends BroadcastReceiver
 	{

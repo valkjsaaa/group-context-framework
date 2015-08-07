@@ -2,9 +2,7 @@ package com.adefreitas.gcfimpromptu;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -27,68 +25,78 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.ValueCallback;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.androidframework.GCFService;
-import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidframework.toolkit.SftpToolkit;
-import com.adefreitas.androidproviders.ActivityContextProvider;
-import com.adefreitas.androidproviders.AudioContextProvider;
-import com.adefreitas.androidproviders.BluetoothContextProvider;
-import com.adefreitas.androidproviders.BluewaveContextProvider;
-import com.adefreitas.androidproviders.CompassContextProvider;
-import com.adefreitas.androidproviders.GPSContextProvider;
-import com.adefreitas.androidproviders.GoogleCalendarProvider;
-import com.adefreitas.androidproviders.LocationContextProvider;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.ContextProvider;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.android.AndroidCommManager;
+import com.adefreitas.gcf.android.AndroidGroupContextManager;
+import com.adefreitas.gcf.android.ContextReceiver;
+import com.adefreitas.gcf.android.GCFService;
+import com.adefreitas.gcf.android.bluewave.BluewaveManager;
+import com.adefreitas.gcf.android.bluewave.JSONContextParser;
+import com.adefreitas.gcf.android.providers.ActivityContextProvider;
+import com.adefreitas.gcf.android.providers.AudioContextProvider;
+import com.adefreitas.gcf.android.providers.BluetoothContextProvider;
+import com.adefreitas.gcf.android.providers.BluewaveContextProvider;
+import com.adefreitas.gcf.android.providers.CompassContextProvider;
+import com.adefreitas.gcf.android.providers.GPSContextProvider;
+import com.adefreitas.gcf.android.providers.GoogleCalendarProvider;
+import com.adefreitas.gcf.android.providers.LocationContextProvider;
+import com.adefreitas.gcf.android.providers.PostureContextProvider;
+import com.adefreitas.gcf.android.providers.TemperatureContextProvider;
+import com.adefreitas.gcf.android.toolkit.CloudStorageToolkit;
+import com.adefreitas.gcf.android.toolkit.HttpToolkit;
+import com.adefreitas.gcf.android.toolkit.SftpToolkit;
+import com.adefreitas.gcf.impromptu.ApplicationFunction;
+import com.adefreitas.gcf.impromptu.ApplicationSettings;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
+import com.adefreitas.gcf.messages.ContextData;
+import com.adefreitas.gcf.messages.ContextRequest;
+import com.adefreitas.gcf.toolkit.SHA1;
 import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.hashlibrary.SHA1;
-import com.adefreitas.liveos.ApplicationFunction;
-import com.adefreitas.liveos.ApplicationSettings;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
-import com.adefreitas.messages.ContextData;
-import com.adefreitas.messages.ContextRequest;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 public class GCFApplication extends Application
 {	
-	// Application Constants
-	public static final String LOG_NAME          	  = "IMPROMPTU"; 
-	public static final String APP_PROCESS_ID		  = "" + new Date().getTime();										// DEBUG		 
+	// Debug Flag (Set to False Before Publishing!)
+	public static final boolean DEBUG		   = true;
+	public static final String  APP_PROCESS_ID = "" + new Date().getTime();	
+	public static final String  LOG_NAME       = "IMPROMPTU";
+
+	// Application Constants 	 
+	public static final int    UPDATE_SECONDS    	  = 60;
+	public static final int    APP_EXPIRATION_TIME    = 60 & 5;
 	public static final String PREFERENCES_NAME       = "com.adefreit.impromptu.preferences";
 	public static final String PREFERENCE_APP_CATALOG = "appCatalog";
 	public static final String PREFERENCE_APP_PREF    = "appPreferences";
-	public static final int    UPDATE_SECONDS    	  = 60;
 	public static final String ACTION_APP_UPDATE 	  = "APP_UPDATE";
 	public static final String ACTION_IMAGE_UPLOADED  = "STI_IMAGE_UPLOADED";
 	public static final String ACTION_APP_SELECTED    = "APP_SELECTED";
 	public static final String ACTION_QUICKBOOT		  = "android.intent.action.QUICKBOOT_POWERON";
 	public static final String ACTION_LOGO_DOWNLOADED = "android.intent.action.LOGO_DOWNLOADED";
 	public static final String EXTRA_APP_ID           = "APP_ID";
-	public static final String LOGO_DOWNLOAD_FOLDER   = "/Download/Impromptu/Logos/";	
-	public static final String DOWNLOAD_FOLDER        = "/Download/Impromptu/";							 			      // Path on the Phone where Files are Downloaded
-	public static final String UPLOAD_SFTP_PATH       = "/var/www/html/gcf/universalremote/magic/";		 			      // Folder Path on the Cloud Server
-	public static final String UPLOAD_WEB_PATH   	  = "http://" + Settings.DEV_SFTP_IP + "/gcf/universalremote/magic/"; // Web Path to the Path Above
+	public static final String LOGO_DOWNLOAD_FOLDER   = "/Download/Impromptu/Logos/";	// Path on the Phone where Logos are Downloaded
+	public static final String DOWNLOAD_FOLDER        = "/Download/Impromptu/";			// Path on the Phone where Files are Downloaded
 	
 	// Context Constants
 	public static final String IDENTITY_CONTEXT_TAG  = "identity";
@@ -121,7 +129,7 @@ public class GCFApplication extends Application
 	};
 	
 	// Object Serialization
-	private Gson 			  gson;
+	private Gson gson;
 	
 	// App Storage
 	private SharedPreferences appSharedPreferences;
@@ -142,7 +150,8 @@ public class GCFApplication extends Application
 	private ArrayList<AppInfo>		   activeApps;
 		
 	// Timer
-	private ContextAutoDeliveryHandler timerHandler;
+	private ContextDeliveryHandler timerHandler;
+	public static long lastQuery = 0;
 	
 	// Snap To It Variables
 	private Date lastSnapToItDeviceContact;
@@ -342,46 +351,54 @@ public class GCFApplication extends Application
 			}
 			else
 			{
-				title = apps.size() + " New Apps Available";
-				
-				for (AppInfo app : apps)
-				{
-					subtitle += app.getName() + ", ";
-				}
+				title    = "New Apps are Available";
+				subtitle = "Tap to View";
 				
 				// Removes the Last Comma
-				subtitle = subtitle.substring(0, subtitle.length()-2);
+				//subtitle = subtitle.substring(0, subtitle.length()-2);
 				
 				intent = new Intent(this.getApplicationContext(), MainActivity.class);
 			}
 			
 			// Generates the Notification
-			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
-			{
-				 Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-				
-				 Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
-				 
-				 PendingIntent 		 pendingIntent 		 = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-				 NotificationManager notificationManager = (NotificationManager)this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
-				 notificationManager.cancelAll();
-				 
-				 Notification note = new Notification.Builder(this)
-				 	.setLargeIcon(bm)
-				 	.setSmallIcon(R.drawable.ic_notification)
-				 	.setContentTitle(title)
-				 	.setContentText(subtitle)
-				 	.setAutoCancel(true)
-				 	.setSound(soundUri)
-				 	.setContentIntent(pendingIntent).build();
-				 
-				 notificationManager.notify(0, note);
-			}
-			else
-			{
-				Toast.makeText(this, title + ": " + subtitle, Toast.LENGTH_SHORT).show();
-			}	
+			createNotification(0, title, subtitle, intent);
 		}
+	}
+	
+	public void createNotification(int id, String title, String subtitle, Intent intent)
+	{
+		// Generates the Notification
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) 
+		{
+			 Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			
+			 Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+			 
+			 PendingIntent 		 pendingIntent 		 = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+			 NotificationManager notificationManager = (NotificationManager)this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+			 notificationManager.cancelAll();
+			 
+			 Notification note = new Notification.Builder(this)
+			 	.setLargeIcon(bm)
+			 	.setSmallIcon(R.drawable.ic_notification)
+			 	.setContentTitle(title)
+			 	.setContentText(subtitle)
+			 	.setAutoCancel(true)
+			 	.setSound(soundUri)
+			 	.setContentIntent(pendingIntent).build();
+			 
+			 notificationManager.notify(id, note);
+		}
+		else
+		{
+			Toast.makeText(this, title + ": " + subtitle, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	public void cancelNotification(int id)
+	{
+		NotificationManager notificationManager = (NotificationManager)this.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+		notificationManager.cancel(id);
 	}
 	
 	/**
@@ -438,10 +455,116 @@ public class GCFApplication extends Application
 		}
 	}
 	
+	// Service Verification ---------------------------------------------------------------
+	public boolean verifyServices()
+	{
+		// Checking Services
+		boolean locationWorking = verifyLocationServices();
+		boolean googleWorking   = verifyGoogleServices();
+		boolean bluewaveWorking = verifyBluewaveServices();
+		
+		if (!locationWorking || !googleWorking || !bluewaveWorking)
+		{
+			Intent newIntent = new Intent(getApplicationContext(), Splashscreen.class);
+			createNotification(0, "Impromptu Needs More Context", "Tap to Troubleshoot", newIntent);			
+			return false;
+		}
+		else
+		{
+			cancelNotification(0);
+		}
+		
+		return true;
+	}
+
+	public boolean verifyLocationServices()
+	{
+		boolean locationEnabled = false;
+		
+		// LOCATION SERVICES CHECK
+		LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		
+		int locationMode = 0;
+	    String locationProviders;
+
+	    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+	    {
+		    try 
+		    {
+		    	locationMode = android.provider.Settings.Secure.getInt(getContentResolver(), android.provider.Settings.Secure.LOCATION_MODE);
+		    } 
+		    catch (Exception e) 
+		    {
+		    	e.printStackTrace();
+		    }
+	
+		    locationEnabled = (locationMode != android.provider.Settings.Secure.LOCATION_MODE_OFF);
+	    }
+	    else
+	    {
+	    	// Looks at Location Mode for Jelly Bean and Below Systems
+	        locationProviders = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+	        locationEnabled   = !TextUtils.isEmpty(locationProviders);
+	    }
+	    
+	    return locationEnabled;
+	}
+	
+	public boolean verifyGoogleServices()
+	{
+		int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+		
+		try 
+		{
+		    return (status == ConnectionResult.SUCCESS);
+		} 
+		catch (Exception e) 
+		{
+		    Log.e("IMPROMPTU", "" + e);
+		    return false;
+		}
+	}
+	
+	public boolean verifyBluewaveServices()
+	{
+		if (getGCFService() == null)
+		{
+			return false;
+		}
+		else
+		{
+			return getGCFService().getBluewaveManager().isDiscoverable();	
+		}
+	}
+	
 	// Context Update Methods -------------------------------------------------------------
 	private void setPersonalContext()
 	{
 		setPersonalContext(null, null, 0.0, 0.0, 0.0);
+	}
+	
+	private void setPersonalContext(String snapToItCode)
+	{
+		try
+		{			
+			if (gcfService != null)
+			{
+				// Updates Via Bluewave
+				getBluewaveManager().getPersonalContextProvider().setContext(IDENTITY_CONTEXT_TAG, getIdentityContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(LOCATION_CONTEXT_TAG, getLocationContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(TIME_CONTEXT_TAG, getTimeContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(ACTIVITY_CONTEXT_TAG, getActivityContext());
+				getBluewaveManager().getPersonalContextProvider().setContext(SNAP_TO_IT_TAG, getSnapToItContext(snapToItCode));
+				getBluewaveManager().getPersonalContextProvider().setContext(PREFERENCES_TAG, getPreferences());
+				
+				// PUBLISHES THE CHANGES AT ONCE
+				getBluewaveManager().getPersonalContextProvider().publish();	
+			}
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Error Creating Context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}
 	}
 	
 	private void setPersonalContext(String photoFilePath, String applianceName, double azimuth, double pitch, double roll)
@@ -542,7 +665,7 @@ public class GCFApplication extends Application
 							//appObject.put("expires", app.getDateExpires().getTime());
 							
 							long timeToExpire = app.getDateExpires().getTime() - System.currentTimeMillis();
-							appObject.put("expiring", timeToExpire < (UPDATE_SECONDS * 1000));
+							appObject.put("expiring", timeToExpire < (UPDATE_SECONDS * 1.5 * 1000));
 							availableApps.put(appObject);
 						}
 					}
@@ -613,6 +736,32 @@ public class GCFApplication extends Application
 	        }
 	        else
 	        {
+	        	getBluewaveManager().getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
+	        }
+		}
+		catch (Exception ex)
+		{
+			Toast.makeText(this, "Could not write snap-to-it context: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		}	
+		
+		return snaptoit;
+	}
+	
+	private JSONObject getSnapToItContext(String code)
+	{
+		JSONObject snaptoit = new JSONObject();
+		
+		try
+		{
+			// Sets Snap To It Value
+	        if (code != null)
+	        {
+	        	Log.d(LOG_NAME, "Snap To It Code: " + code);
+	        	snaptoit.put("CODE", code);
+	        }
+	        else
+	        {
+	        	Log.d(LOG_NAME, "No Snap To It Code");
 	        	getBluewaveManager().getPersonalContextProvider().removeContext(SNAP_TO_IT_TAG);
 	        }
 		}
@@ -822,16 +971,29 @@ public class GCFApplication extends Application
 			}
 		}
 		
-		Collections.sort(catalog);
 		return catalog;
 	}
 	
 	public ArrayList<AppCategoryInfo> getCatalog()
 	{
-		Collections.sort(appCatalog);
 		return appCatalog;
 	}
-					
+			
+	public void removeSnapToItApps()
+	{
+		// Removes the App
+		for (AppCategoryInfo category : appCatalog)
+		{
+			if (category.getName().equalsIgnoreCase("Snap-To-It"))
+			{
+				appCatalog.remove(category);
+				Intent i = new Intent(ACTION_APP_UPDATE);
+				sendBroadcast(i);
+				break;
+			}
+		}
+	}
+	
 	private void updateCatalog()
 	{
 		boolean changed = false;
@@ -844,7 +1006,7 @@ public class GCFApplication extends Application
 			{
 				long timeElapsedInMS = new Date().getTime() - app.getDateExpires().getTime();
 				
-				if (timeElapsedInMS > 60000 * 60)
+				if (timeElapsedInMS > 60000 * APP_EXPIRATION_TIME)
 				{
 					category.removeApp(app);
 					changed = true;
@@ -986,22 +1148,25 @@ public class GCFApplication extends Application
 		{
 			if (gcfService != null && gcfService.isReady())
 			{	
+				// Sets a Debug Flag
+				gcfService.getGroupContextManager().setDebug(DEBUG);
+				
 				// Connects to Default DNS Channel and Channels
 				connectionKey = gcfService.getGroupContextManager().connect(COMM_MODE, IP_ADDRESS, PORT);
 				
 				// Creates Context Providers
-				ContextProvider 		 calendarProvider  = new GoogleCalendarProvider(gcfService.getGroupContextManager(), GCFApplication.this.getContentResolver());
-				//ContextProvider 		 lightProvider     = new LightContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
-				ActivityContextProvider  acp 			   = new ActivityContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
-				AudioContextProvider     audioProvider     = new AudioContextProvider(gcfService.getGroupContextManager());
-				BluewaveContextProvider  bluewaveProvider  = new BluewaveContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
-				BluetoothContextProvider bluetoothProvider = new BluetoothContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
-				LocationContextProvider  locationProvider  = new LocationContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
-				GPSContextProvider		 gpsProvider	   = new GPSContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
-				CompassContextProvider   compassProvider   = new CompassContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
-				
-				gcfService.getGroupContextManager().setDebug(false);
-				
+				ContextProvider 		   calendarProvider  = new GoogleCalendarProvider(gcfService.getGroupContextManager(), GCFApplication.this.getContentResolver());
+				//ContextProvider 		   lightProvider     = new LightContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				ActivityContextProvider    acp 			     = new ActivityContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				AudioContextProvider       audioProvider     = new AudioContextProvider(gcfService.getGroupContextManager());
+				BluewaveContextProvider    bluewaveProvider  = new BluewaveContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
+				BluetoothContextProvider   bluetoothProvider = new BluetoothContextProvider(GCFApplication.this, gcfService.getGroupContextManager(), 60000);
+				LocationContextProvider    locationProvider  = new LocationContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				GPSContextProvider		   gpsProvider	     = new GPSContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				CompassContextProvider     compassProvider   = new CompassContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+				TemperatureContextProvider tempProvider      = new TemperatureContextProvider(gcfService.getGroupContextManager(), GCFApplication.this);
+				PostureContextProvider     postureProvider   = new PostureContextProvider(GCFApplication.this, gcfService.getGroupContextManager());
+								
 				// Registers Context Providers
 				gcfService.getGroupContextManager().registerContextProvider(calendarProvider);
 				//gcfService.getGroupContextManager().registerContextProvider(lightProvider);	
@@ -1012,11 +1177,16 @@ public class GCFApplication extends Application
 				gcfService.getGroupContextManager().registerContextProvider(locationProvider);
 				gcfService.getGroupContextManager().registerContextProvider(gpsProvider);
 				gcfService.getGroupContextManager().registerContextProvider(compassProvider);
+				//gcfService.getGroupContextManager().registerContextProvider(tempProvider);
+				//gcfService.getGroupContextManager().registerContextProvider(postureProvider);
 								
-				if (!isInForeground())
+				if (!isInForeground() && DEBUG)
 				{
-					Toast.makeText(GCFApplication.this, "GCF Ready [" + gcfService.getGroupContextManager().getRegisteredProviders().length + " context providers]", Toast.LENGTH_SHORT).show();	
+					Toast.makeText(GCFApplication.this, "Impromptu Running", Toast.LENGTH_SHORT).show();	
 				}
+				
+				// Checks to Make Sure all Services are Working
+				verifyServices();
 			}
 		}
 		
@@ -1044,7 +1214,7 @@ public class GCFApplication extends Application
 		private void onOtherUserContextReceived(Context context, Intent intent)
 		{
 			// This is the Raw JSON from the Device
-			String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+			String json = intent.getStringExtra(BluewaveManager.EXTRA_OTHER_USER_CONTEXT);
 			
 			// Creates a Parser
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);
@@ -1150,7 +1320,8 @@ public class GCFApplication extends Application
 						Toast.makeText(GCFApplication.this, "Problem With App: " + ex.getMessage(), Toast.LENGTH_LONG).show();
 					}
 				}
-								
+				
+				// Creates a Notification IFF a New App was Found
 				if (newApps.size() >= 1)
 				{
 					createNotification(newApps);
@@ -1164,12 +1335,10 @@ public class GCFApplication extends Application
 	
 		private void onChannelSubscribed(Context context, Intent intent)
 		{
-			//String channel = intent.getStringExtra("CHANNEL");
-			
 			// Creates the Scheduled Event Timer
 			if (timerHandler == null)
 			{
-				timerHandler = new ContextAutoDeliveryHandler(GCFApplication.this);				
+				timerHandler = new ContextDeliveryHandler(GCFApplication.this);				
 				timerHandler.start();	
 			}
 		}
@@ -1182,18 +1351,8 @@ public class GCFApplication extends Application
 			double pitch      = intent.getDoubleExtra("PITCH", 0.0);
 			double roll       = intent.getDoubleExtra("ROLL", 0.0);
 			
-			Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
-			
-			// Removes the App
-			for (AppCategoryInfo category : appCatalog)
-			{
-				if (category.getName().equalsIgnoreCase("Snap-To-It"))
-				{
-					appCatalog.remove(category);
-					break;
-				}
-			}
-			
+			//Toast.makeText(GCFApplication.this, "Uploaded Complete: " + uploadPath, Toast.LENGTH_SHORT).show();
+						
 			// Sends a New Query!
 			sendQuery(GCFApplication.this, uploadPath, applianceName, azimuth, pitch, roll, true);	
 		}
@@ -1233,8 +1392,57 @@ public class GCFApplication extends Application
 			
 		}
 	}
-	
+		
 	public static void sendQuery(GCFApplication application, String snapToItPhoto, String applianceName, double azimuth, double pitch, double roll, boolean force)
+	{
+		// This flag is used to determine if the system should send a message.  It is true when:
+		//   1.  The user has elected to send context from the app's settings screen, OR the system is charging
+		//   2.  A set amount of time has elapsed
+		boolean sendUpdate = application.appSharedPreferences.getBoolean("impromptu_send", true) || 
+				             application.getGroupContextManager().getBatteryMonitor().isCharging();
+		sendUpdate = sendUpdate && (System.currentTimeMillis() - lastQuery) > (UPDATE_SECONDS * 1000  - 5000);
+		
+		if (application.getGCFService() != null)
+		{
+			JSONContextParser context = application.getGCFService().getGroupContextManager().getBluewaveManager().getPersonalContextProvider().getContext(); 
+			
+			if (context != null)
+			{
+				Log.d(LOG_NAME, "Sending Context to DNS: " + context.toString().length() + " bytes");
+				
+				// Updates the Application Catalog to Remove Expired Entries
+				application.updateCatalog();
+				
+				// Sends a Context Update to the System
+				if (sendUpdate || force)
+				{					
+					// Updates the Device's Personal Context
+					application.setPersonalContext(snapToItPhoto, applianceName, azimuth, pitch, roll);
+					
+					// Sends the Context to the Application Directory
+					application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
+							ApplicationSettings.DNS_CHANNEL, 
+							"LOS_DNS", 
+							new String[] { "LOS_DNS" }, 
+							"QUERY", 
+							new String[] { "CONTEXT=" + context.toString(), "TIMESTAMP=" + new Date().toString(), "PID=" + APP_PROCESS_ID });
+				
+					// Remembers when the last time a query was sent
+					lastQuery = System.currentTimeMillis();
+				}
+			}
+			else
+			{
+				Toast.makeText(application, "No Context Generated.  Stand By.", Toast.LENGTH_SHORT).show();
+			}
+		}
+		else
+		{
+			Log.d(LOG_NAME, "Cannot Send Context to DNS: GCF Service is NULL");
+		}
+	}
+	
+	public static void sendQuery(GCFApplication application, String snapToItCode)
 	{
 		boolean sendUpdate = application.appSharedPreferences.getBoolean("impromptu_send", true) || application.getGroupContextManager().getBatteryMonitor().isCharging();
 		
@@ -1250,10 +1458,10 @@ public class GCFApplication extends Application
 				application.updateCatalog();
 				
 				// Sends a Context Update to the System
-				if (sendUpdate || force)
+				if (sendUpdate)
 				{
 					// Updates the Device's Personal Context
-					application.setPersonalContext(snapToItPhoto, applianceName, azimuth, pitch, roll);
+					application.setPersonalContext(snapToItCode);
 					
 					// Sends the Context to the Application Directory
 					application.getGCFService().getGroupContextManager().sendComputeInstruction(connectionKey, 
@@ -1280,12 +1488,12 @@ public class GCFApplication extends Application
 	 * This Class Allows the App To Update Its Context Once per Interval
 	 * @author adefreit
 	 */
-	private static class ContextAutoDeliveryHandler extends Handler
+	private static class ContextDeliveryHandler extends Handler
 	{
 		private boolean 		     running;
 		private final GCFApplication app;
 		
-		public ContextAutoDeliveryHandler(final GCFApplication app)
+		public ContextDeliveryHandler(final GCFApplication app)
 		{			
 			running  = false;
 			this.app = app;
@@ -1297,18 +1505,34 @@ public class GCFApplication extends Application
 			{ 	
 				if (running)
 				{
-					Date nextExecute = (app.isInForeground()) ? 
-							new Date(System.currentTimeMillis() + UPDATE_SECONDS * 1000) :
-							new Date(System.currentTimeMillis() + 2 * UPDATE_SECONDS * 1000);
+					// By Default:  Next Update Occurs According to the Value Specified in GCFApplication.java
+					Date nextExecute = new Date(System.currentTimeMillis() + UPDATE_SECONDS * 1000);
+					
+					// Looks for Special Cases for Updates
+//					if (app.getGroupContextManager().getBatteryMonitor().isCharging())
+//					{
+//						if (app.getGroupContextManager().isConnectedWiFi())
+//						{
+//							// If Charging, go to 30 seconds
+//							nextExecute = new Date(System.currentTimeMillis() + 30000);	
+//						}
+//					}
 					
 					// Sends the Context to the Application Directory
 					sendQuery(app, null, null, 0.0, 0.0, 0.0, false);
+					
+					// Requests Context Information from Self
+					if (app.getGroupContextManager().getRequest("LOC") == null || app.getGroupContextManager().getRequest("ACT") == null)
+					{
+						app.getGroupContextManager().sendRequest("LOC", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);
+						app.getGroupContextManager().sendRequest("ACT", ContextRequest.LOCAL_ONLY, GCFApplication.UPDATE_SECONDS * 1000, new String[0]);	
+					}
 					
 					// Removes Any Existing Callbacks
 					removeCallbacks(this);
 					
 					// Sleep Time Depends on Whether or Not the Application is in the Foreground
-					postDelayed(this, nextExecute.getTime() - System.currentTimeMillis());		
+					postDelayed(this, nextExecute.getTime() - System.currentTimeMillis());
 				}
 			}
 		};

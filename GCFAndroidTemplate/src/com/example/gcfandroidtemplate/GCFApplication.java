@@ -12,18 +12,16 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.BluewaveManager;
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.AndroidGroupContextManager;
-import com.adefreitas.androidframework.GCFService;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidproviders.BluetoothContextProvider;
-import com.adefreitas.androidproviders.BluewaveContextProvider;
-import com.adefreitas.androidproviders.LocationContextProvider;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.messages.ContextData;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.arbiters.ProximityArbiter;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.android.providers.BluetoothContextProvider;
+import com.adefreitas.gcf.android.providers.BluewaveContextProvider;
+import com.adefreitas.gcf.android.providers.LocationContextProvider;
+import com.adefreitas.gcf.messages.ContextData;
 import com.google.gson.Gson;
 
 /**
@@ -120,14 +118,14 @@ public class GCFApplication extends Application
 		{			
 			if (DEBUG)
 			{
-				Toast.makeText(this, "Starting GCF", Toast.LENGTH_SHORT).show();	
+				Toast.makeText(this, "Template App Starting GCF", Toast.LENGTH_SHORT).show();	
 			}
 			
 			// Creates Intent to Start the Service
 			Intent i = new Intent(this, GCFService.class);
 			i.putExtra("name", "Template App");
 			this.bindService(i, gcfServiceConnection, BIND_AUTO_CREATE);
-			//this.startService(i);
+			this.startService(i);
 		}
 	}
 	
@@ -197,7 +195,9 @@ public class GCFApplication extends Application
 		}
 	
 		private void onGCFServiceStarted(Context context, Intent intent)
-		{			
+		{	
+			System.out.println("Made it to the GCF started!");
+			
 			if (gcfService != null && gcfService.isReady())
 			{
 				// Connects to Default DNS Channel and Channels
@@ -212,11 +212,10 @@ public class GCFApplication extends Application
 				gcfService.getGroupContextManager().registerContextProvider(bluewaveProvider);
 				gcfService.getGroupContextManager().registerContextProvider(bluetoothProvider);
 				gcfService.getGroupContextManager().registerContextProvider(locationProvider);
-									
-				if (DEBUG)
-				{
-					Toast.makeText(GCFApplication.this, "GCF Ready [" + gcfService.getGroupContextManager().getRegisteredProviders().length + " context providers]", Toast.LENGTH_SHORT).show();	
-				}
+				
+				// EXPERIMENTAL
+				gcfService.getGroupContextManager().registerArbiter(new ProximityArbiter(gcfService.getGroupContextManager().getBluewaveManager()), ProximityArbiter.PROXIMITY_REQUEST_TYPE);
+				gcfService.getGroupContextManager().sendRequest("LOC", ProximityArbiter.PROXIMITY_REQUEST_TYPE, new String[0], 30000, new String[0]);
 			}
 		}
 		
@@ -237,12 +236,14 @@ public class GCFApplication extends Application
 			String   contextType = intent.getStringExtra(ContextData.CONTEXT_TYPE);
 			String   deviceID    = intent.getStringExtra(ContextData.DEVICE_ID);
 			String[] values      = intent.getStringArrayExtra(ContextData.PAYLOAD);
+			
+			System.out.println("Received " + contextType + " from " + deviceID);
 		}
 		
 		private void onOtherUserContextReceived(Context context, Intent intent)
 		{
 			// This is the Raw JSON from the Device
-			String json = intent.getStringExtra(BluewaveManager.OTHER_USER_CONTEXT);
+			String json = intent.getStringExtra(BluewaveManager.EXTRA_OTHER_USER_CONTEXT);
 			
 			// Creates a Parser
 			JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, json);

@@ -5,18 +5,17 @@ import impromptu_apps.DesktopApplicationProvider;
 import java.util.Date;
 import java.util.HashMap;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.desktopframework.toolkit.SQLToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.SQLToolkit;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_FavorListener extends DesktopApplicationProvider
 {
-	private String 		lastOutput;
-	private int 	 	entriesRecorded;
-	private Date		dateStarted;
+	private int  entriesRecorded;
+	private Date dateStarted;
 		
 	private SQLToolkit sqlToolkit;
 	
@@ -35,13 +34,13 @@ public class App_FavorListener extends DesktopApplicationProvider
 	{
 		super(groupContextManager, 
 				"LISTEN",
-				"Favor Listener Application",
-				"This app records all context advertised by Impromptu.",
-				"FAVOR BANK",
+				"Context Listener Application",
+				"This app records all context advertised by Impromptu and reports it to the favor banking system.",
+				"IMPROMPTU",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"https://cdn1.iconfinder.com/data/icons/MetroStation-PNG/128/MB__listen.png", // LOGO
-				600,
+				3600,
 				commMode,
 				ipAddress,
 				port);
@@ -66,9 +65,8 @@ public class App_FavorListener extends DesktopApplicationProvider
 			ListenInfo li = log.get(deviceID);
 			ui += "<p>" + deviceID + ": " + li.getCount() + " (Updated: " + li.getLastUpdate().toString() + ")</p>";
 		}
-				
-		ui		 += "<p><b>Last Entry:</b><br/>" + lastOutput + "</p>";
-		ui       += "</html>";
+		
+		ui += "</html>";
 		
 		return new String[] { "UI=" + ui };
 	}
@@ -79,53 +77,6 @@ public class App_FavorListener extends DesktopApplicationProvider
 		super.onComputeInstruction(instruction);
 	}
 
-	public void recordContext(JSONContextParser parser)
-	{	
-		try
-		{
-			String deviceID   = this.getDeviceID(parser);
-			String time       = new java.sql.Timestamp(System.currentTimeMillis()).toString();			
-			double latitude   = this.getLatitude(parser);
-			double longitude  = this.getLongitude(parser);
-			String activity   = this.getActivity(parser);
-			int    confidence = this.getActivityConfidence(parser);
-			
-			// Increments the Counter
-			ListenInfo li = (log.containsKey(deviceID)) ? log.get(deviceID) : new ListenInfo();
-			li.update(parser);
-			log.put(deviceID, li);
-			
-			// Generates the History Query
-			String historyQuery = 
-					String.format("INSERT INTO impromptu_usercontext (device_id, timestamp, latitude, longitude, activity, confidence) VALUES ('%s','%s',%f,%f,'%s',%d);",
-					deviceID, time, latitude, longitude, activity, confidence);
-			
-			// Generates the Real Time Query
-			String realtimeQuery = (parser.getJSONObject("location") != null && parser.getJSONObject("location").has("SENSOR")) ?
-					// This query occurs if there is a sensor
-					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, last_sensor, last_sensor_date, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%d,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), last_sensor=VALUES(last_sensor), last_sensor_date=VALUES(last_sensor_date), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
-							deviceID, latitude, longitude, parser.getJSONObject("location").get("SENSOR").getAsString(), System.currentTimeMillis(), activity, (double)confidence, System.currentTimeMillis()) :
-					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
-							deviceID, latitude, longitude, activity, (double)confidence, System.currentTimeMillis());
-					
-			// Runs the SQL Queries
-			sqlToolkit.runUpdateQuery(historyQuery);
-			sqlToolkit.runUpdateQuery(realtimeQuery);
-			
-			// Increments the Counter
-			entriesRecorded++;
-			
-			// Remembers the Last Thing Output
-			lastOutput = historyQuery + "\n\n" + realtimeQuery;
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-			
-			System.out.println(" *** Problem Recording Context: " + parser.toString() + " ***");
-		}
-	}
-	
 	@Override
 	public boolean sendAppData(String json)
 	{
@@ -137,6 +88,55 @@ public class App_FavorListener extends DesktopApplicationProvider
 		return this.hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 
+	// Custom Methods --------------------------------------------------------------------------------------------------------
+	public void recordContext(JSONContextParser parser)
+	{	
+		try
+		{
+			String deviceID   = this.getDeviceID(parser);
+			String time       = new java.sql.Timestamp(System.currentTimeMillis()).toString();			
+			double latitude   = this.getLatitude(parser);
+			double longitude  = this.getLongitude(parser);
+			String activity   = this.getActivity(parser);
+			int    confidence = this.getActivityConfidence(parser);
+			String source     = (parser.getJSONObject("location") != null && parser.getJSONObject("location").has("SENSOR")) ? parser.getJSONObject("location").get("SENSOR").getAsString() : "APP_DIRECTORY";
+			
+			// Increments the Counter
+			ListenInfo li = (log.containsKey(deviceID)) ? log.get(deviceID) : new ListenInfo();
+			li.update(parser);
+			log.put(deviceID, li);
+			
+			// Generates the History Query
+			String historyQuery = 
+					String.format("INSERT INTO impromptu_usercontext (device_id, timestamp, latitude, longitude, activity, confidence,source) VALUES ('%s','%s',%f,%f,'%s',%d,'%s');",
+					deviceID, time, latitude, longitude, activity, confidence, source);
+						
+			// Generates the Real Time Query
+			String realtimeQuery = (parser.getJSONObject("location") != null && parser.getJSONObject("location").has("SENSOR")) ?
+					// This query occurs if there is a sensor
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, last_sensor, last_sensor_date, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%d,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), last_sensor=VALUES(last_sensor), last_sensor_date=VALUES(last_sensor_date), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
+							deviceID, latitude, longitude, parser.getJSONObject("location").get("SENSOR").getAsString(), System.currentTimeMillis() / 1000, activity, (double)confidence, System.currentTimeMillis() / 1000) :
+					// This query occurs if there is no sensor
+					String.format("INSERT INTO favors_profile (device_id, latitude, longitude, activity, confidence, last_update) VALUES ('%s',%f,%f,'%s',%f,%d) ON DUPLICATE KEY UPDATE latitude=VALUES(latitude), longitude=VALUES(longitude), activity=VALUES(activity), confidence=VALUES(confidence), last_update=VALUES(last_update)", 
+							deviceID, latitude, longitude, activity, (double)confidence, System.currentTimeMillis() / 1000);
+					
+			//System.out.println(realtimeQuery);
+					
+			// Runs the SQL Queries
+			sqlToolkit.runUpdateQuery(historyQuery);
+			sqlToolkit.runUpdateQuery(realtimeQuery);
+			
+			// Increments the Counter
+			entriesRecorded++;
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+			
+			System.out.println(" *** Problem Recording Context: " + parser.toString() + " ***");
+		}
+	}
+	
 	public String getDescription(String json)
 	{
 		return entriesRecorded + " entries obtained from " + log.keySet().size() + " devices.  Click for more details.";

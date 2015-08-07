@@ -4,12 +4,12 @@ import impromptu_apps.DesktopApplicationProvider;
 
 import java.util.Date;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationObject;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.impromptu.ApplicationElement;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Diagnostics extends DesktopApplicationProvider
 {
@@ -39,7 +39,7 @@ public class App_Diagnostics extends DesktopApplicationProvider
 		ui	      += "<div><input value=\"Download Test.docx\" type=\"button\" height=\"100\" onclick=\"device.downloadFile('http://gcf.cmu-tbank.com/test.docx');\"/></div>";
 		
 		// Creates an Object for this Application
-		ApplicationObject obj = new ApplicationObject("FILE_DOCX", "Download Test.docx");
+		ApplicationObject obj = new ApplicationObject(this.getAppID(), "FILE_DOCX", "Download Test.docx");
 		
 		// Converts Objects into a JSON String
 		String objects = ApplicationElement.toJSONArray(new ApplicationElement[] { obj }) ;

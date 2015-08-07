@@ -13,13 +13,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.adefreitas.androidframework.ContextReceiver;
+import com.adefreitas.gcf.ContextProvider;
 import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.groupcontextframework.ContextProvider;
 
 public class DebugActivity extends Activity 
 {
@@ -154,7 +152,10 @@ public class DebugActivity extends Activity
 		// Updates Bluewave Contents
 		try
 		{
-			txtBluewave.setText(application.getBluewaveManager().getPersonalContextProvider().getContext().toString());
+			String bluewaveText = "Visible to Other Devices As:\n" + application.getBluewaveManager().getBluetoothName() + "\n\n";
+			bluewaveText       += application.getBluewaveManager().getPersonalContextProvider().getContext().toString();
+			
+			txtBluewave.setText(bluewaveText);
 		}
 		catch (Exception ex)
 		{

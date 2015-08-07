@@ -1,15 +1,14 @@
 package com.adefreitas.gcfimpromptu;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,10 +19,9 @@ import android.annotation.SuppressLint;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentValues;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
@@ -31,15 +29,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Parcelable;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,10 +47,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.webkit.ConsoleMessage;
+import android.webkit.GeolocationPermissions;
+import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
-import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -61,23 +61,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.adefreitas.androidbluewave.JSONContextParser;
-import com.adefreitas.androidframework.AndroidCommManager;
-import com.adefreitas.androidframework.ContextReceiver;
-import com.adefreitas.androidframework.GCFService;
-import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.androidframework.toolkit.HttpToolkit;
-import com.adefreitas.androidframework.toolkit.ImageToolkit;
-import com.adefreitas.gcfimpromptu.lists.AppCategoryInfo;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
+import com.adefreitas.gcf.impromptu.ApplicationFunction;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.ContextData;
+import com.adefreitas.gcf.messages.ContextRequest;
 import com.adefreitas.gcfimpromptu.lists.AppInfo;
 import com.adefreitas.gcfmagicapp.R;
-import com.adefreitas.liveos.ApplicationFunction;
-import com.adefreitas.liveos.ApplicationObject;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ContextData;
-import com.adefreitas.messages.ContextRequest;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class AppEngine extends ActionBarActivity implements ContextReceiver
@@ -86,6 +79,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	private static final String LOG_NAME 				 = "AppEngine";
 	private static final String ACTION_DOWNLOADED_HTML   = "DOWNLOADED_HTML";
 	private static final String ACTION_DOWNLOAD_COMPLETE = "DOWNLOAD_COMPLETE";
+	public  static final String REMOTE_UPLOAD_COMPLETE   = "APP_UPLOAD";
 	
 	// Application Link
 	private GCFApplication application;
@@ -110,7 +104,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	private Gson gson;
 	
 	// Web Chrome Client Values
-    private static final int     FILECHOOSER_RESULTCODE = 12345;
+    public  static final int     FILECHOOSER_RESULTCODE = 12345;
     private static final String  SS_FILE_PATH_CALLBACK  = "FILE_PATH_CALLBACK";
     private static final String  SS_UPLOAD_MESSAGE      = "UPLOAD_MESSAGE";
     private static final String  SS_CAMERA_PHOTO_PATH   = "CAMERA_PHOTO_PATH";
@@ -148,7 +142,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		this.intentFilter = new IntentFilter();
 		this.intentFilter.addAction(ACTION_DOWNLOADED_HTML);
 		this.intentFilter.addAction(ACTION_DOWNLOAD_COMPLETE);
-		this.intentFilter.addAction(UploadFileDialog.REMOTE_UPLOAD_COMPLETE);
+		this.intentFilter.addAction(REMOTE_UPLOAD_COMPLETE);
 		this.intentFilter.addAction(AndroidCommManager.ACTION_COMMTHREAD_CONNECTED);
 		this.intentFilter.addAction(AndroidCommManager.ACTION_CHANNEL_SUBSCRIBED);
 		
@@ -179,6 +173,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		webView.setWebViewClient(new CustomBrowser());	
 		webView.setWebChromeClient(new CustomChromeClient());
 		webViewPlaceholder.addView(webView);
+		webView.getSettings().setGeolocationDatabasePath(application.getFilesDir().getPath() );
 	
 		// Restores the App State so Long as the App is Running!
 		if (savedInstanceState != null)
@@ -359,44 +354,95 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
     {
     	if (Build.VERSION.SDK_INT >= 21)
     	{
-            if(requestCode != FILECHOOSER_RESULTCODE || application.mFilePathCallback == null) 
+    		if (requestCode == FILECHOOSER_RESULTCODE && application.mFilePathCallback != null)
+    		{
+    			Uri[] results = null;
+
+                // Check that the response is a good one
+                if (resultCode == Activity.RESULT_OK) 
+                {
+                	results = new Uri[] { Uri.parse(application.mCameraPhotoPath) };
+                    application.mFilePathCallback.onReceiveValue(results);
+                    application.mFilePathCallback = null;
+                }
+                
+                return;
+    		}
+    		else if (requestCode == FILECHOOSER_RESULTCODE)
+    		{
+    			// Check that the response is a good one
+                if (resultCode == Activity.RESULT_OK) 
+                {
+                	String filePath = FileHelper.getPath(this, intent.getData());
+                	
+                	if (filePath != null)
+                	{
+                		File file = new File(filePath);
+                		
+                		if (file.exists())
+                    	{
+                    		ContentResolver cr   = application.getContentResolver();
+                        	String 			mime = cr.getType(intent.getData());
+                        	                    	
+                        	try 
+                        	{
+                        		Toast.makeText(application, "Uploading " + file.getName(), Toast.LENGTH_SHORT).show();
+                        		
+                        		byte[] bytes = new byte[(int)file.length()];
+                        	    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+                        	    buf.read(bytes, 0, bytes.length);
+                        	    buf.close();
+    	                    	encodeFile(file.getName(), bytes);
+                        	} 
+                        	catch (Exception ex)
+                        	{
+                        		Toast.makeText(application, "Upload Failed: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                        	}
+                    	}
+                	}
+                	else
+                	{
+                		Toast.makeText(application, "File Not Downloaded: " + intent.getData(), Toast.LENGTH_LONG).show();
+                	}
+                	
+//                	// Only Uploads if the File is Valid
+//                    if (file.exists())
+//                    {
+//                    	Toast.makeText(application, intent.getData().getPath(), Toast.LENGTH_SHORT).show();
+//                    	
+//                    	ContentResolver cr   = application.getContentResolver();
+//                    	String 			mime = cr.getType(intent.getData());
+//                    	
+//                    	Toast.makeText(application, "Uploading " + file.getName(), Toast.LENGTH_SHORT).show();
+//                    	
+//                    	try 
+//                    	{
+//                    		byte[] bytes = new byte[(int)file.length()];
+//                    	    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+//                    	    buf.read(bytes, 0, bytes.length);
+//                    	    buf.close();
+//	                    	encodeFile(file.getName(), bytes);
+//                    	} 
+//                    	catch (Exception ex)
+//                    	{
+//                    	    // TODO Auto-generated catch block
+//                    	    ex.printStackTrace();
+//                    	}
+//                    }
+//                    else
+//                    {
+//                    	Toast.makeText(application, intent.getData().getPath() + " is not downloaded on the phone.", Toast.LENGTH_LONG).show();
+//                    }
+                }
+
+                return;
+    		}
+    		else
             {
             	Toast.makeText(this, "Unexpected Activity Result: " + requestCode, Toast.LENGTH_SHORT).show();
                 super.onActivityResult(requestCode, resultCode, intent);
                 return;
             }
-
-            Uri[] results = null;
-
-            // Check that the response is a good one
-            if (resultCode == Activity.RESULT_OK) 
-            {
-//                if(intent == null) 
-//                {
-//                	System.out.println("A");
-//                	// If there is not data, then we may have taken a photo
-//                    if(application.mCameraPhotoPath != null) 
-//                    {
-//                        results = new Uri[]{Uri.parse(application.mCameraPhotoPath)};
-//                    }
-//                } 
-//                else 
-//                {
-//                    String dataString = intent.getDataString();
-//                	System.out.println("B " + dataString);
-//                    //if (dataString != null) 
-//                    {
-//                        //results = new Uri[]{Uri.parse(dataString)};
-//                    	results = new Uri[] { Uri.parse(application.mCameraPhotoPath) };
-//                    }
-//                }
-            	
-            	results = new Uri[] { Uri.parse(application.mCameraPhotoPath) };
-            }
-
-            application.mFilePathCallback.onReceiveValue(results);
-            application.mFilePathCallback = null;
-            return;
         }
     	else
     	{
@@ -493,6 +539,8 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		{
 			for (ApplicationFunction f : app.getFunctions())
 			{
+				Toast.makeText(application, "Looking at function: " + f.getName() + " from " + app.getName(), Toast.LENGTH_SHORT).show();
+				
 				if (f.isCompatible(applicationObjects.toArray(new ApplicationObject[0])))
 				{
 					// Creates and Adds a Button
@@ -501,6 +549,8 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 					bt.setTextSize(10.0f);
 					bt.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 					bt.setOnClickListener(onFunctionClickListener);
+					bt.setBackgroundColor(0xFF333333);
+					bt.setTextColor(0xFFFFFFFF);
 					layoutFunctions.addView(bt);
 					
 					// Adds the Button to the Lookup
@@ -600,24 +650,66 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	        {
 	    		alertDialog.dismiss(); 
 	    		
+	    		boolean found = false;
+	    		
 	    		for (AppInfo app : application.getAvailableApps())
 	    		{
-	    			for (ApplicationFunction f : app.getFunctions())
+	    			if (function.getParentAppID().equals(app.getID()))
 	    			{
-	    				if (f.getName().equals(function.getName()))
+	    				// Opens a Temporary Connection to this Device
+	    				String socketID = application.getGroupContextManager().connect(app.getCommMode(), app.getIPAddress(), app.getPort());
+	    				
+	    				// TODO:  REPLACE ALL OF THIS SOMEDAY!
+	    				// Determine what Object to send to this function
+	    				ArrayList<String> objects = new ArrayList<String>();
+	    				for (ApplicationObject o : applicationObjects)
 	    				{
-	    					// Opens a Temporary Connection to this Device
-		    				String socketID = application.getGroupContextManager().connect(app.getCommMode(), app.getIPAddress(), app.getPort());
-		    				
-		    				// Determine what Object to send
-		    				
-		    				
-		    				// Sends the Command
-		    				System.out.println("Sending Information to ");
-		    				application.getGroupContextManager().sendComputeInstruction(socketID, app.getChannel(), app.getAppContextType(), new String[] { app.getDeviceID() }, function.getCallbackCommand(), new String[0]);
-		    				break;
+	    					if (function.isCompatible(new ApplicationObject[] { o } ))
+	    					{
+	    						objects.add(o.toJSON());
+	    					}
 	    				}
+	    				
+	    				// Sends the Command
+	    				application.getGroupContextManager().sendComputeInstruction(socketID, app.getChannel(), app.getAppContextType(), new String[] { app.getDeviceID() }, function.getCallbackCommand(), objects.toArray(new String[0]));
+	    				found = true;
+    					break;
 	    			}
+	    			
+//	    			for (ApplicationFunction f : app.getFunctions())
+//	    			{
+//	    				if (f == function)
+//	    				{
+//	    					// Opens a Temporary Connection to this Device
+//		    				String socketID = application.getGroupContextManager().connect(app.getCommMode(), app.getIPAddress(), app.getPort());
+//		    				
+//		    				// TODO:  REPLACE ALL OF THIS SOMEDAY!
+//		    				// Determine what Object to send to this function
+//		    				ArrayList<String> objects = new ArrayList<String>();
+//		    				for (ApplicationObject o : applicationObjects)
+//		    				{
+//		    					if (f.isCompatible(new ApplicationObject[] { o } ))
+//		    					{
+//		    						objects.add(o.toJSON());
+//		    					}
+//		    				}
+//		    				
+//		    				// Sends the Command
+//		    				application.getGroupContextManager().sendComputeInstruction(socketID, app.getChannel(), app.getAppContextType(), new String[] { app.getDeviceID() }, function.getCallbackCommand(), objects.toArray(new String[0]));
+//		    				found = true;
+//	    					break;
+//	    				}
+//	    			}
+	    			
+	    			if (found)
+	    			{
+	    				break;
+	    			}
+	    		}
+	    		
+	    		if (!found)
+	    		{
+	    			Toast.makeText(application, "No Function Found: " + function.getName(), Toast.LENGTH_SHORT).show();
 	    		}
 	    		
 	    		// Remembers the Function
@@ -645,6 +737,47 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		
 	    // Shows the Finished Dialog
 		alertDialog.show();	
+	}
+	
+	/**
+	 * Asynchronous Task to Encode a File to a String
+	 * @param byteArray
+	 */
+	private void encodeFile(final String filename, final byte[] byteArray)
+	{
+		new AsyncTask<Void, Void, String>()
+		{
+			String encodedString = "";
+			
+			protected void onPreExecute()
+			{
+				
+			}
+
+			@Override
+			protected String doInBackground(Void... params) 
+			{
+				long startTime = System.currentTimeMillis();
+				
+				encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+				
+				encodedString = Uri.encode(encodedString);
+				
+				long timeElapsed = System.currentTimeMillis() - startTime;
+				
+				Log.d(LOG_NAME, "Encoded " + encodedString.length() + " Bytes in " + timeElapsed + "ms");
+				return "";
+			}
+			
+			protected void onPostExecute(String msg)
+			{
+				String url = "http://gcf.cmu-tbank.com/snaptoit/upload_file.php" 
+						+ "?deviceID=" + Uri.encode(application.getGroupContextManager().getDeviceID()) 
+						+ "&filename=" + Uri.encode(filename);
+				
+				application.getHttpToolkit().post(url, "data=" + encodedString, REMOTE_UPLOAD_COMPLETE);
+			}
+		}.execute(null, null, null);
 	}
 	
 	// Event Handlers -----------------------------------------------------------------------
@@ -806,7 +939,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 			{
 				onDownloadComplete(context, intent);
 			}
-			else if (intent.getAction().equals(UploadFileDialog.REMOTE_UPLOAD_COMPLETE))
+			else if (intent.getAction().equals(REMOTE_UPLOAD_COMPLETE))
 			{	
 				onUploadComplete(context, intent);
 			}
@@ -869,7 +1002,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 		
 		private void onDownloadComplete(Context context, Intent intent)
 		{
-			String downloadPath = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+			String downloadPath = intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE);
 			
 			if (downloadPath != null)
 			{
@@ -883,7 +1016,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 				{
 					// This retrieves any commands associated with the uploaded file folder
 					String callbackCommand = jsInterface.getUploadCallbackCommand();
-					String uploadPath      = intent.getStringExtra(HttpToolkit.HTTP_RESPONSE);
+					String uploadPath      = intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE);
 					
 					Toast.makeText(application, "File Uploaded: " + uploadPath + "; UPLOAD COMMAND = " + callbackCommand, Toast.LENGTH_SHORT).show();
 					
@@ -946,7 +1079,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 	
     public class CustomChromeClient extends WebChromeClient
     {
-     //For Android 4.1
+     // For Android 4.1
     @SuppressWarnings("unused")
      public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType)
      {
@@ -981,7 +1114,7 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
         AppEngine.this.startActivityForResult(chooserIntent,  FILECHOOSER_RESULTCODE);
     }
     
-     //For Android 5.0+
+     // For Android 5.0+
      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) 
      {
     	//Toast.makeText(AppEngine.this, "onShowFileChoser (Android 5+)", Toast.LENGTH_SHORT).show();
@@ -1038,6 +1171,11 @@ public class AppEngine extends ActionBarActivity implements ContextReceiver
 
         return true;
     }
-    	
+    
+     // Enabled Location Services
+     public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) 
+     {
+    	 callback.invoke(origin, true, false);
+     }
     }
 }

@@ -2,7 +2,7 @@ package impromptu_app_directory;
 
 import java.util.Date;
 
-import com.adefreitas.messages.CommMessage;
+import com.adefreitas.gcf.messages.CommMessage;
 
 public class AppDNSEntry 
 {

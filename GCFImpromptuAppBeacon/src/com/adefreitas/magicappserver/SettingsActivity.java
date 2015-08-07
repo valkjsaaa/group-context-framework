@@ -6,7 +6,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.view.Menu;
 
-import com.adefreitas.groupcontextframework.GroupContextManager;
+import com.adefreitas.gcf.GroupContextManager;
 
 public class SettingsActivity extends PreferenceActivity
 {

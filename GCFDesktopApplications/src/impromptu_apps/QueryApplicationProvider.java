@@ -6,12 +6,12 @@ import impromptu_apps.snaptoit.SnapToItApplicationProvider;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationProvider;
-import com.adefreitas.liveos.ApplicationSettings;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextProvider;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.impromptu.ApplicationProvider;
+import com.adefreitas.gcf.impromptu.ApplicationSettings;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -33,7 +33,7 @@ public class QueryApplicationProvider extends ContextProvider
 		this.connectionKey = connectionKey;
 
 		// Sets it So That Any Device can Send a Command Message to this Device at Any Time!
-		this.setSubscriptionDependentForCompute(false);
+		this.setSubscriptionRequiredForCompute(false);
 	}
 	
 	/**
@@ -72,7 +72,7 @@ public class QueryApplicationProvider extends ContextProvider
 					System.out.print("  " + application.getAppID() + ": ");
 					
 					// Determines if Sending an App Advertisement would be Redundant
-					boolean redundant       = isRedundant(deviceID, application, context);
+					boolean redundant       = isRedundant(deviceID, application, context) && !application.getCategory(context).equalsIgnoreCase("snap-to-it");
 					boolean appDecision     = application.sendAppData(context);
 					boolean signed          = application.signedDisclaimer(new JSONContextParser(JSONContextParser.JSON_TEXT, context));
 					boolean isDisclaimerApp = application.getAppID().equals("APP_DISCLAIMER");

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import com.adefreitas.groupcontextframework.ContextProvider;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.liveos.ApplicationSettings;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextProvider;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.impromptu.ApplicationSettings;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class DNSProvider extends ContextProvider
 {	
@@ -33,7 +33,7 @@ public class DNSProvider extends ContextProvider
 		this.connectionKey = connectionKey;
 				
 		// Sets it So That Any Device can Send a Command Message to this Device at Any Time!
-		this.setSubscriptionDependentForCompute(false);
+		this.setSubscriptionRequiredForCompute(false);
 	}
 
 	/**

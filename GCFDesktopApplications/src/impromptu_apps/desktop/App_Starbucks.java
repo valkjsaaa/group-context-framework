@@ -6,12 +6,12 @@ import java.awt.geom.Point2D;
 import java.util.HashMap;
 
 
-import com.adefreitas.desktopframework.toolkit.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.CommMessage;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.messages.CommMessage;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_Starbucks extends DesktopApplicationProvider
 {
@@ -22,8 +22,8 @@ public class App_Starbucks extends DesktopApplicationProvider
 	{
 		super(groupContextManager, 
 				"STARB",
-				"Starbucks Application",
-				"Lets you pay for your coffee.",
+				"Starbucks App",
+				"Launches the Starbucks App (or installs it) to let you pay for your coffee.",
 				"SHOPPING",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
@@ -40,8 +40,10 @@ public class App_Starbucks extends DesktopApplicationProvider
 		coordinates.put("Monroeville West", new Point2D.Double(40.429615, -79.810339));
 		coordinates.put("Monroeville (Miracle Mile)", new Point2D.Double(40.437900, -79.768467));
 		coordinates.put("Forbes/Craig", new Point2D.Double(40.44456700, -79.9485571));
-//		coordinates.put("Home", new Point2D.Double(40.434090, -79.853565));
-//		coordinates.put("NSH", new Point2D.Double(40.443608, -79.945573));
+		coordinates.put("Forbes Tower", new Point2D.Double(40.440932, -79.957643));
+		coordinates.put("UPMC Shadyside", new Point2D.Double(40.455807, -79.939505));
+		coordinates.put("Copeland St", new Point2D.Double(40.451680, -79.934961));
+		coordinates.put("Squirrel Hill", new Point2D.Double(40.430686, -79.923124));
 	}
 	
 	private boolean nearLocation(JSONContextParser parser, double km)

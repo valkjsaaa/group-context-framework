@@ -6,10 +6,10 @@ import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class Sti_Paint extends SnapToItApplicationProvider
 {
@@ -31,7 +31,7 @@ public class Sti_Paint extends SnapToItApplicationProvider
 				ipAddress,
 				port);
 		
-		this.enableScreenshots(5000, 3);
+		this.enableScreenshots(5000, 3, 0, 0, 0);
 		
 		setDebugMode(true);
 	}

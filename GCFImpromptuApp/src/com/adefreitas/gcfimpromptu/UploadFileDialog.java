@@ -21,13 +21,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adefreitas.androidframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.androidframework.toolkit.ImageToolkit;
+import com.adefreitas.gcf.android.*;
+import com.adefreitas.gcf.android.bluewave.*;
+import com.adefreitas.gcf.android.toolkit.*;
 
 public class UploadFileDialog 
 {
 	public static final String LOG_NAME				  = "UPLOAD_FILE_DIALOG";
-	public static final String REMOTE_UPLOAD_COMPLETE = "APP_UPLOAD";
 	public static final String CLOUD_UPLOAD_URL       = "http://gcf.cmu-tbank.com/snaptoit/upload_file.php";
 	
 	private GCFApplication application;
@@ -145,7 +145,7 @@ public class UploadFileDialog
 						+ "?deviceID=" + Uri.encode(application.getGroupContextManager().getDeviceID()) 
 						+ "&filename=" + Uri.encode(filename);
 				
-				application.getHttpToolkit().post(url, "data=" + encodedString, REMOTE_UPLOAD_COMPLETE);
+				application.getHttpToolkit().post(url, "data=" + encodedString, AppEngine.REMOTE_UPLOAD_COMPLETE);
 			}
 		}.execute(null, null, null);
 	}
@@ -161,7 +161,6 @@ public class UploadFileDialog
 	            
 	            if (mFileList == null) 
 	            {
-	                Log.e("FileDialog", "Showing file picker before loading the file list");
 	                dialog = builder.create();
 	                return dialog;
 	            }

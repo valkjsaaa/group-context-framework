@@ -7,17 +7,18 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Date;
 
-import com.adefreitas.desktopframework.toolkit.CloudStorageToolkit;
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.desktopframework.toolkit.ScreenshotToolkit;
-import com.adefreitas.desktopframework.toolkit.SftpToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.groupcontextframework.Settings;
-import com.adefreitas.liveos.ApplicationElement;
-import com.adefreitas.liveos.ApplicationObject;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.Settings;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.CloudStorageToolkit;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.desktop.toolkit.ScreenshotToolkit;
+import com.adefreitas.gcf.desktop.toolkit.SftpToolkit;
+import com.adefreitas.gcf.impromptu.ApplicationElement;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.ComputeInstruction;
 
 public class App_PowerPoint extends DesktopApplicationProvider
 {		
@@ -32,10 +33,10 @@ public class App_PowerPoint extends DesktopApplicationProvider
 	public App_PowerPoint(GroupContextManager groupContextManager, CommMode commMode, String ipAddress, int port)
 	{
 		super(groupContextManager, 
-				"STI_POWERPOINT",
+				"PROJECTOR",
 				"Digital Projector App",
 				"This app lets you upload a presentation to the digital projector in this conference room, as well as advance the slide deck.",
-				"DEBUG",
+				"DEVICES",
 				new String[] { },  // Contexts
 				new String[] { },  // Preferences
 				"http://png-2.findicons.com/files/icons/770/token_dark/128/projector.png",				   // LOGO
@@ -54,7 +55,7 @@ public class App_PowerPoint extends DesktopApplicationProvider
 		
 		if (PRESENTATION_FILE.length() == 0)
 		{
-			ui += "<div><input value=\"Upload Presentation\" type=\"button\" style=\"height:50px; width:300px; font-size:25px\" onclick=\"device.uploadFile('PP_UPLOADED', 'Pick Your Presentation', ['.pptx']);\"/></div>";
+			ui += "<div><input value=\"Upload Presentation\" type=\"button\" style=\"height:50px; width:300px; font-size:25px\" onclick=\"device.uploadFile('PP_UPLOADED', 'Pick Your Presentation', ['application/pptx']);\"/></div>";
 			ui += "</html>";
 		}
 		else
@@ -68,7 +69,7 @@ public class App_PowerPoint extends DesktopApplicationProvider
 					  "</html>";
 				
 				// Creates an Object for this Application
-				ApplicationObject obj = new ApplicationObject("FILE_PPTX", PRESENTATION_FILE);
+				ApplicationObject obj = new ApplicationObject(this.getAppID(), "FILE_PPTX", PRESENTATION_FILE);
 				
 				// Converts Objects into a JSON String
 				String objects = ApplicationElement.toJSONArray(new ApplicationElement[] { obj }) ;
@@ -278,11 +279,11 @@ public class App_PowerPoint extends DesktopApplicationProvider
 	    System.out.println("Uploaded New Screenshot");
 	    this.sendContext();
 	}
-
 	
 	@Override
 	public boolean sendAppData(String bluewaveContextJSON) 
 	{
-		return true;
+		JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, bluewaveContextJSON);
+		return this.hasEmailAddress(parser, "adrian.defreitas@gmail.com");
 	}
 }

@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.adefreitas.gcfmagicapp"
-    android:versionCode="8"
-    android:versionName="0.75" >
+    android:versionCode="13"
+    android:versionName="0.86" >
 
-    <!-- Permissions -->
+    <!-- Framework Permissions -->
+    <uses-permission android:name="com.aware.READ_CONTEXT_DATA" />
+    <uses-permission android:name="com.aware.WRITE_CONTEXT_DATA" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" /> -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="com.aware.READ_CONTEXT_DATA" />
-    <uses-permission android:name="com.aware.WRITE_CONTEXT_DATA" />
-    <uses-permission android:name="android.permission.CAMERA" />
-
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
     <!-- Application Specific Permissions -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Application Specific Hardware Permissions -->
     <uses-feature android:name="android.hardware.camera" />
@@ -48,8 +47,8 @@
         </receiver>
 
         <!-- Services -->
-        <service android:name="com.adefreitas.androidframework.GCFService" />
-        <service android:name="com.adefreitas.androidproviders.ActivityRecognitionIntentService" />
+        <service android:name="com.adefreitas.gcf.android.GCFService" />
+        <service android:name="com.adefreitas.gcf.android.providers.ActivityRecognitionIntentService" />
 
         <!-- Google Play Services -->
         <meta-data
@@ -108,6 +107,10 @@
             android:name="com.adefreitas.gcfimpromptu.SnapToItActivity"
             android:label="@string/title_activity_snap_to_it"
             android:parentActivityName="com.adefreitas.gcfimpromptu.MainActivity" >
+        </activity>
+        <activity
+            android:name="com.adefreitas.gcfimpromptu.QRCodeActivity"
+            android:label="@string/title_activity_qrcode" >
         </activity>
     </application>
 

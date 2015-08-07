@@ -5,11 +5,17 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import com.adefreitas.desktopframework.toolkit.HttpToolkit;
-import com.adefreitas.groupcontextframework.CommManager.CommMode;
-import com.adefreitas.groupcontextframework.ContextSubscriptionInfo;
-import com.adefreitas.groupcontextframework.GroupContextManager;
-import com.adefreitas.messages.ComputeInstruction;
+import com.adefreitas.gcf.ContextSubscriptionInfo;
+import com.adefreitas.gcf.GroupContextManager;
+import com.adefreitas.gcf.CommManager.CommMode;
+import com.adefreitas.gcf.desktop.toolkit.HttpToolkit;
+import com.adefreitas.gcf.desktop.toolkit.JSONContextParser;
+import com.adefreitas.gcf.impromptu.ApplicationElement;
+import com.adefreitas.gcf.impromptu.ApplicationFunction;
+import com.adefreitas.gcf.impromptu.ApplicationObject;
+import com.adefreitas.gcf.messages.ComputeInstruction;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Sti_Printer extends SnapToItApplicationProvider
 {	
@@ -44,13 +50,15 @@ public class Sti_Printer extends SnapToItApplicationProvider
 	@Override
 	public String[] getInterface(ContextSubscriptionInfo subscription)
 	{	
-		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/printer/print.php?printer=" + this.printerName };
+		return new String[] { "WEBSITE=http://gcf.cmu-tbank.com/apps/printer/print.php?printer=" + this.printerName.replace(" ", "%20") };
 	}
 
 	@Override
 	public void onComputeInstruction(ComputeInstruction instruction)
 	{
 		super.onComputeInstruction(instruction);
+		
+		System.out.println(this.getContextType() + " received command: " + instruction.getCommand() + "\n  " + instruction.toString());
 		
 		if (instruction.getCommand().equals("UPLOAD_PRINT") && !busy)
 		{
@@ -74,10 +82,44 @@ public class Sti_Printer extends SnapToItApplicationProvider
 			
 			print(filePath, instruction.getDeviceID());
 		}
-		else if (instruction.getCommand().equals("REMOTE_PRINT") && !busy)
+		else if (instruction.getCommand().equals("PRINT_PPTX") || instruction.getCommand().equals("PRINT_WORD"))
 		{
-			System.out.println("*** I got remotely told to print something. ***");
+			try
+			{
+				JsonParser parser   = new JsonParser();
+				JsonObject obj      = (JsonObject)parser.parse(instruction.getPayload(0));
+				String     filePath = obj.get("name").getAsString();
+				
+				print(filePath, instruction.getDeviceID());
+			}
+			catch (Exception ex)
+			{
+				System.out.println("Could not parse JSON.  Ignoring Command.");
+			}
 		}
+	}
+	
+	public String getFunctions()
+	{
+		// Creates the Function
+		ApplicationFunction wordFunction 	   = new ApplicationFunction(this.getAppID(), "Print Document (" + printerName + ")", "Prints a *.docx file using default settings.", "PRINT_WORD");
+		ApplicationFunction powerPointFunction = new ApplicationFunction(this.getAppID(), "Print Handouts (" + printerName + ")", "Converts a *.pptx file into handouts.", "PRINT_PPTX");
+			
+		// Adds a Required Object to the Function
+		wordFunction.addRequiredObject(new ApplicationObject("", "FILE_DOCX", "FILE"));
+		powerPointFunction.addRequiredObject(new ApplicationObject("", "FILE_PPTX", "FILE"));
+		
+		// Generates the JSON that Contains all Functions
+		String functionsJSON = ApplicationElement.toJSONArray(new ApplicationElement[] { wordFunction, powerPointFunction });
+		System.out.println(functionsJSON);
+		
+		return functionsJSON;
+	}
+	
+	public String getCategory(String userContextJSON)
+	{
+		// JSONContextParser parser = new JSONContextParser(JSONContextParser.JSON_TEXT, userContextJSON);
+		return category;
 	}
 	
 	/**
@@ -102,9 +144,12 @@ public class Sti_Printer extends SnapToItApplicationProvider
 		
 		// Determines What Operating System is Being Used
 		String OS = System.getProperty("os.name").toLowerCase();
+		System.out.println("Operating System: " + OS);
 		
 		if (file.exists())
 		{
+			System.out.println("File Downloaded: " + destination);
+			
 			if (OS.indexOf("win") >= 0) 
 			{
 				System.out.println("Using Windows Print Method");
@@ -177,10 +222,16 @@ public class Sti_Printer extends SnapToItApplicationProvider
 					"C:\\Program Files (x86)\\Microsoft Office\\Office14\\WINWORD.EXE", file.getAbsolutePath());
 			this.executeRuntimeCommand(command);
 		}
+		else if (file.getAbsolutePath().endsWith("pptx"))
+		{
+			String command = String.format("\"%s\" /PT \"%s\" \"\" \"\" \"%s\"", 
+					"C:\\Program Files (x86)\\Microsoft Office\\Office14\\POWERPNT.EXE", this.networkName, file.getAbsolutePath());
+			this.executeRuntimeCommand(command);
+		}
 		else if (file.getAbsolutePath().endsWith("pdf"))
 		{
 			String command = String.format("\"%s\" /t \"%s\"", 
-					"C:\\Program Files (x86)\\Adobe\\Reader 11.0\\Reader\\AcroRd32.exe", file.getAbsolutePath());
+					"C:\\Program Files (x86)\\Adobe\\Acrobat Reader DC\\Reader\\AcroRd32.exe", file.getAbsolutePath());
 			this.executeRuntimeCommand(command);
 		}
 		else
