@@ -1,4 +1,4 @@
-include ':groupContextFramework'
+include ':groupContextFramework', ':GCFFaceTracker'
 include ':aware_framework_v2'
 include ':groupContextAndroidFramework'
 include ':GCFImpromptuApp'
