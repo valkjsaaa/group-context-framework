@@ -1,0 +1,10 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('libs/openimaj.jar')
+    compile 'com.google.code.gson:gson:2.3.1'
+}

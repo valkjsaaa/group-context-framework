@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 'Google Inc.:Google APIs:22'
+    buildToolsVersion "23.0.0"
+
+    defaultConfig {
+        minSdkVersion 10
+        targetSdkVersion 23
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':aware_framework_v2')
+    compile project(':groupContextFramework')
+    compile 'com.google.android.gms:play-services:+'
+    compile 'com.android.support:appcompat-v7:23.0.0'
+    compile 'com.dropbox.core:dropbox-core-sdk:1.7.7'
+    compile 'javax.activation:activation:1.0.2'
+    compile 'javax.mail:mail:1.4.7'
+    compile 'com.jcraft:jsch:0.1.53'
+}
