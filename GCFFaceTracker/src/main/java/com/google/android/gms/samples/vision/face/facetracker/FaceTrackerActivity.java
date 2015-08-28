@@ -31,8 +31,8 @@ import android.util.SparseArray;
 import com.adefreitas.gcf.android.AndroidGroupContextManager;
 import com.adefreitas.gcf.android.bluewave.BluewaveManager;
 import com.adefreitas.gcf.android.bluewave.JSONContextParser;
-import com.adefreitas.groupcontextframework.CommManager;
-import com.adefreitas.groupcontextframework.Settings;
+import com.adefreitas.gcf.CommManager;
+import com.adefreitas.gcf.Settings;
 import com.facepp.error.FaceppParseException;
 import com.facepp.http.HttpRequests;
 import com.facepp.http.PostParameters;
@@ -46,6 +46,7 @@ import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,6 +57,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -80,6 +82,7 @@ public final class FaceTrackerActivity extends Activity {
     private BroadcastReceiver mGCFReceiver;
     private IntentFilter mGCFIntentFilter;
     private Set<String> mDeviceAround;
+    private Map<String, String> mPersonAround;
 
     //==============================================================================================
     // Activity Methods
@@ -141,7 +144,7 @@ public final class FaceTrackerActivity extends Activity {
     public void createContextManager(){
         mGCFManager = new AndroidGroupContextManager(new ContextWrapper(context), DEV_NAME, false);
 
-        mGCFManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[] {"device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
+        mGCFManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[] {"face", "device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
 
         mGCFManager.getBluewaveManager().setDiscoverable(true);
         mGCFManager.getBluewaveManager().startScan(30 * 1000);
@@ -155,23 +158,58 @@ public final class FaceTrackerActivity extends Activity {
         mGCFReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Set<String> newDeviceAround = new HashSet<String>(Arrays.asList(mGCFManager.getBluewaveManager().getNearbyDevices(30)));
-                Set<String> oldDeviceAround = new HashSet<String>(mDeviceAround);
+                Set<String> newDeviceAround = new HashSet<>(Arrays.asList(mGCFManager.getBluewaveManager().getNearbyDevices(30)));
+                Set<String> oldDeviceAround = new HashSet<>(mDeviceAround);
+                Set<String> updatedDeviceAround = new HashSet<>(mDeviceAround);
                 oldDeviceAround.removeAll(newDeviceAround);
                 newDeviceAround.removeAll(mDeviceAround);
                 for (String deviceName : oldDeviceAround) {
                     JSONContextParser json = mGCFManager.getBluewaveManager().getContext(deviceName);
-                    Log.i(TAG, "Device deleted: " + json.toString());
+                    if (json != null) {
+                        Log.i(TAG, "Device deleted: name: " + deviceName + "json: " + json.toString());
+                        removePerson(deviceName);
+                        updatedDeviceAround.remove(deviceName);
+                    } else {
+                        Log.i(TAG, "Device deleted: name: " + deviceName + "json: null");
+                    }
                 }
                 for (String deviceName : newDeviceAround) {
                     JSONContextParser json = mGCFManager.getBluewaveManager().getContext(deviceName);
-                    Log.i(TAG, "Device added: " + json.toString());
+                    if (json != null) {
+                        Log.i(TAG, "Device added: name: " + deviceName + "json: " + json.toString());
+                        try {
+                            if (json.getJSONObject("face") != null) {
+                                String name = json.getJSONObject("face").getString("name");
+                                JSONArray urlJsonArray = json.getJSONObject("face").getJSONArray("pictures");
+                                String[] urlArray = new String[urlJsonArray.length()];
+                                for (int i = 0; i < urlJsonArray.length(); i++) {
+                                    String url = urlJsonArray.getString(i);
+                                    urlArray[i] = url;
+                                }
+                                addPerson(deviceName, name, urlArray);
+                            }
+                            updatedDeviceAround.add(deviceName);
+                        } catch (JSONException | NullPointerException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Log.i(TAG, "Device added: name: " + deviceName + "json: null");
+                    }
                 }
+                mDeviceAround = updatedDeviceAround;
             }
         };
         mGCFIntentFilter = new IntentFilter();
         mGCFIntentFilter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
         this.registerReceiver(mGCFReceiver, mGCFIntentFilter);
+    }
+
+    public void addPerson(String DeviceID, String personName, String[] personFaceUrl) {
+
+    }
+
+    public void removePerson(String deviceID) {
+
     }
 
     /**
