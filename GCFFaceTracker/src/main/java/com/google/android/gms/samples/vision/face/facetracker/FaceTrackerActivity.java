@@ -24,9 +24,12 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.adefreitas.gcf.android.AndroidGroupContextManager;
 import com.adefreitas.gcf.android.bluewave.BluewaveManager;
@@ -55,8 +58,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -70,6 +76,7 @@ public final class FaceTrackerActivity extends Activity {
     private static final String API_KEY = "3c37e71dc616a68515c0cead13531fa4";
     private static final String API_SECRET = "FinOk9wJ6u6lQ1lBQVOytSQFTsTOgVlQ";
     private static final String DEV_NAME = "Smart Sign - Hello";
+    private static final String GROUP_ID = "5188a985698b5e68c7fc07593a02ad68";
     private static final CommManager.CommMode COMM_MODE  	 = CommManager.CommMode.MQTT;
     private static final String   IP_ADDRESS 	 = Settings.DEV_MQTT_IP;
     private static final int      PORT 	    	 = Settings.DEV_MQTT_PORT;
@@ -144,12 +151,13 @@ public final class FaceTrackerActivity extends Activity {
     public void createContextManager(){
         mGCFManager = new AndroidGroupContextManager(new ContextWrapper(context), DEV_NAME, false);
 
-        mGCFManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[] {"face", "device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
+        mGCFManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[]{"face", "device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
 
         mGCFManager.getBluewaveManager().setDiscoverable(true);
         mGCFManager.getBluewaveManager().startScan(30 * 1000);
 
         mDeviceAround = new HashSet<>();
+        mPersonAround = new HashMap<>();
 
         if (sFacePPAPI == null) {
             sFacePPAPI = new HttpRequests(API_KEY, API_SECRET, false, false);
@@ -163,32 +171,44 @@ public final class FaceTrackerActivity extends Activity {
                 Set<String> updatedDeviceAround = new HashSet<>(mDeviceAround);
                 oldDeviceAround.removeAll(newDeviceAround);
                 newDeviceAround.removeAll(mDeviceAround);
-                for (String deviceName : oldDeviceAround) {
-                    JSONContextParser json = mGCFManager.getBluewaveManager().getContext(deviceName);
-                    if (json != null) {
-                        Log.i(TAG, "Device deleted: name: " + deviceName + "json: " + json.toString());
-                        removePerson(deviceName);
-                        updatedDeviceAround.remove(deviceName);
-                    } else {
-                        Log.i(TAG, "Device deleted: name: " + deviceName + "json: null");
-                    }
+                for (final String deviceName : oldDeviceAround) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                removePerson(deviceName);
+                            } catch (FaceppParseException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+                    updatedDeviceAround.remove(deviceName);
                 }
-                for (String deviceName : newDeviceAround) {
+                for (final String deviceName : newDeviceAround) {
                     JSONContextParser json = mGCFManager.getBluewaveManager().getContext(deviceName);
                     if (json != null) {
                         Log.i(TAG, "Device added: name: " + deviceName + "json: " + json.toString());
                         try {
                             if (json.getJSONObject("face") != null) {
-                                String name = json.getJSONObject("face").getString("name");
+                                final String name = json.getJSONObject("face").getString("name");
                                 JSONArray urlJsonArray = json.getJSONObject("face").getJSONArray("pictures");
-                                String[] urlArray = new String[urlJsonArray.length()];
+                                final String[] urlArray = new String[urlJsonArray.length()];
                                 for (int i = 0; i < urlJsonArray.length(); i++) {
                                     String url = urlJsonArray.getString(i);
                                     urlArray[i] = url;
                                 }
-                                addPerson(deviceName, name, urlArray);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            addPerson(deviceName, name, urlArray);
+                                        } catch (FaceppParseException | JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }).start();
+                                updatedDeviceAround.add(deviceName);
                             }
-                            updatedDeviceAround.add(deviceName);
                         } catch (JSONException | NullPointerException e) {
                             e.printStackTrace();
                         }
@@ -201,15 +221,72 @@ public final class FaceTrackerActivity extends Activity {
         };
         mGCFIntentFilter = new IntentFilter();
         mGCFIntentFilter.addAction(BluewaveManager.ACTION_OTHER_USER_CONTEXT_RECEIVED);
-        this.registerReceiver(mGCFReceiver, mGCFIntentFilter);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    sFacePPAPI.groupRemovePerson(new PostParameters().setPersonId("all").setGroupId(GROUP_ID));
+                } catch (FaceppParseException e) {
+                    e.printStackTrace();
+                }
+                context.registerReceiver(mGCFReceiver, mGCFIntentFilter);
+            }
+        }).start();
     }
 
-    public void addPerson(String DeviceID, String personName, String[] personFaceUrl) {
-
+    public void addPerson(String deviceID, String personName, String[] personFaceUrl) throws FaceppParseException, JSONException {
+        Log.i(TAG, "addPerson: deviceID: " + deviceID + " name: " + personName + " url: [" + personFaceUrl.toString() + "]");
+        HttpRequests facepp = FaceTrackerActivity.sFacePPAPI;
+        try {
+            facepp.personDelete(new PostParameters().setPersonName(personName));
+        } catch (FaceppParseException e) {
+            e.printStackTrace();
+        }
+        ArrayList<String> faceIdList = new ArrayList<>();
+        for (String url : personFaceUrl) {
+            try {
+                JSONObject result = facepp.detectionDetect(new PostParameters().setUrl(url));
+                String faceId = result.getJSONArray("face").getJSONObject(0).getString("face_id");
+                faceIdList.add(faceId);
+                Log.i(TAG, "addPerson: name: " + personName + " faceID: " + faceId);
+            } catch (FaceppParseException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        String personId = facepp.personCreate(new PostParameters().setPersonName(personName).setFaceId(faceIdList).setGroupId(GROUP_ID)).getString("person_id");
+        facepp.trainIdentify(new PostParameters().setGroupId(GROUP_ID));
+        Log.i(TAG, "addPerson: personCreated! name: " + personName);
+        mPersonAround.put(deviceID, personId);
+        showToast("Person added: " + personName);
     }
 
-    public void removePerson(String deviceID) {
+    public void removePerson(String deviceID) throws FaceppParseException {
+        HttpRequests facepp = FaceTrackerActivity.sFacePPAPI;
+        facepp.personDelete(new PostParameters().setPersonId(mPersonAround.get(deviceID)).setGroupId(GROUP_ID));
+        facepp.trainIdentify(new PostParameters().setGroupId(GROUP_ID));
+    }
 
+    /**
+     * A {@link Handler} for showing {@link Toast}s.
+     */
+    private Handler mMessageHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Toast.makeText(context, (String) msg.obj, Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    /**
+     * Shows a {@link Toast} on the UI thread.
+     *
+     * @param text The message to show
+     */
+    private void showToast(String text) {
+        // We show a Toast by sending request message to mMessageHandler. This makes sure that the
+        // Toast is shown on the UI thread.
+        Message message = Message.obtain();
+        message.obj = text;
+        mMessageHandler.sendMessage(message);
     }
 
     /**
@@ -344,7 +421,7 @@ public final class FaceTrackerActivity extends Activity {
                             .setImg(faceFile));
                     Log.i(TAG, "detection: " + faceDetection.toString());
                     JSONObject result = FaceTrackerActivity.sFacePPAPI.recognitionIdentify(new PostParameters()
-                            .setGroupId("5188a985698b5e68c7fc07593a02ad68")
+                            .setGroupId(GROUP_ID)
                             .setImg(faceFile)
                             .setMode("oneface"));
                     Log.i(TAG, "result get: " + result.toString());
@@ -357,7 +434,10 @@ public final class FaceTrackerActivity extends Activity {
                     String name = faceObj.getString("person_name");
                     Log.i(TAG, "face found: { name: " + name + ", confidence: " + confidence + "}");
                     if (confidence > 30.0) {
+                        showToast("Hello " + name + "!");
                         mFaceGraphic.setmFaceName(name);
+                    } else {
+                        showToast("Are you " + name + "?\nI'm " + confidence + "% sure.");
                     }
                 } catch (FaceppParseException | JSONException e) {
                     e.printStackTrace();

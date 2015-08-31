@@ -46,6 +46,7 @@ import com.adefreitas.gcf.impromptu.ApplicationSettings;
 import com.adefreitas.gcf.messages.ContextData;
 import com.adefreitas.gcf.messages.ContextRequest;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class GCFApplication extends Application
 {
@@ -65,7 +66,7 @@ public class GCFApplication extends Application
 		
 	// GCF Bluewave Variables
 	public static final String   BLUEWAVE_APP_ID   = "PRINT_SERVICES";
-	public static final String[] BLUEWAVE_CONTEXTS = new String[] { "device", "identity" };
+	public static final String[] BLUEWAVE_CONTEXTS = new String[] { "device", "identity", "face" };
 	
 	// GCF Variables
 	public AndroidBatteryMonitor      batteryMonitor;
@@ -218,7 +219,7 @@ public class GCFApplication extends Application
 		// Registers the Provider(s)
 		//groupContextManager.registerContextProvider(identityProvider);
 		//groupContextManager.registerContextProvider(new TemperatureContextProvider(groupContextManager, this));
-		//groupContextManager.registerContextProvider(iotProvider);
+		groupContextManager.registerContextProvider(iotProvider);
 	}
 	
 	/**
@@ -550,9 +551,15 @@ public class GCFApplication extends Application
 								array.put(iot.getJSON());	
 							}
 						}
-						
+
+                        JSONObject faceContent = new JSONObject()
+                            .put("name", "Jackie Yang")
+                            .put("pictures", new JSONArray()
+                                    .put("http://i1233.photobucket.com/albums/ff382/valkjsaaa/face989669909_1.png")
+                                    .put("http://i1233.photobucket.com/albums/ff382/valkjsaaa/face2006286377_1.png"));
+
 						// Adds All of the Array Contents
-						gcm.getBluewaveManager().getPersonalContextProvider().setContext("IOT", array);
+						gcm.getBluewaveManager().getPersonalContextProvider().setContext("face", faceContent);
 						gcm.getBluewaveManager().getPersonalContextProvider().publish();
 					}
 					catch (Exception ex)
