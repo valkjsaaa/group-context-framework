@@ -536,7 +536,6 @@ public class GCFApplication extends Application
 				{
 					// By Default:  Next Update Occurs According to the Value Specified in GCFApplication.java
 					Date nextExecute = new Date(System.currentTimeMillis() + BLUEWAVE_UPDATE_SECONDS * 1000);
-					
 					// Sets the Context
 					AndroidGroupContextManager gcm = (AndroidGroupContextManager)app.getGroupContextManager();
 					try
@@ -557,6 +556,13 @@ public class GCFApplication extends Application
                             .put("pictures", new JSONArray()
                                     .put("http://i1233.photobucket.com/albums/ff382/valkjsaaa/face989669909_1.png")
                                     .put("http://i1233.photobucket.com/albums/ff382/valkjsaaa/face2006286377_1.png"));
+
+//						JSONObject faceContent = new JSONObject()
+//								.put("name", "Adrian de Freitas")
+//								.put("pictures", new JSONArray()
+//										.put("https://dl.pushbulletusercontent.com/JEtPXbn3VzPQMHXnZIvRLtQb9My8cpyP/face1739439998.png")
+//										.put("https://dl.pushbulletusercontent.com/Vo7ZaJSqhhJjVylU8cL2T7xa3PZO3IQ2/face1448919907.png")
+//                                        .put("https://dl.pushbulletusercontent.com/aIBnlCB2OWNJPqBkHn6CEtziUp70bVP6/face665690445.png"));
 
 						// Adds All of the Array Contents
 						gcm.getBluewaveManager().getPersonalContextProvider().setContext("face", faceContent);

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GCFFaceProvider</string>
+
+    <string name="settings_file"> com.yangjunrui.gcffaceprovider.setting </string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="add_face">Add Face</string>
+</resources>

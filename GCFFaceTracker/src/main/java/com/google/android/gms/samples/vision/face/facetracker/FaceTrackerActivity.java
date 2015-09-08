@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -168,7 +169,7 @@ public final class FaceTrackerActivity extends Activity {
             public void onReceive(Context context, Intent intent) {
                 Set<String> newDeviceAround = new HashSet<>(Arrays.asList(mGCFManager.getBluewaveManager().getNearbyDevices(30)));
                 Set<String> oldDeviceAround = new HashSet<>(mDeviceAround);
-                Set<String> updatedDeviceAround = new HashSet<>(mDeviceAround);
+                final Set<String> updatedDeviceAround = new HashSet<>(mDeviceAround);
                 oldDeviceAround.removeAll(newDeviceAround);
                 newDeviceAround.removeAll(mDeviceAround);
                 for (final String deviceName : oldDeviceAround) {
@@ -187,7 +188,7 @@ public final class FaceTrackerActivity extends Activity {
                 for (final String deviceName : newDeviceAround) {
                     JSONContextParser json = mGCFManager.getBluewaveManager().getContext(deviceName);
                     if (json != null) {
-                        Log.i(TAG, "Device added: name: " + deviceName + "json: " + json.toString());
+                        Log.i(TAG, "Device added: name: " + deviceName);
                         try {
                             if (json.getJSONObject("face") != null) {
                                 final String name = json.getJSONObject("face").getString("name");
@@ -226,6 +227,7 @@ public final class FaceTrackerActivity extends Activity {
             public void run() {
                 try {
                     sFacePPAPI.groupRemovePerson(new PostParameters().setPersonId("all").setGroupId(GROUP_ID));
+                    sFacePPAPI.trainIdentify(new PostParameters().setGroupId(GROUP_ID));
                 } catch (FaceppParseException e) {
                     e.printStackTrace();
                 }
@@ -234,7 +236,7 @@ public final class FaceTrackerActivity extends Activity {
         }).start();
     }
 
-    public void addPerson(String deviceID, String personName, String[] personFaceUrl) throws FaceppParseException, JSONException {
+    public synchronized void addPerson(String deviceID, String personName, String[] personFaceUrl) throws FaceppParseException, JSONException {
         Log.i(TAG, "addPerson: deviceID: " + deviceID + " name: " + personName + " url: [" + personFaceUrl.toString() + "]");
         HttpRequests facepp = FaceTrackerActivity.sFacePPAPI;
         try {
@@ -375,14 +377,23 @@ public final class FaceTrackerActivity extends Activity {
             Face face = item.first;
             Frame frame = item.second;
             int frameWidth = frame.getMetadata().getWidth();
+            int frameHeight = frame.getMetadata().getHeight();
             int width = (int) face.getHeight();
             int height = (int) face.getWidth();
             int left = (int) face.getPosition().y;
             int top = (int) face.getPosition().x;
             int right = left + width;
             int bottom = top + height;
+            left -= width / 3;
+            top -= height / 3;
+            right += width / 3;
+            bottom += height / 3;
             left = left > 0 ? left : 0;
             top = top > 0 ? top : 0;
+            bottom = bottom > frameHeight - 1 ? frameHeight - 1: bottom;
+            right = right > frameWidth - 1 ? frameWidth - 1: right;
+            width = right - left;
+            height = bottom - top;
 
             int[] facePixels = new int[width * height];
             byte[] framePixels = frame.getGrayscaleImageData().array();
@@ -411,11 +422,9 @@ public final class FaceTrackerActivity extends Activity {
             }
 
             try {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                faceBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                 File cacheDir = FaceTrackerActivity.context.getCacheDir();
-                File faceFile = File.createTempFile("face", ".png", cacheDir);
-                faceBitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(faceFile));
+                File faceFile = File.createTempFile("face", ".jpg", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));
+                faceBitmap.compress(Bitmap.CompressFormat.JPEG, 50, new FileOutputStream(faceFile));
                 try {
                     JSONObject faceDetection = FaceTrackerActivity.sFacePPAPI.detectionDetect(new PostParameters()
                             .setImg(faceFile));
@@ -433,7 +442,7 @@ public final class FaceTrackerActivity extends Activity {
                     double confidence = faceObj.getDouble("confidence");
                     String name = faceObj.getString("person_name");
                     Log.i(TAG, "face found: { name: " + name + ", confidence: " + confidence + "}");
-                    if (confidence > 30.0) {
+                    if (confidence > 20.0) {
                         showToast("Hello " + name + "!");
                         mFaceGraphic.setmFaceName(name);
                     } else {
@@ -453,14 +462,14 @@ public final class FaceTrackerActivity extends Activity {
         @Override
         public void onNewItem(int faceId, final Pair<Face, Frame> item) {
             mFaceGraphic.setId(faceId);
-            if (((++counter) & 0xFFF) == 0) {
-                new Thread(new Runnable() {
+            Log.i(TAG, "counter: " + counter);
+            new Thread(new Runnable() {
                     @Override
                     public void run() {
                         recognize(item);
                     }
                 }).start();
-            }
+            counter = 0;
         }
 
         /**
@@ -470,7 +479,9 @@ public final class FaceTrackerActivity extends Activity {
         public void onUpdate(FaceDetector.Detections<Pair<Face, Frame>> detectionResults, final Pair<Face, Frame> item) {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(item.first);
-            if ((++counter & 0xF) == 0) {
+//            Log.i(TAG, "counter: " + counter);
+            counter = counter + 1;
+            if ((counter & 0x0F) == 0) {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
