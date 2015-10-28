@@ -2,6 +2,7 @@ package com.yangjunrui.gcffaceprovider;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,11 +10,14 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
@@ -26,6 +30,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.adefreitas.gcf.android.AndroidGroupContextManager;
 import com.avos.avoscloud.AVException;
 import com.avos.avoscloud.AVFile;
 import com.avos.avoscloud.AVOSCloud;
@@ -40,15 +45,20 @@ import com.dexafree.materialList.controller.OnDismissCallback;
 import com.dexafree.materialList.model.Card;
 import com.dexafree.materialList.view.MaterialListView;
 
+import org.apache.http.HttpRequest;
+import org.apache.http.impl.DefaultHttpClientConnection;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Set;
 
@@ -69,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     static final String AVOS_APP_KEY = "eRCBDDswmcykNY05lqC9UkJq";
     static final String AVOS_PERSON_CLASS = "Person";
     static final String AVOS_PERSON_URLS = "urls";
+    private String DEV_NAME;
     //TODO: implement advance sharing
     static final boolean ADVANCE_SHARING = false;
     public Context context;
@@ -77,6 +88,19 @@ public class MainActivity extends AppCompatActivity {
     private BasicButtonsCard mNameCard;
     private AVObject mPerson = null;
     private String mPersonData;
+    private AndroidGroupContextManager mGCFManager;
+
+    private void updateContext() {
+        try {
+            JSONObject bluewaveContext = new JSONObject()
+                    .put("name", mSharedPreferences.getString(SETTINGS_NAME, "NO NAME"))
+                    .put("pictures", getPerson().getJSONArray(AVOS_PERSON_URLS));
+            mGCFManager.getBluewaveManager().getPersonalContextProvider().setContext("face", bluewaveContext);
+            mGCFManager.getBluewaveManager().getPersonalContextProvider().publish();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
     private AVObject getPerson(){
         if (mPerson == null) {
@@ -93,8 +117,46 @@ public class MainActivity extends AppCompatActivity {
         //TODO: update web data
         mNameCard.setDescription(name);
         mSharedPreferences.edit().putString(SETTINGS_NAME, name).commit();
+        updateContext();
     }
 
+    private void addUrl(String url) {
+        getPerson().put(AVOS_PERSON_URLS, getPerson().getJSONArray(AVOS_PERSON_URLS).put(url));
+        getPerson().saveInBackground(new SaveCallback() {
+            @Override
+            public void done(AVException e) {
+                mSharedPreferences.edit().putString(SETTINGS_PERSON, getPerson().toString()).apply();
+                Log.i(TAG, "urls: " + getPerson().getJSONArray(AVOS_PERSON_URLS));
+                Log.i(TAG, "person: " + getPerson().toString());
+            }
+        });
+        updateContext();
+    }
+
+    private void removeUrl(String url) {
+        JSONArray urls = getPerson().getJSONArray(AVOS_PERSON_URLS);
+        int deleteIdx = -1;
+        for (int j = 0; j < urls.length(); j++) {
+            try {
+                if (urls.getString(j).equals(url)) {
+                    deleteIdx = j;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        urls.remove(deleteIdx);
+        getPerson().put(AVOS_PERSON_URLS, urls);
+        getPerson().saveInBackground(new SaveCallback() {
+            @Override
+            public void done(AVException e) {
+                Log.i(TAG, "person: " + getPerson().toString());
+                mSharedPreferences.edit().putString(SETTINGS_PERSON, getPerson().toString()).apply();
+                Log.i(TAG, "urls: " + getPerson().getJSONArray(AVOS_PERSON_URLS));
+            }
+        });
+        updateContext();
+    }
 
     private void setInitialized(){
         //TODO: start broadcasting
@@ -180,6 +242,12 @@ public class MainActivity extends AppCompatActivity {
         return card;
     }
 
+    private Bitmap rotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
         super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
@@ -190,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         final Uri imageUri = imageReturnedIntent.getData();
                         final File tempFile = File.createTempFile("photo", ".jpg");
-                        MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri)
+                        rotateBitmap(MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri), -90)
                                 .compress(Bitmap.CompressFormat.JPEG, 50,
                                         new FileOutputStream(tempFile));
                         final AVFile file = AVFile.withFile("", tempFile);
@@ -200,15 +268,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (e == null) {
                                     Log.i(TAG, "uploaded file");
                                     showToast("Uploaded!");
-                                    getPerson().put(AVOS_PERSON_URLS, getPerson().getJSONArray(AVOS_PERSON_URLS).put(file.getUrl()));
-                                    getPerson().saveInBackground(new SaveCallback() {
-                                        @Override
-                                        public void done(AVException e) {
-                                            mSharedPreferences.edit().putString(SETTINGS_PERSON, getPerson().toString()).apply();
-                                            Log.i(TAG, "urls: " + getPerson().getJSONArray(AVOS_PERSON_URLS));
-                                            Log.i(TAG, "person: " + getPerson().toString());
-                                        }
-                                    });
+                                    addUrl(file.getUrl());
                                     mListView.add(createFaceCard(file.getUrl()));
                                 } else {
                                     Log.e(TAG, "upload failed: " + e.getMessage());
@@ -293,6 +353,27 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
+
+            DEV_NAME = com.adefreitas.gcf.Settings.getDeviceName(android.os.Build.SERIAL);
+
+            mGCFManager = new AndroidGroupContextManager(new ContextWrapper(context), DEV_NAME, false);
+
+            mGCFManager.getBluewaveManager().setCredentials("IMPROMPTU", new String[]{"face", "device", "identity", "location", "time", "activity", "preferences", "snap-to-it"});
+
+            mGCFManager.getBluewaveManager().setDiscoverable(true);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        URLConnection client = new URL("http://gcf.cmu-tbank.com/bluewave/updatePermissions.php?deviceID=" + Uri.encode(DEV_NAME) + "&global[]=face&").openConnection();
+                        client.connect();
+                        client.getInputStream().read();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
 
         mListView.setOnDismissCallback(new OnDismissCallback() {
@@ -304,27 +385,7 @@ public class MainActivity extends AppCompatActivity {
                 if (cardType.equals(CARD_WELCOME)) {
                     setInitialized();
                 } else if (cardType.equals(CARD_FACE)) {
-                    JSONArray urls = getPerson().getJSONArray(AVOS_PERSON_URLS);
-                    int deleteIdx = -1;
-                    for (int j = 0; j < urls.length(); j++) {
-                        try {
-                            if (urls.getString(j).equals(cardTag.second)) {
-                                deleteIdx = j;
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    urls.remove(deleteIdx);
-                    getPerson().put(AVOS_PERSON_URLS, urls);
-                    getPerson().saveInBackground(new SaveCallback() {
-                        @Override
-                        public void done(AVException e) {
-                            Log.i(TAG, "person: " + getPerson().toString());
-                            mSharedPreferences.edit().putString(SETTINGS_PERSON, getPerson().toString()).apply();
-                            Log.i(TAG, "urls: " + getPerson().getJSONArray(AVOS_PERSON_URLS));
-                        }
-                    });
+                    removeUrl(cardTag.second);
                 }
             }
         });

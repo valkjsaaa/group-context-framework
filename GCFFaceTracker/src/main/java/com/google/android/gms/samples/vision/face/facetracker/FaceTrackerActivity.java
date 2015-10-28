@@ -30,6 +30,7 @@ import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.adefreitas.gcf.android.AndroidGroupContextManager;
@@ -91,6 +92,7 @@ public final class FaceTrackerActivity extends Activity {
     private IntentFilter mGCFIntentFilter;
     private Set<String> mDeviceAround;
     private Map<String, String> mPersonAround;
+    private TextView mTextOverlay;
 
     //==============================================================================================
     // Activity Methods
@@ -108,6 +110,7 @@ public final class FaceTrackerActivity extends Activity {
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
+        mTextOverlay = (TextView) findViewById(R.id.textOverlay);
 
         createFaceRecognizer();
         createContextManager();
@@ -291,6 +294,19 @@ public final class FaceTrackerActivity extends Activity {
         mMessageHandler.sendMessage(message);
     }
 
+    private Handler mTextOverlaySetHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            mTextOverlay.setText((String) msg.obj);
+        }
+    };
+
+    private void setTextOverlayText(String text) {
+        Message message = Message.obtain();
+        message.obj = text;
+        mTextOverlaySetHandler.sendMessage(message);
+    }
+
     /**
      * Restarts the camera.
      */
@@ -378,16 +394,20 @@ public final class FaceTrackerActivity extends Activity {
             Frame frame = item.second;
             int frameWidth = frame.getMetadata().getWidth();
             int frameHeight = frame.getMetadata().getHeight();
-            int width = (int) face.getHeight();
-            int height = (int) face.getWidth();
-            int left = (int) face.getPosition().y;
-            int top = (int) face.getPosition().x;
+//            int width = (int) face.getWidth();
+//            int height = (int) face.getHeight();
+//            int left = (int) face.getPosition().x;
+//            int top = (int) face.getPosition().y;
+            int width = frameWidth;
+            int height = frameHeight;
+            int left = 0;
+            int top = 0;
             int right = left + width;
             int bottom = top + height;
-            left -= width / 3;
-            top -= height / 3;
-            right += width / 3;
-            bottom += height / 3;
+//            left -= width / 3;
+//            top -= height / 3;
+//            right += width / 3;
+//            bottom += height / 3;
             left = left > 0 ? left : 0;
             top = top > 0 ? top : 0;
             bottom = bottom > frameHeight - 1 ? frameHeight - 1: bottom;
@@ -405,7 +425,7 @@ public final class FaceTrackerActivity extends Activity {
                     facePixels[facePosition] = (0xFF000000) + (framePixel << 16) + (framePixel << 8) + (framePixel);
                 }
             }
-            Log.i(TAG, "createBitmap " + face.getPosition().x + " " + face.getPosition().y + " " + face.getWidth() + " " + face.getHeight());
+            Log.i(TAG, "createBitmap " + left + " " + right + " " + top + " " + bottom);
             Bitmap faceBitmap = Bitmap.createBitmap(facePixels, width, height, Bitmap.Config.ARGB_8888);
             switch (frame.getMetadata().getRotation()) {
                 case Frame.ROTATION_0:
@@ -445,6 +465,7 @@ public final class FaceTrackerActivity extends Activity {
                     if (confidence > 20.0) {
                         showToast("Hello " + name + "!");
                         mFaceGraphic.setmFaceName(name);
+                        setTextOverlayText("Hello!\n" + name);
                     } else {
                         showToast("Are you " + name + "?\nI'm " + confidence + "% sure.");
                     }

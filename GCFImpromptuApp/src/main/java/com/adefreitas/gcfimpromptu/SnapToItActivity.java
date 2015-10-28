@@ -1,6 +1,11 @@
 package com.adefreitas.gcfimpromptu;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +19,7 @@ import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
@@ -176,7 +182,9 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 			photoPitch   = currentPitch;
 			photoRoll    = currentRoll;
 			encodeImageToString(imageData);
-		}
+
+        }
+
 	};
 	
 	private int findBackFacingCamera() 
@@ -324,21 +332,34 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 			@Override
 			protected String doInBackground(Void... params) 
 			{
-				long startTime = System.currentTimeMillis();
-				
-				Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray , 0, byteArray.length);
-				Bitmap resizedBitmap = ImageToolkit.resizeImage(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT);
-				
-				ByteArrayOutputStream stream = new ByteArrayOutputStream();
-				resizedBitmap.compress(CompressFormat.JPEG, 100, stream);
-				
-				encodedString = Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT);
-				
-				encodedString = Uri.encode(encodedString);
-				
-				long timeElapsed = System.currentTimeMillis() - startTime;
-				
-				Log.d(LOG_NAME, "Encoded " + encodedString.length() + " Bytes in " + timeElapsed + "ms");
+                try {
+                    long startTime = System.currentTimeMillis();
+
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+                    Bitmap resizedBitmap = ImageToolkit.resizeImage(bitmap, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+                    File downloadDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+                    File photoFile = File.createTempFile("STI_photo", ".jpg", downloadDirectory);
+
+
+//                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    FileOutputStream stream = new FileOutputStream(photoFile, false);
+                    resizedBitmap.compress(CompressFormat.JPEG, 100, stream);
+
+
+
+//                    encodedString = Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT);
+//
+//                    encodedString = Uri.encode(encodedString);
+//
+                    long timeElapsed = System.currentTimeMillis() - startTime;
+
+                    Log.d(LOG_NAME, "Encoded " + encodedString.length() + " Bytes in " + timeElapsed + "ms");
+                    return photoFile.getName();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 				return "";
 			}
 			
@@ -351,8 +372,27 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 						+ "&pitch=" + currentPitch
 						+ "&roll=" + currentRoll
 						+ "&object=" + Uri.encode(txtObject.getText().toString());
-				
-				application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PHOTO_SUBMITTED);
+
+                File downloadDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                File infoFile = new File(downloadDirectory, "STI_info.txt");
+                if (!infoFile.exists()) {
+                    try {
+                        infoFile.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    FileOutputStream stream = new FileOutputStream(infoFile, true);
+                    stream.write((url + "\n").getBytes());
+                    stream.write((msg + "\n").getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Intent intent = new Intent(ACTION_PHOTO_SUBMITTED);
+                sendBroadcast(intent);
+//                application.getHttpToolkit().post(url, "jpeg=" + encodedString, ACTION_PHOTO_SUBMITTED);
 			}
 		}.execute(null, null, null);
 	}
@@ -382,40 +422,41 @@ public class SnapToItActivity extends ActionBarActivity implements SurfaceHolder
 		
 		private void onPhotoSubmitted(Context context, Intent intent)
 		{		
-			String photoURL = intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE).replace(" ", "%20");
-			Log.d("ASDF", "Response: " + photoURL);
-			
-			double azimuth  = (photoAzimuth != Double.NaN) ? photoAzimuth : currentAzimuth;
-			double pitch    = (photoPitch   != Double.NaN) ? photoPitch   : currentAzimuth;
-			double roll     = (photoRoll    != Double.NaN) ? photoRoll    : currentAzimuth;
-			
-			Intent i = new Intent(GCFApplication.ACTION_IMAGE_UPLOADED);
-			i.putExtra("UPLOAD_PATH", photoURL);
-			i.putExtra("AZIMUTH", azimuth);
-			i.putExtra("PITCH", pitch);
-			i.putExtra("ROLL", roll);
-			i.putExtra("APPLIANCE_NAME", txtObject.getText().toString().trim());
-			
-			photoAzimuth = Double.NaN;
-			photoPitch   = Double.NaN;
-			photoRoll    = Double.NaN;			
-			
-			if (txtObject.getText().length() == 0)
-			{
-				finish();
-			}
-			else
-			{
+//			String photoURL = intent.getStringExtra(HttpToolkit.EXTRA_HTTP_RESPONSE).replace(" ", "%20");
+//			Log.d("ASDF", "Response: " + photoURL);
+//
+//			double azimuth  = (photoAzimuth != Double.NaN) ? photoAzimuth : currentAzimuth;
+//			double pitch    = (photoPitch   != Double.NaN) ? photoPitch   : currentAzimuth;
+//			double roll     = (photoRoll    != Double.NaN) ? photoRoll    : currentAzimuth;
+//
+//			Intent i = new Intent(GCFApplication.ACTION_IMAGE_UPLOADED);
+//			i.putExtra("UPLOAD_PATH", photoURL);
+//			i.putExtra("AZIMUTH", azimuth);
+//			i.putExtra("PITCH", pitch);
+//			i.putExtra("ROLL", roll);
+//			i.putExtra("APPLIANCE_NAME", txtObject.getText().toString().trim());
+//
+//			photoAzimuth = Double.NaN;
+//			photoPitch   = Double.NaN;
+//			photoRoll    = Double.NaN;
+//
+//			if (txtObject.getText().length() == 0)
+//			{
+//				finish();
+//			}
+//			else
+//			{
 				//i.putExtra("UPLOAD_PATH", photoURL);//"http://gcf.cmu-tbank.com/snaptoit/photos/" + Uri.encode(application.getGroupContextManager().getDeviceID()) + ".jpeg");
 		  		previewRunning = false;
 		  		encodedString = "";
 		  		camera.stopPreview();
 		  		camera.startPreview();
-			}
-			
-			// Sends the Broadcast
-			Log.d("IMPROMPTU", "Sending " + GCFApplication.ACTION_IMAGE_UPLOADED);
-			application.sendBroadcast(i);
+            finish();
+//			}
+//
+//			// Sends the Broadcast
+//			Log.d("IMPROMPTU", "Sending " + GCFApplication.ACTION_IMAGE_UPLOADED);
+//			application.sendBroadcast(i);
 		}
 		
 		private void onContextDataReceived(Context context, Intent intent)

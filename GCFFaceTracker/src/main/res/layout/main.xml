@@ -8,11 +8,23 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
 
-  <com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview
+    <com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview
       android:id="@+id/preview"
       android:layout_width="match_parent"
       android:layout_height="match_parent">
-
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="I&apos;m waiting..."
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="100sp"
+        android:gravity="center"
+        android:id="@+id/textOverlay"
+        android:textColor="#000000"
+        android:shadowColor="#FFFFFF"
+        android:shadowDx="10"
+        android:shadowDy="10"
+        android:shadowRadius="10"/>
     <com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay
         android:id="@+id/faceOverlay"
         android:layout_width="match_parent"

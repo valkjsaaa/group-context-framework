@@ -10,6 +10,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        multiDexEnabled = true
     }
     buildTypes {
         release {
@@ -24,6 +25,9 @@ android {
     }
     lintOptions {
         abortOnError false
+    }
+    dexOptions {
+        javaMaxHeapSize "4g"
     }
 }
 
